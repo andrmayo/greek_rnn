@@ -1,0 +1,43 @@
+start greek data processing -- 2024-11-21 10:45:26.650835
+Files found: 1
+train: 75500 texts
+dev: 9437 texts
+test: 9438 texts
+full: 94375 texts
+Training model
+Train greek_rnn_no_dropout model specs: embed_size: 200, hidden_size: 300, proj_size: 150, rnn n layers: 4, share: False, dropout: 0.0
+RNN(
+  (embed): Embedding(35, 200)
+  (scale_up): Linear(in_features=200, out_features=300, bias=True)
+  (rnn): LSTM(300, 150, num_layers=4, batch_first=True, bidirectional=True)
+  (out): Linear(in_features=300, out_features=200, bias=True)
+  (dropout): Dropout(p=0.0, inplace=False)
+)
+total parameter count = 2,287,000
+Mask type: smart - once
+Training data read in with 75500 lines
+Masking strategy is once, masking sentences...
+Masking complete
+train=75,500 22,961,805 27,371,166 1.2 dev=9,437 2,902,794 3,550,752 1.2 bs=1 lr=0.0003 [200, 300, 150, 4, False, 0.0, 0.15, 35]
+0 tr loss   0.0914   0.0767 -- dev loss   0.3127   0.2557 -- incremental_batch_size:    1 time elapsed: 3004.5
+dev masked total: 295118, correct predictions: 41829, simple accuracy: 0.142
+1 tr loss   0.0842   0.0707 -- dev loss   0.3014   0.2464 -- incremental_batch_size:    1 time elapsed: 6026.2
+dev masked total: 295118, correct predictions: 52829, simple accuracy: 0.179
+2 tr loss   0.0801   0.0672 -- dev loss   0.2974   0.2432 -- incremental_batch_size:    2 time elapsed: 9038.3
+dev masked total: 295118, correct predictions: 58262, simple accuracy: 0.197
+3 tr loss   0.0768   0.0645 -- dev loss   0.2956   0.2417 -- incremental_batch_size:    3 time elapsed: 12037.9
+dev masked total: 295118, correct predictions: 57211, simple accuracy: 0.194
+4 tr loss   0.0739   0.0620 -- dev loss   0.2952   0.2413 -- incremental_batch_size:    4 time elapsed: 15024.8
+dev masked total: 295118, correct predictions: 53493, simple accuracy: 0.181
+5 tr loss   0.0710   0.0596 -- dev loss   0.3006   0.2457 -- incremental_batch_size:    5 time elapsed: 18001.3
+early exit
+masked total: 295118, correct predictions: 55865, simple accuracy: 0.189, mismatch: 0
+File test.json read in with 9313 texts
+66742 reconstructed lacunae read in accross 6107 texts
+Test Reconstructed:
+masked total: 303860, correct predictions: 55199, simple accuracy: 0.182, mismatch: 0
+Most Common Char Baseline; dev masked total: 303860, correct predictions: 37554, baseline accuracy: 0.124
+Random Baseline; dev masked total: 303860, correct predictions: 7197, baseline accuracy: 0.024
+Trigram Baseline; dev masked total: 303860, correct predictions: 28336, baseline accuracy: 0.093
+end generator -- 2024-11-21 15:55:13.267163
+

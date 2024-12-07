@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link href='https://fonts.googleapis.com/css?family=Asul' rel='stylesheet'>
+    <link rel="stylesheet" href="static/main.css">
+</head>
+
+<body>
+<header>Predict Lacuna for Sentence</header>
+
+<form method="post">
+    <div class="button-container">
+        <label class="label" for="sentence">Sentence:</label>
+        <input class="input-container" type="string" name="sentence" value="" placeholder="Use the # symbol to represent missing characters"/>
+        <label class="label" for="model_name">Model:</label>
+        <select class="input-container-medium" id="model_name" name="model_name">
+            <option class="label" value="" disabled selected hidden>Select model...</option>
+            <option class="label" value="Smart Once">Smart Once</option>
+          <option class="label" value="Random Dynamic">Random Dynamic</option>
+        </select>
+        <button>Submit</button>
+    </div>
+</form>
+
+
+<div class="result-container">
+    <p class="label">{{ result["input"] }}</p>
+</div>
+
+<div class="result-container">
+    <p class="label">{{ result["output"] }}</p>
+</div>
+
+<div class="button-container">
+    <form action="/">
+        <button>Back</button>
+    </form>
+</div>
+
+</body>
+</html>

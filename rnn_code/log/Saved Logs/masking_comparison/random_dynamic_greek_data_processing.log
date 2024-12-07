@@ -1,0 +1,33 @@
+start greek data processing -- 2024-11-19 10:51:42.517501
+Files found: 1
+train: 75500 texts
+dev: 9437 texts
+test: 9438 texts
+full: 94375 texts
+Training model
+Train greek_rnn_no_dropout model specs: embed_size: 200, hidden_size: 300, proj_size: 150, rnn n layers: 4, share: False, dropout: 0.0
+RNN(
+  (embed): Embedding(35, 200)
+  (scale_up): Linear(in_features=200, out_features=300, bias=True)
+  (rnn): LSTM(300, 150, num_layers=4, batch_first=True, bidirectional=True)
+  (out): Linear(in_features=300, out_features=200, bias=True)
+  (dropout): Dropout(p=0.0, inplace=False)
+)
+total parameter count = 2,287,000
+Mask type: random - dynamic
+Training data read in with 75500 lines
+train=75,500 22,964,523 27,371,916 1.2 dev=9,437 2,905,704 3,559,556 1.2 bs=1 lr=0.0003 [200, 300, 150, 4, False, 0.0, 0.15, 35]
+0 tr loss   0.1865   0.1565 -- dev loss   0.3070   0.2506 -- incremental_batch_size:    1 time elapsed: 3053.5
+dev masked total: 307342, correct predictions: 52782, simple accuracy: 0.172
+1 tr loss   0.1427   0.1197 -- dev loss   0.3112   0.2540 -- incremental_batch_size:    1 time elapsed: 6116.7
+early exit
+masked total: 307342, correct predictions: 59443, simple accuracy: 0.193, mismatch: 0
+File test.json read in with 9305 texts
+67401 reconstructed lacunae read in accross 6175 texts
+Test Reconstructed:
+masked total: 302150, correct predictions: 57832, simple accuracy: 0.191, mismatch: 0
+Most Common Char Baseline; dev masked total: 302150, correct predictions: 37054, baseline accuracy: 0.123
+Random Baseline; dev masked total: 302150, correct predictions: 7088, baseline accuracy: 0.023
+Trigram Baseline; dev masked total: 302150, correct predictions: 28630, baseline accuracy: 0.095
+end generator -- 2024-11-19 12:46:31.827251
+
