@@ -117,7 +117,7 @@ print(f"torch version & device: {torch.version.__version__, device}")
 
 
 class DataItem:
-    def __init__(self, text=None, text_number = None, indexes=None, mask=None, labels=None, scholarly_lacunae = None, position_in_original = None):
+    def __init__(self, text=None, text_number = None, indexes=None, mask=None, labels=None, position_in_original = None):
         self.text_number = text_number
         self.text = text  # original text
         self.indexes = indexes  # tensor of indexes of characters or tokens
@@ -125,7 +125,6 @@ class DataItem:
             mask  # list of indexes same size as index, true when character is masked
         )
         self.labels = labels  # list of indexes for attention mask
-        self.scholarly_lacunae = scholarly_lacunae # list of lists for scholarly lacunae reconstructions
         self.position_in_original = position_in_original # integer marking location of DataItem in original set of texts (including non-Greek texts)
 
 

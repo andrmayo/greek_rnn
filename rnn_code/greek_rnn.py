@@ -201,12 +201,8 @@ class RNN(nn.Module):
         return data_item, total_mask # Total mask also includes tokens swapped for random character, and tokens retained
     
     # This is the function to use to mask and label the test set incorporating the actual lacunae as masks
-    def actual_lacuna_mask_and_label(
-        self, data_item, reconstructed_lacunae
-    ):
+    def actual_lacuna_mask_and_label(self, data_item):
         text_buffer = []
-        scholarly_char_buffer = []
-        data_item.scholarly_lacunae = reconstructed_lacunae
 
         mask = []
         labels = []
@@ -245,6 +241,5 @@ class RNN(nn.Module):
             
         # returned data_item has self.text with the masked text with [] removed, 
         # self.mask marking where there's masking,
-        # self.labels with -100 for unmasked tokens and >= 0 with the embedding index for masked tokens,
-        # self.scholarly_lacunae as a list of lists (for each lacuna) of embedding indices to the characters in the scholarly reconstructions. 
+        # self.labels with -100 for unmasked tokens and >= 0 with the embedding index for masked tokens.
         return data_item

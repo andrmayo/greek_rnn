@@ -2,6 +2,7 @@ import argparse
 import datetime
 import glob
 import logging
+import re
 
 from rnn_code import greek_utils as utils
 from rnn_code import greek_rnn 
@@ -9,6 +10,8 @@ from rnn_code import greek_char_data
 from rnn_code.greek_char_generator import *
 
 specs = utils.specs
+
+# Note to self: the model at present seems to veer towards just predicting the most common character in the corpus
 
 if __name__ == "__main__":
 
@@ -194,7 +197,7 @@ if __name__ == "__main__":
         model = model.to(device)
     else:
         logger.info(f"Using a pre-trained model")
-        model = torch.load(model_path + model_name + ".pth", map_location=device)
+        model = torch.load(model_path + model_name + ".pth", map_location=device, weights_only=False)
         logger.info(
             f"Load model: {model} with specs: embed_size: {model.specs[0]}, hidden_size: {model.specs[1]}, proj_size: {model.specs[2]}, rnn n layers: {model.specs[3]}, share: {model.specs[4]}, dropout: {model.specs[5]}"
         )
@@ -210,15 +213,12 @@ if __name__ == "__main__":
 
     # Now convert lacunas in dev and test sets into masks with labels to reconstructions using model.actual_lacuna_mask_and_label(). 
     # actual_lacuna_mask_and_label replaces all characters within [] with '_', strips '[' and ']', and adds embedding indices to self.labels for 
-    # lacuna/mask characters. It also takes the list of reconstructed lacunae for the given text, converts it to a list of lists of embedding indices,
-    # and adds it to data_item as data_item.scholarly_lacunae. 
+    # lacuna/mask characters.
 
     for i, data_item in enumerate(dev_data):
-        location = random_index[len(train_data) + i]
-        dev_data[i] = model.actual_lacuna_mask_and_label(data_item, reconstructions[location])
+        dev_data[i] = model.actual_lacuna_mask_and_label(data_item)
     for i, data_item in enumerate(test_data):
-        location = random_index[len(train_data) + len(dev_data) + i]
-        test_data[i] = model.actual_lacuna_mask_and_label(data_item, reconstructions[location])
+        test_data[i] = model.actual_lacuna_mask_and_label(data_item)
 
     if args.train:
         # if masking_strategy is "dynamic", utils.mask_input returns the data as passed to it, and mask = True
@@ -310,8 +310,16 @@ if __name__ == "__main__":
 
     if args.predict:
         sentence = args.predict
-        data_item = model.actual_lacuna_mask_and_label(DataItem(), sentence)
-        predict(model, data_item)
+        sentence = re.sub("<gap/>", "!", sentence)
+        pattern = re.compile(r"\[.*?\]")
+        sentence = pattern.sub(lambda x: x.group().replace(" ", ""), sentence)
+
+        if not isinstance(sentence, str):
+            logging.warning("Input to predict is not a string.")
+        else:
+            instance = DataItem(text=sentence)
+            data_item = model.actual_lacuna_mask_and_label(instance)
+            predict(model, data_item)
 
     if args.predict_top_k:
         k = 1000
