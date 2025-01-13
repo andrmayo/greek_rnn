@@ -1,0 +1,274 @@
+start greek data processing -- 2025-01-10 09:41:36.355102
+Using a pre-trained model
+Load model: RNN(
+  (embed): Embedding(35, 200)
+  (scale_up): Linear(in_features=200, out_features=300, bias=True)
+  (rnn): LSTM(300, 150, num_layers=4, batch_first=True, bidirectional=True)
+  (out): Linear(in_features=300, out_features=200, bias=True)
+  (dropout): Dropout(p=0.0, inplace=False)
+) with specs: embed_size: 200, hidden_size: 300, proj_size: 150, rnn n layers: 4, share: False, dropout: 0.0
+RNN(
+  (embed): Embedding(35, 200)
+  (scale_up): Linear(in_features=200, out_features=300, bias=True)
+  (rnn): LSTM(300, 150, num_layers=4, batch_first=True, bidirectional=True)
+  (out): Linear(in_features=300, out_features=200, bias=True)
+  (dropout): Dropout(p=0.0, inplace=False)
+)
+total parameter count = 2,287,000
+File test.json read in with 9313 texts
+start greek data processing -- 2025-01-10 09:43:34.508987
+Using a pre-trained model
+Load model: RNN(
+  (embed): Embedding(35, 200)
+  (scale_up): Linear(in_features=200, out_features=300, bias=True)
+  (rnn): LSTM(300, 150, num_layers=4, batch_first=True, bidirectional=True)
+  (out): Linear(in_features=300, out_features=200, bias=True)
+  (dropout): Dropout(p=0.0, inplace=False)
+) with specs: embed_size: 200, hidden_size: 300, proj_size: 150, rnn n layers: 4, share: False, dropout: 0.0
+RNN(
+  (embed): Embedding(35, 200)
+  (scale_up): Linear(in_features=200, out_features=300, bias=True)
+  (rnn): LSTM(300, 150, num_layers=4, batch_first=True, bidirectional=True)
+  (out): Linear(in_features=300, out_features=200, bias=True)
+  (dropout): Dropout(p=0.0, inplace=False)
+)
+total parameter count = 2,287,000
+File test.json read in with 9313 texts
+66742 reconstructed lacunae read in accross 6107 texts
+Test Reconstructed:
+masked total: 303860, correct predictions: 52656, simple accuracy: 0.173, mismatch: 0
+Most Common Char Baseline; dev masked total: 303860, correct predictions: 37554, baseline accuracy: 0.124
+Random Baseline; dev masked total: 303860, correct predictions: 7207, baseline accuracy: 0.024
+Trigram Baseline; dev masked total: 303860, correct predictions: 28228, baseline accuracy: 0.093
+end generator -- 2025-01-10 09:48:30.907960
+
+start greek data processing -- 2025-01-10 10:31:31.750259
+Training model
+Train greek_rnn_no_dropout model specs: embed_size: 200, hidden_size: 300, proj_size: 150, rnn n layers: 4, share: False, dropout: 0.0
+RNN(
+  (embed): Embedding(35, 200)
+  (scale_up): Linear(in_features=200, out_features=300, bias=True)
+  (rnn): LSTM(300, 150, num_layers=4, batch_first=True, bidirectional=True)
+  (out): Linear(in_features=300, out_features=200, bias=True)
+  (dropout): Dropout(p=0.0, inplace=False)
+)
+total parameter count = 2,287,000
+Mask type: random - dynamic
+Training data read in with 75500 lines
+start greek data processing -- 2025-01-10 13:24:41.743978
+Using a pre-trained model
+Load model: RNN(
+  (embed): Embedding(35, 200)
+  (scale_up): Linear(in_features=200, out_features=300, bias=True)
+  (rnn): LSTM(300, 150, num_layers=4, batch_first=True, bidirectional=True)
+  (out): Linear(in_features=300, out_features=200, bias=True)
+  (dropout): Dropout(p=0.0, inplace=False)
+) with specs: embed_size: 200, hidden_size: 300, proj_size: 150, rnn n layers: 4, share: False, dropout: 0.0
+RNN(
+  (embed): Embedding(35, 200)
+  (scale_up): Linear(in_features=200, out_features=300, bias=True)
+  (rnn): LSTM(300, 150, num_layers=4, batch_first=True, bidirectional=True)
+  (out): Linear(in_features=300, out_features=200, bias=True)
+  (dropout): Dropout(p=0.0, inplace=False)
+)
+total parameter count = 2,287,000
+start greek data processing -- 2025-01-10 13:42:26.784069
+Using a pre-trained model
+Load model: RNN(
+  (embed): Embedding(35, 200)
+  (scale_up): Linear(in_features=200, out_features=300, bias=True)
+  (rnn): LSTM(300, 150, num_layers=4, batch_first=True, bidirectional=True)
+  (out): Linear(in_features=300, out_features=200, bias=True)
+  (dropout): Dropout(p=0.0, inplace=False)
+) with specs: embed_size: 200, hidden_size: 300, proj_size: 150, rnn n layers: 4, share: False, dropout: 0.0
+RNN(
+  (embed): Embedding(35, 200)
+  (scale_up): Linear(in_features=200, out_features=300, bias=True)
+  (rnn): LSTM(300, 150, num_layers=4, batch_first=True, bidirectional=True)
+  (out): Linear(in_features=300, out_features=200, bias=True)
+  (dropout): Dropout(p=0.0, inplace=False)
+)
+total parameter count = 2,287,000
+input text: λ\nἔτους δωδεκάτου Αὐτοκράτορος Καίσαρος Δομιτιανοῦ Σεβαστοῦ\nΓερμανικοῦ, μηνὸς Νέου Σεβαστοῦ λ, ἐν Πτολεμαίδι Εὐεργέτιδι τοῦ\nἈρσινοίτου νομοῦ. ὁμολογεῖ Ταευήμερος Μάρκου ὡς ἐτῶν πεν\nτήκοντα πέντε οὐλὴ παρʼ ἀντίχειρα δεξιὸν μετὰ κυρίου τοῦ υἱοῦ Σαρα\nπίωνος [_]οῦ Σαραπ[_]ωνος ὡς ἐτῶν εἴκοσι πέντε οὐ[_]ὴι μετώπωι μέσωι\n[_]πὸ τρίχα Μάρκωι Ἀνθεστ[___] Γεμέλλωι στρατιώτηι σπείρης τρίτης Ἰτου\n[_]αίων ἑκατονταρχίας Τιτίου ὡς ἐτῶν τριάκοντα πέντε οὐλὴ γενείωι\nἐξ ἀριστε[_]ῶν ἐπάναγκον τὴν ὁμολογοῦσαν Τ[_]ευ[__]ερον ἀπο\n[_]ώσε[__ _]ωι Μάρ[_]ωι Ἀνθεστίωι Γεμέλλωι ἐν αἷς ηιτήσατο αὐτὸν\nεἰς σ[__]περιφ[__]ὰν τῆς ἀποδόσεως ἡμέραις π[_]ντε ἀπὸ τῆς προκει\n[_____ _]ὰς ὀφ[_]ιλομένας τηι τοῦ Ἀνθεντίου μητρὶ Θαῆσι Σισόιτος\n[___ ____]ούσηι ὑ[_]ὸ Ἡρακλείδου τοῦ Ὡρίωνος καθʼ ὁμολογίαν τὴν διὰ τοῦ\n[__ _____ ________ ________ ____________] τῶι ἕκτωι ἔτε[_] θεοῦ Οὐ[_]σπασιανοῦ μηνὶ Φαρμοῦθι\n[________ _______ ______] ............ει ἡ Τ[____]μερος τοῦ Ἡρα\n[_______ ____ ________] .................... [________ _______]\n[_____ _______ ____ ___] .................... [_____ __ __________]\n [___ ___ _____ __________ __]γυρίου δραχμὰς [___________ _____]\n[_______] [___ ]..............ται ἡ Ταευήμε[___ ___ ______ ___]\n[___________ ________] [__]αμῶν χιλίων κα[_ __ _______ _ _____]\n[__________ ___ʼ _____ ________]φον ἄλλων ἀργ[_____ _______ _____]\n<gap/> [____________ _] <gap/> [___ _________ _____ __- ]<gap/>
+start greek data processing -- 2025-01-10 13:52:28.622903
+Using a pre-trained model
+Load model: RNN(
+  (embed): Embedding(35, 200)
+  (scale_up): Linear(in_features=200, out_features=300, bias=True)
+  (rnn): LSTM(300, 150, num_layers=4, batch_first=True, bidirectional=True)
+  (out): Linear(in_features=300, out_features=200, bias=True)
+  (dropout): Dropout(p=0.0, inplace=False)
+) with specs: embed_size: 200, hidden_size: 300, proj_size: 150, rnn n layers: 4, share: False, dropout: 0.0
+RNN(
+  (embed): Embedding(35, 200)
+  (scale_up): Linear(in_features=200, out_features=300, bias=True)
+  (rnn): LSTM(300, 150, num_layers=4, batch_first=True, bidirectional=True)
+  (out): Linear(in_features=300, out_features=200, bias=True)
+  (dropout): Dropout(p=0.0, inplace=False)
+)
+total parameter count = 2,287,000
+input text: λ\nἔτους δωδεκάτου Αὐτοκράτορος Καίσαρος Δομιτιανοῦ Σεβαστοῦ\nΓερμανικοῦ, μηνὸς Νέου Σεβαστοῦ λ, ἐν Πτολεμαίδι Εὐεργέτιδι τοῦ\nἈρσινοίτου νομοῦ. ὁμολογεῖ Ταευήμερος Μάρκου ὡς ἐτῶν πεν\nτήκοντα πέντε οὐλὴ παρʼ ἀντίχειρα δεξιὸν μετὰ κυρίου τοῦ υἱοῦ Σαρα\nπίωνος [_]οῦ Σαραπ[_]ωνος ὡς ἐτῶν εἴκοσι πέντε οὐ[_]ὴι μετώπωι μέσωι\n[_]πὸ τρίχα Μάρκωι Ἀνθεστ[___] Γεμέλλωι στρατιώτηι σπείρης τρίτης Ἰτου\n[_]αίων ἑκατονταρχίας Τιτίου ὡς ἐτῶν τριάκοντα πέντε οὐλὴ γενείωι\nἐξ ἀριστε[_]ῶν ἐπάναγκον τὴν ὁμολογοῦσαν Τ[_]ευ[__]ερον ἀπο\n[_]ώσε[__ _]ωι Μάρ[_]ωι Ἀνθεστίωι Γεμέλλωι ἐν αἷς ηιτήσατο αὐτὸν\nεἰς σ[__]περιφ[__]ὰν τῆς ἀποδόσεως ἡμέραις π[_]ντε ἀπὸ τῆς προκει\n[_____ _]ὰς ὀφ[_]ιλομένας τηι τοῦ Ἀνθεντίου μητρὶ Θαῆσι Σισόιτος\n[___ ____]ούσηι ὑ[_]ὸ Ἡρακλείδου τοῦ Ὡρίωνος καθʼ ὁμολογίαν τὴν διὰ τοῦ\n[__ _____ ________ ________ ____________] τῶι ἕκτωι ἔτε[_] θεοῦ Οὐ[_]σπασιανοῦ μηνὶ Φαρμοῦθι\n[________ _______ ______] ............ει ἡ Τ[____]μερος τοῦ Ἡρα\n[_______ ____ ________] .................... [________ _______]\n[_____ _______ ____ ___] .................... [_____ __ __________]\n [___ ___ _____ __________ __]γυρίου δραχμὰς [___________ _____]\n[_______] [___ ]..............ται ἡ Ταευήμε[___ ___ ______ ___]\n[___________ ________] [__]αμῶν χιλίων κα[_ __ _______ _ _____]\n[__________ ___ʼ _____ ________]φον ἄλλων ἀργ[_____ _______ _____]\n<gap/> [____________ _] <gap/> [___ _________ _____ __- ]<gap/>
+start greek data processing -- 2025-01-10 14:03:24.486181
+Using a pre-trained model
+Load model: RNN(
+  (embed): Embedding(35, 200)
+  (scale_up): Linear(in_features=200, out_features=300, bias=True)
+  (rnn): LSTM(300, 150, num_layers=4, batch_first=True, bidirectional=True)
+  (out): Linear(in_features=300, out_features=200, bias=True)
+  (dropout): Dropout(p=0.0, inplace=False)
+) with specs: embed_size: 200, hidden_size: 300, proj_size: 150, rnn n layers: 4, share: False, dropout: 0.0
+RNN(
+  (embed): Embedding(35, 200)
+  (scale_up): Linear(in_features=200, out_features=300, bias=True)
+  (rnn): LSTM(300, 150, num_layers=4, batch_first=True, bidirectional=True)
+  (out): Linear(in_features=300, out_features=200, bias=True)
+  (dropout): Dropout(p=0.0, inplace=False)
+)
+total parameter count = 2,287,000
+input text: λ\nἔτους δωδεκάτου Αὐτοκράτορος Καίσαρος Δομιτιανοῦ Σεβαστοῦ\nΓερμανικοῦ, μηνὸς Νέου Σεβαστοῦ λ, ἐν Πτολεμαίδι Εὐεργέτιδι τοῦ\nἈρσινοίτου νομοῦ. ὁμολογεῖ Ταευήμερος Μάρκου ὡς ἐτῶν πεν\nτήκοντα πέντε οὐλὴ παρʼ ἀντίχειρα δεξιὸν μετὰ κυρίου τοῦ υἱοῦ Σαρα\nπίωνος [_]οῦ Σαραπ[_]ωνος ὡς ἐτῶν εἴκοσι πέντε οὐ[_]ὴι μετώπωι μέσωι\n[_]πὸ τρίχα Μάρκωι Ἀνθεστ[___] Γεμέλλωι στρατιώτηι σπείρης τρίτης Ἰτου\n[_]αίων ἑκατονταρχίας Τιτίου ὡς ἐτῶν τριάκοντα πέντε οὐλὴ γενείωι\nἐξ ἀριστε[_]ῶν ἐπάναγκον τὴν ὁμολογοῦσαν Τ[_]ευ[__]ερον ἀπο\n[_]ώσε[__ _]ωι Μάρ[_]ωι Ἀνθεστίωι Γεμέλλωι ἐν αἷς ηιτήσατο αὐτὸν\nεἰς σ[__]περιφ[__]ὰν τῆς ἀποδόσεως ἡμέραις π[_]ντε ἀπὸ τῆς προκει\n[_____ _]ὰς ὀφ[_]ιλομένας τηι τοῦ Ἀνθεντίου μητρὶ Θαῆσι Σισόιτος\n[___ ____]ούσηι ὑ[_]ὸ Ἡρακλείδου τοῦ Ὡρίωνος καθʼ ὁμολογίαν τὴν διὰ τοῦ\n[__ _____ ________ ________ ____________] τῶι ἕκτωι ἔτε[_] θεοῦ Οὐ[_]σπασιανοῦ μηνὶ Φαρμοῦθι\n[________ _______ ______] ............ει ἡ Τ[____]μερος τοῦ Ἡρα\n[_______ ____ ________] .................... [________ _______]\n[_____ _______ ____ ___] .................... [_____ __ __________]\n [___ ___ _____ __________ __]γυρίου δραχμὰς [___________ _____]\n[_______] [___ ]..............ται ἡ Ταευήμε[___ ___ ______ ___]\n[___________ ________] [__]αμῶν χιλίων κα[_ __ _______ _ _____]\n[__________ ___ʼ _____ ________]φον ἄλλων ἀργ[_____ _______ _____]\n<gap/> [____________ _] <gap/> [___ _________ _____ __- ]<gap/>
+start greek data processing -- 2025-01-10 14:37:27.667301
+Using a pre-trained model
+Load model: RNN(
+  (embed): Embedding(35, 200)
+  (scale_up): Linear(in_features=200, out_features=300, bias=True)
+  (rnn): LSTM(300, 150, num_layers=4, batch_first=True, bidirectional=True)
+  (out): Linear(in_features=300, out_features=200, bias=True)
+  (dropout): Dropout(p=0.0, inplace=False)
+) with specs: embed_size: 200, hidden_size: 300, proj_size: 150, rnn n layers: 4, share: False, dropout: 0.0
+RNN(
+  (embed): Embedding(35, 200)
+  (scale_up): Linear(in_features=200, out_features=300, bias=True)
+  (rnn): LSTM(300, 150, num_layers=4, batch_first=True, bidirectional=True)
+  (out): Linear(in_features=300, out_features=200, bias=True)
+  (dropout): Dropout(p=0.0, inplace=False)
+)
+total parameter count = 2,287,000
+input text: λ\nἔτους δωδεκάτου Αὐτοκράτορος Καίσαρος Δομιτιανοῦ Σεβαστοῦ\nΓερμανικοῦ, μηνὸς Νέου Σεβαστοῦ λ, ἐν Πτολεμαίδι Εὐεργέτιδι τοῦ\nἈρσινοίτου νομοῦ. ὁμολογεῖ Ταευήμερος Μάρκου ὡς ἐτῶν πεν\nτήκοντα πέντε οὐλὴ παρʼ ἀντίχειρα δεξιὸν μετὰ κυρίου τοῦ υἱοῦ Σαρα\nπίωνος [_]οῦ Σαραπ[_]ωνος ὡς ἐτῶν εἴκοσι πέντε οὐ[_]ὴι μετώπωι μέσωι\n[_]πὸ τρίχα Μάρκωι Ἀνθεστ[___] Γεμέλλωι στρατιώτηι σπείρης τρίτης Ἰτου\n[_]αίων ἑκατονταρχίας Τιτίου ὡς ἐτῶν τριάκοντα πέντε οὐλὴ γενείωι\nἐξ ἀριστε[_]ῶν ἐπάναγκον τὴν ὁμολογοῦσαν Τ[_]ευ[__]ερον ἀπο\n[_]ώσε[___]ωι Μάρ[_]ωι Ἀνθεστίωι Γεμέλλωι ἐν αἷς ηιτήσατο αὐτὸν\nεἰς σ[__]περιφ[__]ὰν τῆς ἀποδόσεως ἡμέραις π[_]ντε ἀπὸ τῆς προκει\n[______]ὰς ὀφ[_]ιλομένας τηι τοῦ Ἀνθεντίου μητρὶ Θαῆσι Σισόιτος\n[_______]ούσηι ὑ[_]ὸ Ἡρακλείδου τοῦ Ὡρίωνος καθʼ ὁμολογίαν τὴν διὰ τοῦ\n[___________________________________] τῶι ἕκτωι ἔτε[_] θεοῦ Οὐ[_]σπασιανοῦ μηνὶ Φαρμοῦθι\n[_____________________] ............ει ἡ Τ[____]μερος τοῦ Ἡρα\n[___________________] .................... [_______________]\n[___________________] .................... [_________________]\n [_______________________]γυρίου δραχμὰς [________________]\n[_______] [___]..............ται ἡ Ταευήμε[_______________]\n[___________________] [__]αμῶν χιλίων κα[________________]\n[_____________ʼ_____________]φον ἄλλων ἀργ[_________________]\n! [_____________] ! [___________________-]!
+output text: <λετουϲδωδεκατουαυτοκρατοροϲκαιϲαροϲδομιτιανουϲεβαϲτουγερμανικουμηνοϲνεουϲεβαϲτουλενπτολεμαιδιευεργετιδιτουαρϲινοιτουνομου.ομολογειταευημεροϲμαρκουωϲετωνπεντηκονταπεντεουληπαραντιχειραδεξιονμετακυριουτουυιουϲαραπιωνοϲτουϲαραπιωνοϲωϲετωνεικοϲιπεντεουκηιμετωπωιμεϲωιυποτριχαμαρκωιανθεϲτοι
+γεμελλωιϲτρατιωτηιϲπειρηϲτριτηϲιτουκαιωνεκατονταρχιαϲτιτιουωϲετωντριακονταπεντεουληγενειωιεξαριϲτερωνεπαναγκοντηνομολογουϲανταευ
+τεροναποδωϲεν
+τωιμαρκωιανθεϲτιωιγεμελλωιεναιϲηιτηϲατοαυτονειϲϲοιπεριφαλαντηϲαποδοϲεωϲημεραιϲπαντεαποτηϲπροκειται
+ρραϲοφειλομεναϲτηιτουανθεντιουμητριθαηϲιϲιϲοιτοϲ
+ειαμελουϲηιυποηρακλειδουτουωριωνοϲκαθομολογιαντηνδιατου
+εραοοοοαααααααααααααααααααααιταιαντωιεκτωιετειθεουουαϲπαϲιανουμηνιφαρμουθι.................................ειητοϲουμεροϲτουηρακλειου...................................................................................................................αυραϲαυτουαργυριουδραχμαϲτκ.ααααα................................ταιηταευημερωιααααααααααααααααααααααααααιααιαυπαμωνχιλιωνκαιααααιαααααααααααααααααααααααααααααιιιαγραφοναλλωναργυριου
+ααααααιοοα
+!
+αααααααιο.!
+!
+!αααααα!!αααα...!
+!>
+end generator -- 2025-01-10 14:38:02.644249
+
+start greek data processing -- 2025-01-10 15:54:30.560068
+Using a pre-trained model
+Load model: RNN(
+  (embed): Embedding(35, 200)
+  (scale_up): Linear(in_features=200, out_features=300, bias=True)
+  (rnn): LSTM(300, 150, num_layers=4, batch_first=True, bidirectional=True)
+  (out): Linear(in_features=300, out_features=200, bias=True)
+  (dropout): Dropout(p=0.0, inplace=False)
+) with specs: embed_size: 200, hidden_size: 300, proj_size: 150, rnn n layers: 4, share: False, dropout: 0.0
+RNN(
+  (embed): Embedding(35, 200)
+  (scale_up): Linear(in_features=200, out_features=300, bias=True)
+  (rnn): LSTM(300, 150, num_layers=4, batch_first=True, bidirectional=True)
+  (out): Linear(in_features=300, out_features=200, bias=True)
+  (dropout): Dropout(p=0.0, inplace=False)
+)
+total parameter count = 2,287,000
+input text: λ\nἔτους δωδεκάτου Αὐτοκράτορος Καίσαρος Δομιτιανοῦ Σεβαστοῦ\nΓερμανικοῦ, μηνὸς Νέου Σεβαστοῦ λ, ἐν Πτολεμαίδι Εὐεργέτιδι τοῦ\nἈρσινοίτου νομοῦ. ὁμολογεῖ Ταευήμερος Μάρκου ὡς ἐτῶν πεν\nτήκοντα πέντε οὐλὴ παρʼ ἀντίχειρα δεξιὸν μετὰ κυρίου τοῦ υἱοῦ Σαρα\nπίωνος [_]οῦ Σαραπ[_]ωνος ὡς ἐτῶν εἴκοσι πέντε οὐ[_]ὴι μετώπωι μέσωι\n[_]πὸ τρίχα Μάρκωι Ἀνθεστ[___] Γεμέλλωι στρατιώτηι σπείρης τρίτης Ἰτου\n[_]αίων ἑκατονταρχίας Τιτίου ὡς ἐτῶν τριάκοντα πέντε οὐλὴ γενείωι\nἐξ ἀριστε[_]ῶν ἐπάναγκον τὴν ὁμολογοῦσαν Τ[_]ευ[__]ερον ἀπο\n[_]ώσε[___]ωι Μάρ[_]ωι Ἀνθεστίωι Γεμέλλωι ἐν αἷς ηιτήσατο αὐτὸν\nεἰς σ[__]περιφ[__]ὰν τῆς ἀποδόσεως ἡμέραις π[_]ντε ἀπὸ τῆς προκει\n[______]ὰς ὀφ[_]ιλομένας τηι τοῦ Ἀνθεντίου μητρὶ Θαῆσι Σισόιτος\n[_______]ούσηι ὑ[_]ὸ Ἡρακλείδου τοῦ Ὡρίωνος καθʼ ὁμολογίαν τὴν διὰ τοῦ\n[___________________________________] τῶι ἕκτωι ἔτε[_] θεοῦ Οὐ[_]σπασιανοῦ μηνὶ Φαρμοῦθι\n[_____________________] ............ει ἡ Τ[____]μερος τοῦ Ἡρα\n[___________________] .................... [_______________]\n[___________________] .................... [_________________]\n [_______________________]γυρίου δραχμὰς [________________]\n[_______] [___]..............ται ἡ Ταευήμε[_______________]\n[___________________] [__]αμῶν χιλίων κα[________________]\n[_____________ʼ_____________]φον ἄλλων ἀργ[_________________]\n! [_____________] ! [___________________-]!
+start greek data processing -- 2025-01-10 16:06:20.668375
+Using a pre-trained model
+Load model: RNN(
+  (embed): Embedding(35, 200)
+  (scale_up): Linear(in_features=200, out_features=300, bias=True)
+  (rnn): LSTM(300, 150, num_layers=4, batch_first=True, bidirectional=True)
+  (out): Linear(in_features=300, out_features=200, bias=True)
+  (dropout): Dropout(p=0.0, inplace=False)
+) with specs: embed_size: 200, hidden_size: 300, proj_size: 150, rnn n layers: 4, share: False, dropout: 0.0
+RNN(
+  (embed): Embedding(35, 200)
+  (scale_up): Linear(in_features=200, out_features=300, bias=True)
+  (rnn): LSTM(300, 150, num_layers=4, batch_first=True, bidirectional=True)
+  (out): Linear(in_features=300, out_features=200, bias=True)
+  (dropout): Dropout(p=0.0, inplace=False)
+)
+total parameter count = 2,287,000
+input text: λ\nἔτους δωδεκάτου Αὐτοκράτορος Καίσαρος Δομιτιανοῦ Σεβαστοῦ\nΓερμανικοῦ, μηνὸς Νέου Σεβαστοῦ λ, ἐν Πτολεμαίδι Εὐεργέτιδι τοῦ\nἈρσινοίτου νομοῦ. ὁμολογεῖ Ταευήμερος Μάρκου ὡς ἐτῶν πεν\nτήκοντα πέντε οὐλὴ παρʼ ἀντίχειρα δεξιὸν μετὰ κυρίου τοῦ υἱοῦ Σαρα\nπίωνος [_]οῦ Σαραπ[_]ωνος ὡς ἐτῶν εἴκοσι πέντε οὐ[_]ὴι μετώπωι μέσωι\n[_]πὸ τρίχα Μάρκωι Ἀνθεστ[___] Γεμέλλωι στρατιώτηι σπείρης τρίτης Ἰτου\n[_]αίων ἑκατονταρχίας Τιτίου ὡς ἐτῶν τριάκοντα πέντε οὐλὴ γενείωι\nἐξ ἀριστε[_]ῶν ἐπάναγκον τὴν ὁμολογοῦσαν Τ[_]ευ[__]ερον ἀπο\n[_]ώσε[___]ωι Μάρ[_]ωι Ἀνθεστίωι Γεμέλλωι ἐν αἷς ηιτήσατο αὐτὸν\nεἰς σ[__]περιφ[__]ὰν τῆς ἀποδόσεως ἡμέραις π[_]ντε ἀπὸ τῆς προκει\n[______]ὰς ὀφ[_]ιλομένας τηι τοῦ Ἀνθεντίου μητρὶ Θαῆσι Σισόιτος\n[_______]ούσηι ὑ[_]ὸ Ἡρακλείδου τοῦ Ὡρίωνος καθʼ ὁμολογίαν τὴν διὰ τοῦ\n[___________________________________] τῶι ἕκτωι ἔτε[_] θεοῦ Οὐ[_]σπασιανοῦ μηνὶ Φαρμοῦθι\n[_____________________] ............ει ἡ Τ[____]μερος τοῦ Ἡρα\n[___________________] .................... [_______________]\n[___________________] .................... [_________________]\n [_______________________]γυρίου δραχμὰς [________________]\n[_______] [___]..............ται ἡ Ταευήμε[_______________]\n[___________________] [__]αμῶν χιλίων κα[________________]\n[_____________ʼ_____________]φον ἄλλων ἀργ[_________________]\n! [_____________] ! [___________________-]!
+start greek data processing -- 2025-01-10 16:09:26.704070
+Using a pre-trained model
+Load model: RNN(
+  (embed): Embedding(35, 200)
+  (scale_up): Linear(in_features=200, out_features=300, bias=True)
+  (rnn): LSTM(300, 150, num_layers=4, batch_first=True, bidirectional=True)
+  (out): Linear(in_features=300, out_features=200, bias=True)
+  (dropout): Dropout(p=0.0, inplace=False)
+) with specs: embed_size: 200, hidden_size: 300, proj_size: 150, rnn n layers: 4, share: False, dropout: 0.0
+RNN(
+  (embed): Embedding(35, 200)
+  (scale_up): Linear(in_features=200, out_features=300, bias=True)
+  (rnn): LSTM(300, 150, num_layers=4, batch_first=True, bidirectional=True)
+  (out): Linear(in_features=300, out_features=200, bias=True)
+  (dropout): Dropout(p=0.0, inplace=False)
+)
+total parameter count = 2,287,000
+input text: λ
+ἔτους δωδεκάτου Αὐτοκράτορος Καίσαρος Δομιτιανοῦ Σεβαστοῦ
+Γερμανικοῦ, μηνὸς Νέου Σεβαστοῦ λ, ἐν Πτολεμαίδι Εὐεργέτιδι τοῦ
+Ἀρσινοίτου νομοῦ. ὁμολογεῖ Ταευήμερος Μάρκου ὡς ἐτῶν πεν
+τήκοντα πέντε οὐλὴ παρʼ ἀντίχειρα δεξιὸν μετὰ κυρίου τοῦ υἱοῦ Σαρα
+πίωνος [_]οῦ Σαραπ[_]ωνος ὡς ἐτῶν εἴκοσι πέντε οὐ[_]ὴι μετώπωι μέσωι
+[_]πὸ τρίχα Μάρκωι Ἀνθεστ[___] Γεμέλλωι στρατιώτηι σπείρης τρίτης Ἰτου
+[_]αίων ἑκατονταρχίας Τιτίου ὡς ἐτῶν τριάκοντα πέντε οὐλὴ γενείωι
+ἐξ ἀριστε[_]ῶν
+start greek data processing -- 2025-01-10 16:23:59.015297
+Using a pre-trained model
+Load model: RNN(
+  (embed): Embedding(35, 200)
+  (scale_up): Linear(in_features=200, out_features=300, bias=True)
+  (rnn): LSTM(300, 150, num_layers=4, batch_first=True, bidirectional=True)
+  (out): Linear(in_features=300, out_features=200, bias=True)
+  (dropout): Dropout(p=0.0, inplace=False)
+) with specs: embed_size: 200, hidden_size: 300, proj_size: 150, rnn n layers: 4, share: False, dropout: 0.0
+RNN(
+  (embed): Embedding(35, 200)
+  (scale_up): Linear(in_features=200, out_features=300, bias=True)
+  (rnn): LSTM(300, 150, num_layers=4, batch_first=True, bidirectional=True)
+  (out): Linear(in_features=300, out_features=200, bias=True)
+  (dropout): Dropout(p=0.0, inplace=False)
+)
+total parameter count = 2,287,000
+start greek data processing -- 2025-01-10 16:25:43.788736
+start greek data processing -- 2025-01-10 16:25:58.277108
+Using a pre-trained model
+Load model: RNN(
+  (embed): Embedding(35, 200)
+  (scale_up): Linear(in_features=200, out_features=300, bias=True)
+  (rnn): LSTM(300, 150, num_layers=4, batch_first=True, bidirectional=True)
+  (out): Linear(in_features=300, out_features=200, bias=True)
+  (dropout): Dropout(p=0.0, inplace=False)
+) with specs: embed_size: 200, hidden_size: 300, proj_size: 150, rnn n layers: 4, share: False, dropout: 0.0
+RNN(
+  (embed): Embedding(35, 200)
+  (scale_up): Linear(in_features=200, out_features=300, bias=True)
+  (rnn): LSTM(300, 150, num_layers=4, batch_first=True, bidirectional=True)
+  (out): Linear(in_features=300, out_features=200, bias=True)
+  (dropout): Dropout(p=0.0, inplace=False)
+)
+total parameter count = 2,287,000
+input text: λ\nἔτους δωδεκάτου Αὐτοκράτορος Καίσαρος Δομιτιανοῦ Σεβαστοῦ\nΓερμανικοῦ, μηνὸς Νέου Σεβαστοῦ λ, ἐν Πτολεμαίδι Εὐεργέτιδι τοῦ\nἈρσινοίτου νομοῦ. ὁμολογεῖ Ταευήμερος Μάρκου ὡς ἐτῶν πεν\nτήκοντα πέντε οὐλὴ παρʼ ἀντίχειρα δεξιὸν μετὰ κυρίου τοῦ υἱοῦ Σαρα\nπίωνος [_]οῦ Σαραπ[_]ωνος ὡς ἐτῶν εἴκοσι πέντε οὐ[_]ὴι μετώπωι μέσωι\n[_]πὸ τρίχα Μάρκωι Ἀνθεστ[___] Γεμέλλωι στρατιώτηι σπείρης τρίτης Ἰτου\n[_]αίων ἑκατονταρχίας Τιτίου ὡς ἐτῶν τριάκοντα πέντε οὐλὴ γενείωι\nἐξ ἀριστε[_]ῶν ἐπάναγκον τὴν ὁμολογοῦσαν Τ[_]ευ[__]ερον ἀπο\n[_]ώσε[___]ωι Μάρ[_]ωι Ἀνθεστίωι Γεμέλλωι ἐν αἷς ηιτήσατο αὐτὸν\nεἰς σ[__]περιφ[__]ὰν τῆς ἀποδόσεως ἡμέραις π[_]ντε ἀπὸ τῆς προκει\n[______]ὰς ὀφ[_]ιλομένας τηι τοῦ Ἀνθεντίου μητρὶ Θαῆσι Σισόιτος\n[_______]ούσηι ὑ[_]ὸ Ἡρακλείδου τοῦ Ὡρίωνος καθʼ ὁμολογίαν τὴν διὰ τοῦ\n[___________________________________] τῶι ἕκτωι ἔτε[_] θεοῦ Οὐ[_]σπασιανοῦ μηνὶ Φαρμοῦθι\n[_____________________] ............ει ἡ Τ[____]μερος τοῦ Ἡρα\n[___________________] .................... [_______________]\n[___________________] .................... [_________________]\n [_______________________]γυρίου δραχμὰς [________________]\n[_______] [___]..............ται ἡ Ταευήμε[_______________]\n[___________________] [__]αμῶν χιλίων κα[________________]\n[_____________ʼ_____________]φον ἄλλων ἀργ[_________________]\n! [_____________] ! [___________________-]!
+output text: λ\nἔτους δωδεκάτου Αὐτοκράτορος Καίσαρος Δομιτιανοῦ Σεβαστοῦ\nΓερμανικοῦ, μηνὸς Νέου Σεβαστοῦ λ, ἐν Πτολεμαίδι Εὐεργέτιδι τοῦ\nἈρσινοίτου νομοῦ. ὁμολογεῖ Ταευήμερος Μάρκου ὡς ἐτῶν πεν\nτήκοντα πέντε οὐλὴ παρʼ ἀντίχειρα δεξιὸν μετὰ κυρίου τοῦ υἱοῦ Σαρα\nπίωνος [τ]οῦ Σαραπ[ι]ωνος ὡς ἐτῶν εἴκοσι πέντε οὐ[κ]ὴι μετώπωι μέσωι\n[υ]πὸ τρίχα Μάρκωι Ἀνθεστ[οι
+] Γεμέλλωι στρατιώτηι σπείρης τρίτης Ἰτου\n[κ]αίων ἑκατονταρχίας Τιτίου ὡς ἐτῶν τριάκοντα πέντε οὐλὴ γενείωι\nἐξ ἀριστε[ρ]ῶν ἐπάναγκον τὴν ὁμολογοῦσαν Τ[α]ευ[
+τ]ερον ἀπο\n[δ]ώσε[ν
+τ]ωι Μάρ[κ]ωι Ἀνθεστίωι Γεμέλλωι ἐν αἷς ηιτήσατο αὐτὸν\nεἰς σ[οι]περιφ[αλ]ὰν τῆς ἀποδόσεως ἡμέραις π[α]ντε ἀπὸ τῆς προκει\n[ται
+ρρ]ὰς ὀφ[ε]ιλομένας τηι τοῦ Ἀνθεντίου μητρὶ Θαῆσι Σισόιτος\n[
+ειαμελ]ούσηι ὑ[π]ὸ Ἡρακλείδου τοῦ Ὡρίωνος καθʼ ὁμολογίαν τὴν διὰ τοῦ\n[
+εραοοοοαααααααααααααααααααααιταιαν] τῶι ἕκτωι ἔτε[ι] θεοῦ Οὐ[α]σπασιανοῦ μηνὶ Φαρμοῦθι\n[.....................] ............ει ἡ Τ[οϲου]μερος τοῦ Ἡρα\n[κλειου.............] .................... [...............]\n[...................] .................... [.................]\n [...........αυραϲαυτουαρ]γυρίου δραχμὰς [τκ.ααααα........]\n[.......] [...]..............ται ἡ Ταευήμε[ρωιαααααααααααα]\n[ααααααααααααααιααια] [υπ]αμῶν χιλίων κα[ιααααιαααααααααα]\n[αααααααααααααααααααιιιαγραυ]φον ἄλλων ἀργ[ριου
+ααααααιοοα
+
+]\n! [αααααααιο.!
+
+] ! [!αααααα!!αααα...!
+__]!
+end generator -- 2025-01-10 16:26:33.906270
+
