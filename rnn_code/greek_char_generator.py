@@ -62,7 +62,7 @@ def train_batch(
     model.zero_grad()
     total_loss, total_tokens, total_chars = 0, 0, 0
 
-    total_masked = 0
+    train_masked = 0
 
     dev_masked = 0
     dev_correct = 0
@@ -74,7 +74,6 @@ def train_batch(
             data_item, mask_count = model.mask_and_label_characters(
                 data_item, mask_type=mask_type
             )
-            total_masked += mask_count
 
         index_tensor = torch.tensor(data_item.indexes, dtype=torch.int64).to(device)
         label_tensor = torch.tensor(data_item.labels, dtype=torch.int64).to(device)
@@ -82,6 +81,8 @@ def train_batch(
         # splice out just predicted indexes to go into loss
         masked_idx = torch.BoolTensor(data_item.mask)
         # loss = criterion(out[0], label_tensor.view(-1))  # [1:] old loss method
+
+        train_masked += torch.numel(masked_idx) # to find the average loss
 
         masked_out = out[0, masked_idx]
         masked_label = label_tensor[masked_idx]
@@ -112,9 +113,7 @@ def train_batch(
     if update:
         optimizer.step()
 
-    total_masked += dev_masked
-
-    return total_loss, total_tokens, total_chars, total_masked, dev_masked, dev_correct
+    return total_loss, total_tokens, total_chars, train_masked, dev_masked, dev_correct
 
 
 def train_model(
@@ -177,7 +176,7 @@ def train_model(
         model.train()
         train_loss, train_tokens, train_chars, train_mask_count = 0, 0, 0, 0
         for i in range(0, len(train_data), incremental_batch_size):
-            loss, num_tokens, num_characters, total_masked, _, _ = train_batch(
+            loss, num_tokens, num_characters, train_masked, _, _ = train_batch(
                 model,
                 optimizer,
                 criterion,
@@ -193,8 +192,8 @@ def train_model(
             train_loss += loss
             train_tokens += num_tokens
             train_chars += num_characters
-            train_mask_count += total_masked
-            wandb.log({"Epoch": epoch, "avg loss in epoch": train_loss/train_chars, "batch_size": incremental_batch_size})
+            train_mask_count += train_masked
+            wandb.log({"Epoch": epoch, "avg loss in epoch": train_loss/train_mask_count, "batch_size": incremental_batch_size})
 
             if num_characters > 0:
                 logger.debug(
@@ -233,12 +232,12 @@ def train_model(
             f"{epoch} tr loss {msg_trn} -- dev loss {msg_dev} -- incremental_batch_size: {incremental_batch_size:4} time elapsed: {time.time() - start:6.1f}"
         )
 
-        train_loss = train_loss / train_chars
-        dev_loss = dev_loss / dev_chars
+        train_loss = train_loss / train_tokens
+        dev_loss = dev_loss / dev_tokens
 
         wandb.log({"dev loss after epoch": dev_loss})
 
-        if train_loss < prev_train_loss and dev_loss > prev_dev_loss:
+        if train_loss < prev_train_loss and dev_loss > prev_dev_loss and dev_loss > prev_prev_dev_loss:
             logger.info("early exit")
             break
         
