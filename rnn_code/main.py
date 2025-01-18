@@ -300,7 +300,7 @@ if __name__ == "__main__":
         # make data_items and mask lacunae
         for i in range(len(test_texts)):
             test_texts[i].text_number = test_indexes[i]
-        test_texts = [model.actual_lacuna_mask_and_label(test_texts[i], test_reconstructions[i]) for i in range(len(test_texts))]
+        test_texts = [model.actual_lacuna_mask_and_label(test_texts[i]) for i in range(len(test_texts))]
 
         test_list = [i for i in range(len(test_texts))]
         # accuracy evaluation

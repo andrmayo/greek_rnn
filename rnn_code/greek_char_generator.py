@@ -237,13 +237,10 @@ def train_model(
 
         wandb.log({"dev loss after epoch": dev_loss})
 
-        if train_loss < prev_train_loss and dev_loss > prev_dev_loss and dev_loss > prev_prev_dev_loss:
+        if train_loss < prev_train_loss and dev_loss > prev_dev_loss:
             logger.info("early exit")
             break
         
-        if epoch > 0:
-            prev_prev_dev_loss = prev_dev_loss
-            prev_prev_train_loss = prev_train_loss
         prev_dev_loss = dev_loss
         prev_train_loss = train_loss
 
