@@ -128,10 +128,6 @@ class DataItem:
         self.position_in_original = position_in_original # integer marking location of DataItem in original set of texts (including non-Greek texts)
 
 
-def get_home_path():
-    return os.path.expanduser("~")
-
-
 UNICODE_MARK_NONSPACING = "Mn"
 COMBINING_DOT = "COMBINING DOT BELOW"
 MN_KEEP_LIST = [COMBINING_DOT]

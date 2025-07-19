@@ -1,4 +1,5 @@
 import argparse
+from pathlib import Path
 import datetime
 import glob
 import logging
@@ -88,7 +89,8 @@ if __name__ == "__main__":
     full_json = "full_data.json"
     reconstruction_json = "reconstructions.json"
 
-    file_dir_path = f"{utils.get_home_path()}/Desktop/Corpora/Lacuna/"
+    cur_path = Path(__file__).absolute()
+    file_dir_path = cur_path.parent.parent.parent / "Corpora/Lacuna"
     # read in json file
     json_list = glob.glob(f"{file_dir_path}*.json")
     
