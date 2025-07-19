@@ -3,7 +3,7 @@ name = "greek-rnn"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 dependencies = [
     "certifi==2024.8.30 ; python_full_version >= '3.12' and python_full_version < '4.0'",
     "charset-normalizer==3.4.0 ; python_full_version >= '3.12' and python_full_version < '4.0'",
