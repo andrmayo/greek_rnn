@@ -92,7 +92,7 @@ if __name__ == "__main__":
     cur_path = Path(__file__).absolute()
     file_dir_path = cur_path.parent.parent.parent / "Corpora/Lacuna"
     # read in json file
-    json_list = glob.glob(f"{file_dir_path}*.json")
+    json_list = [str(json_file) for json_file in file_dir_path.glob("*.json")]
     
     if args.partition:
         # Do full data partition
