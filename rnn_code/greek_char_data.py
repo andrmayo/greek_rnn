@@ -1,9 +1,9 @@
 import regex as re
-import unicodedata
 import random
 import json
 import os
 from pathlib import Path
+import logging
 
 import greek_utils as utils
 
@@ -76,7 +76,11 @@ def read_datafiles(json_list):
             else:
                 lacunae.append(case["alternatives"][0])
         reconstructions.append(lacunae) 
-
+    
+    logging.info("greek_char_data.read_datafiles has partitioned data")
+    logging.info(f"train_data has {len(train_data)} entries")
+    logging.info(f"dev_data has {len(dev_data)} entries")
+    logging.info(f"test_data has {len(test_data)} entries")
     # Return includes json_blocks (with alternate readings) and random_index 
     # random_index is in same order as train_data + dev_data + test_data, and lists indexes to json_blocks
     # json_blocks contains texts in the order they stand in the json files, and the json files in the order in which they stand in the file_list argument
