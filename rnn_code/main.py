@@ -89,7 +89,7 @@ if __name__ == "__main__":
     full_json = "full_data.json"
     reconstruction_json = "reconstructions.json"
 
-    file_dir_path = cur_path.parent.parent.parent / "Corpora/Lacuna"
+    file_dir_path = cur_path.parent.parent / "Corpora/Lacuna"
     # read in json file
     json_list = [str(json_file) for json_file in file_dir_path.glob("*.json")]
     
