@@ -1,6 +1,6 @@
 import argparse
 from pathlib import Path
-import datetime
+from datetime import datetime
 import glob
 import logging
 import re
