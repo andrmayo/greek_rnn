@@ -1,6 +1,5 @@
 import logging
-import logging.config
-import os
+from datetime import datetime
 import sys
 import unicodedata
 import re
@@ -21,7 +20,11 @@ stdout_handler = logging.StreamHandler(sys.stdout)
 stdout_handler.setLevel(logging.DEBUG)
 stdout_handler.setFormatter(formatter)
 
-file_handler = logging.FileHandler("log/greek_data_processing.log")
+
+file_handler = logging.FileHandler('log/{:%Y-%m-%d_%H-%M}.log'.format(datetime.now()))
+formatter = logging.Formatter('%(asctime)s | %(levelname)-8s | %(lineno)04d | %(message)s')
+file_handler.setFormatter(formatter)
+
 file_handler.setLevel(logging.INFO)
 
 logger.addHandler(file_handler)
