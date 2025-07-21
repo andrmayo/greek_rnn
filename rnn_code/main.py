@@ -96,7 +96,9 @@ if __name__ == "__main__":
     if args.partition:
         # Do full data partition
         logging.info(f"Now partitioning data")
-        logging.info(f"Files found: {len(json_list)}")
+        logging.info(f"{len(json_list)} json files found: ")
+        for json_file in json_list:
+            logging.info(f"{json_file}")
         (
             train_data,
             dev_data,
