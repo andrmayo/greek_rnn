@@ -3,6 +3,7 @@ import unicodedata
 import random
 import json
 import os
+from pathlib import Path
 
 import greek_utils as utils
 
@@ -89,9 +90,10 @@ def read_datafiles(json_list):
     )
 
 def write_to_json(file_name: str, text_list: list, text_index: list, mapping_greek_to_original: dict):
-    path = f"{__file__}/data/{file_name}"
+    cur_path = str(Path(__file__).parent)
+    path = f"{cur_path}/data/{file_name}"
     os.makedirs(os.path.dirname(path), exist_ok = True) 
-    with open(f"{__file__}/data/{file_name}", "w") as jsonfile:
+    with open(f"{cur_path}/data/{file_name}", "w") as jsonfile:
         for i, text in enumerate(text_list):
             json_block = {"text_index": text_index[i], "text": text, "position_in_original": mapping_greek_to_original[text_index[i]]}
             json_line = json.dumps(json_block, ensure_ascii = False)
