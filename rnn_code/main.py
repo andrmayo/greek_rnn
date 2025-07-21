@@ -127,15 +127,15 @@ if __name__ == "__main__":
     train_data = []
     dev_data = []
     test_data = []
-    with open(f"./data/{train_json}", "r") as file:
+    with open(f"{__file__}/data/{train_json}", "r") as file:
         for line in file:
             jsonDict = json.loads(line)
             train_data.append(jsonDict)
-    with open(f"./data/{dev_json}", "r") as file:
+    with open(f"{__file__}//data/{dev_json}", "r") as file:
         for line in file:
             jsonDict = json.loads(line)
             dev_data.append(jsonDict)
-    with open(f"./data/{test_json}", "r") as file:
+    with open(f"{__file__}//data/{test_json}", "r") as file:
         for line in file:
             jsonDict = json.loads(line)
             test_data.append(jsonDict)

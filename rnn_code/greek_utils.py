@@ -21,8 +21,10 @@ stdout_handler.setLevel(logging.DEBUG)
 stdout_handler.setFormatter(formatter)
 
 
-Path("../log").mkdir(exist_ok=True)
-file_handler = logging.FileHandler('../log/{:%Y-%m-%d_%H-%M}.log'.format(datetime.now()))
+log_path = (Path(__file__).parent / "log")
+log_path.mkdir(exist_ok=True)
+cur_time = '{:%Y-%m-%d_%H-%M}.log'.format(datetime.now())
+file_handler = logging.FileHandler(str(log_path / cur_time))
 formatter = logging.Formatter('%(asctime)s | %(levelname)-8s | %(lineno)04d | %(message)s')
 file_handler.setFormatter(formatter)
 
