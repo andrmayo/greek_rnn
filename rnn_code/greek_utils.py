@@ -1,6 +1,7 @@
 import logging
 from datetime import datetime
 import sys
+from pathlib import Path
 import unicodedata
 import re
 import string
@@ -21,7 +22,8 @@ stdout_handler.setLevel(logging.DEBUG)
 stdout_handler.setFormatter(formatter)
 
 
-file_handler = logging.FileHandler('log/{:%Y-%m-%d_%H-%M}.log'.format(datetime.now()))
+Path("../log").mkdir(exist_ok=True)
+file_handler = logging.FileHandler('../log/{:%Y-%m-%d_%H-%M}.log'.format(datetime.now()))
 formatter = logging.Formatter('%(asctime)s | %(levelname)-8s | %(lineno)04d | %(message)s')
 file_handler.setFormatter(formatter)
 
