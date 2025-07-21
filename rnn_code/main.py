@@ -77,7 +77,7 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    logger.info(f"start greek data processing -- {datetime.datetime.now()}")
+    logger.info(f"start greek data processing -- {datetime.now()}")
 
     spaces_are_tokens = True
     newlines_are_tokens = True
@@ -345,5 +345,5 @@ if __name__ == "__main__":
         for option in ranking:
             print(option)
 
-    logger.info(f"end generator -- {datetime.datetime.now()}\n")
+    logger.info(f"end generator -- {datetime.now()}\n")
 
