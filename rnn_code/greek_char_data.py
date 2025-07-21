@@ -33,6 +33,8 @@ def read_datafiles(json_list):
                     json_blocks.append(jsonDict)                    
                 i += 1 
 
+    logging.info(f"Lines read in from json files by greek_char_data.read_datafiles: {i}")
+
     training_texts = []
     lacuna_texts = []
 
@@ -49,6 +51,7 @@ def read_datafiles(json_list):
 
     # calculate lengths for each partition based on ratios (80:10:10)
     n_texts = len(training_texts)
+    logging.info(f"n of training texts is {n_texts}")
     train_length = int(n_texts * 0.8)
     dev_test_length = int(n_texts * 0.1)
 

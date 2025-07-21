@@ -226,6 +226,7 @@ if __name__ == "__main__":
         # if masking_strategy is "dynamic", utils.mask_input returns the data as passed to it, and mask = True
         # if masking_strategy is "once", utils.mask_input adds masking to data by calling model.mask_and_label_characters(),
         # and returns newly masked ata and mask = False. 
+        logging.info("Now training LSTM")
         # utils.mask_input expects train_data to be a list of objects of class greek_utils.DataItem.
         training_data, mask = utils.mask_input(model, train_data, mask_type, masking_strategy)
         # mask ultimately gets passed to greek_char_generator.train_batch(), to tell it whether to remask, which it should do if strategy is "dynamic"
