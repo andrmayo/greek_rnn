@@ -17,7 +17,7 @@ from torch import nn
 import wandb
 
 from greek_rnn import *
-from rnn_code import greek_utils as utils
+import greek_utils as utils
 from greek_utils import *
 
 
