@@ -118,7 +118,7 @@ if __name__ == "__main__":
         greek_char_data.write_to_json(dev_json, dev_data, random_index[len(train_data): (len(train_data) + len(dev_data))], mapping_greek_to_original)
         greek_char_data.write_to_json(test_json, test_data, random_index[(len(train_data) + len(dev_data)): ], mapping_greek_to_original)
     
-        with open(f"./data/{reconstruction_json}", "w") as jsonfile:
+        with open(f"{__file__}/data/{reconstruction_json}", "w") as jsonfile:
             for i, lst in enumerate(reconstructions):
                 json_block = {"text_index": i, "reconstructions": lst}    
                 json_line = json.dumps(json_block, ensure_ascii = False)

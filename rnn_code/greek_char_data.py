@@ -89,10 +89,9 @@ def read_datafiles(json_list):
     )
 
 def write_to_json(file_name: str, text_list: list, text_index: list, mapping_greek_to_original: dict):
-    data = []
-    path = f"./data/{file_name}"
+    path = f"{__file__}/data/{file_name}"
     os.makedirs(os.path.dirname(path), exist_ok = True) 
-    with open(f"./data/{file_name}", "w") as jsonfile:
+    with open(f"{__file__}/data/{file_name}", "w") as jsonfile:
         for i, text in enumerate(text_list):
             json_block = {"text_index": text_index[i], "text": text, "position_in_original": mapping_greek_to_original[text_index[i]]}
             json_line = json.dumps(json_block, ensure_ascii = False)
