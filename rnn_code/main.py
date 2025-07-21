@@ -150,7 +150,7 @@ if __name__ == "__main__":
     # get the file in same order as original_json with scholarly reconstructions of lacunae 
     reconstructions = []
     for json_file in json_list:
-        with open(f"./data/{reconstruction_json}", "r") as file:
+        with open(f"{cur_path}/data/{reconstruction_json}", "r") as file:
             for line in file:
                 jsonDict = json.loads(line)
                 reconstructions.append(jsonDict["reconstructions"])
