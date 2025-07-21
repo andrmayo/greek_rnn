@@ -15,7 +15,7 @@ specs = utils.specs
 # Note to self: the model at present seems to veer towards just predicting the most common character in the corpus
 
 if __name__ == "__main__":
-
+    cur_path = Path(__file__).parent.absolute()
     parser = argparse.ArgumentParser(description="Greek character level generator")
     parser.add_argument(
         "-tr",
@@ -89,7 +89,6 @@ if __name__ == "__main__":
     full_json = "full_data.json"
     reconstruction_json = "reconstructions.json"
 
-    cur_path = Path(__file__).absolute()
     file_dir_path = cur_path.parent.parent.parent / "Corpora/Lacuna"
     # read in json file
     json_list = [str(json_file) for json_file in file_dir_path.glob("*.json")]
@@ -118,7 +117,7 @@ if __name__ == "__main__":
         greek_char_data.write_to_json(dev_json, dev_data, random_index[len(train_data): (len(train_data) + len(dev_data))], mapping_greek_to_original)
         greek_char_data.write_to_json(test_json, test_data, random_index[(len(train_data) + len(dev_data)): ], mapping_greek_to_original)
     
-        with open(f"{__file__}/data/{reconstruction_json}", "w") as jsonfile:
+        with open(f"{cur_path}/data/{reconstruction_json}", "w") as jsonfile:
             for i, lst in enumerate(reconstructions):
                 json_block = {"text_index": i, "reconstructions": lst}    
                 json_line = json.dumps(json_block, ensure_ascii = False)
@@ -127,15 +126,15 @@ if __name__ == "__main__":
     train_data = []
     dev_data = []
     test_data = []
-    with open(f"{__file__}/data/{train_json}", "r") as file:
+    with open(f"{cur_path}/data/{train_json}", "r") as file:
         for line in file:
             jsonDict = json.loads(line)
             train_data.append(jsonDict)
-    with open(f"{__file__}//data/{dev_json}", "r") as file:
+    with open(f"{cur_path}//data/{dev_json}", "r") as file:
         for line in file:
             jsonDict = json.loads(line)
             dev_data.append(jsonDict)
-    with open(f"{__file__}//data/{test_json}", "r") as file:
+    with open(f"{cur_path}//data/{test_json}", "r") as file:
         for line in file:
             jsonDict = json.loads(line)
             test_data.append(jsonDict)
