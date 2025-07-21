@@ -2,8 +2,8 @@ import torch
 import torch.nn as nn
 import random
 
-from rnn_code.greek_utils import *
-from rnn_code import letter_tokenizer
+from greek_utils import *
+import letter_tokenizer
 
 #MASK = "<mask>"
 MASK = '_'

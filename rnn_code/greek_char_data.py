@@ -4,7 +4,7 @@ import random
 import json
 import os
 
-from rnn_code import greek_utils as utils
+import greek_utils as utils
 
 #RECONSTRUCTED_LACUNA_MAX = 100
 # We may want to use this so that the  model avoids texts that are hopelessly lacunose

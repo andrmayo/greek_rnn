@@ -5,10 +5,10 @@ import glob
 import logging
 import re
 
-from rnn_code import greek_utils as utils
-from rnn_code import greek_rnn 
-from rnn_code import greek_char_data
-from rnn_code.greek_char_generator import *
+import greek_utils as utils
+import greek_rnn 
+import greek_char_data
+from greek_char_generator import *
 
 specs = utils.specs
 

@@ -6,12 +6,11 @@ import unicodedata
 import re
 import string
 import json
-import nltk
 from nltk.util import ngrams
 from collections import Counter
 import torch
 
-from rnn_code.letter_tokenizer import LetterTokenizer
+from letter_tokenizer import LetterTokenizer
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)

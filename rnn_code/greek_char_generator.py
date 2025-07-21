@@ -16,9 +16,9 @@ import torch.nn.functional as nnf
 from torch import nn
 import wandb
 
-from rnn_code.greek_rnn import *
+from greek_rnn import *
 from rnn_code import greek_utils as utils
-from rnn_code.greek_utils import *
+from greek_utils import *
 
 
 

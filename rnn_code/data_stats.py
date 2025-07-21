@@ -3,7 +3,7 @@
 from collections import Counter
 import re
 
-from rnn_code.greek_utils import logger
+from greek_utils import logger
 
 FULL_DATA = "../data/full_data.csv"
 RECONSTRUCTED_DATA = "./data/masked_test_reconstructed_lacuna.csv"
