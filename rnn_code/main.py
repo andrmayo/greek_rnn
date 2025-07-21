@@ -178,7 +178,7 @@ if __name__ == "__main__":
     for i, data_dict in enumerate(dev_data):
         new_data_item = utils.DataItem(text_number = data_dict["text_index"], text = data_dict["text"], position_in_original = data_dict["position_in_original"])
         dev_data[i] = new_data_item
-    for i, test_dict in enumerate(test_data):
+    for i, data_dict in enumerate(test_data):
         new_data_item = utils.DataItem(text_number = data_dict["text_index"], text = data_dict["text"], position_in_original = data_dict["position_in_original"])
         test_data[i] = new_data_item
 
