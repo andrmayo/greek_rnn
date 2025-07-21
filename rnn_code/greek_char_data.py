@@ -90,7 +90,7 @@ def read_datafiles(json_list):
     )
 
 def write_to_json(file_name: str, text_list: list, text_index: list, mapping_greek_to_original: dict):
-    cur_path = str(Path(__file__).parent)
+    cur_path = Path(__file__).absolute().parent
     path = f"{cur_path}/data/{file_name}"
     os.makedirs(os.path.dirname(path), exist_ok = True) 
     with open(f"{cur_path}/data/{file_name}", "w") as jsonfile:
