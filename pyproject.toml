@@ -58,4 +58,4 @@ dependencies = [
     "pytest>=8.4.1",
 ]
 [tool.setuptools.packages.find]
-exclude = ["tests", "data"]
+exclude = ["tests", "data", "scripts"]
