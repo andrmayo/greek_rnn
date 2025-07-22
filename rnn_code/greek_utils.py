@@ -116,7 +116,9 @@ nEpochs = 50
 L2_lambda = 0.0
 # L2_lambda = 0.001
 
-model_path = "./models/"
+model_path = f"{Path(__file__).parent}/models/"
+if not Path(model_path).exists():
+    Path(model_path).mkdir()
 
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 print(f"torch version & device: {torch.version.__version__, device}")

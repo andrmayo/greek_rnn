@@ -201,7 +201,14 @@ if __name__ == "__main__":
         model = model.to(device)
     else:
         logger.info(f"Using a pre-trained model")
-        model = torch.load(model_path + model_name + ".pth", map_location=device, weights_only=False)
+        preload_model = Path(model_path) / "best"
+        preload_model = [mod for mod in preload_model.glob("*.pth")]
+        if not preload_model:
+            raise FileNotFoundError(f"No pth file found in {model_path}/best")
+        # get most recent model in models/best dir
+        preload_model = str(max(preload_model, key=lambda f: f.stat().st_mtime))
+        logger.info(f"Loading model: {preload_model}")
+        model = torch.load(preload_model, map_location=device, weights_only=False)
         logger.info(
             f"Load model: {model} with specs: embed_size: {model.specs[0]}, hidden_size: {model.specs[1]}, proj_size: {model.specs[2]}, rnn n layers: {model.specs[3]}, share: {model.specs[4]}, dropout: {model.specs[5]}"
         )
