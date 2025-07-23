@@ -7,7 +7,7 @@
 #SBATCH --account=acmayo0
 #SBATCH --partition=spgpu
 #SBATCH --gpus=1
-#SBATCH --time=2:00:00
+#SBATCH --time=4:00:00
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=8
