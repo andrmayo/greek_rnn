@@ -1,7 +1,6 @@
 import logging
-from datetime import datetime
+import os
 import sys
-from pathlib import Path
 import unicodedata
 import re
 import string
@@ -10,7 +9,46 @@ from nltk.util import ngrams
 from collections import Counter
 import torch
 
-from letter_tokenizer import LetterTokenizer
+from rnn_code.letter_tokenizer import LetterTokenizer
+
+__all__ = [
+    # Configuration variables
+    "logger",
+    "SPACES_ARE_TOKENS",
+    "NEWLINES_ARE_TOKENS",
+    "tokenizer",
+    "share",
+    "embed_size",
+    "proj_size",
+    "hidden_size",
+    "rnn_nLayers",
+    "masking_proportion",
+    "dropout",
+    "specs",
+    "learning_rate",
+    "batch_size",
+    "batch_size_multiplier",
+    "nEpochs",
+    "L2_lambda",
+    "model_path",
+    "device",
+    # Constants
+    "UNICODE_MARK_NONSPACING",
+    "COMBINING_DOT",
+    "MN_KEEP_LIST",
+    # Classes
+    "DataItem",
+    # Functions
+    "get_home_path",
+    "filter_diacritics",
+    "count_parameters",
+    "read_datafile",
+    "filter_brackets",
+    "skip_sentence",
+    "has_more_than_one_latin_character",
+    "mask_input",
+    "construct_trigram_lookup",
+]
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -20,28 +58,23 @@ stdout_handler = logging.StreamHandler(sys.stdout)
 stdout_handler.setLevel(logging.DEBUG)
 stdout_handler.setFormatter(formatter)
 
-
-log_path = (Path(__file__).parent / "log")
-log_path.mkdir(exist_ok=True)
-cur_time = '{:%Y-%m-%d_%H-%M}.log'.format(datetime.now())
-file_handler = logging.FileHandler(str(log_path / cur_time))
-formatter = logging.Formatter('%(asctime)s | %(levelname)-8s | %(lineno)04d | %(message)s')
-file_handler.setFormatter(formatter)
-
+file_handler = logging.FileHandler("log/greek_data_processing.log")
 file_handler.setLevel(logging.INFO)
 
 logger.addHandler(file_handler)
 logger.addHandler(stdout_handler)
 
-SPACES_ARE_TOKENS=False 
-NEWLINESARETOKENS=False
+SPACES_ARE_TOKENS = False
+NEWLINES_ARE_TOKENS = False
 
 # This module contains the model hyperparameters as well as various functions for data processing and logging information about the model
 
-tokenizer = LetterTokenizer(spaces_are_tokens=SPACES_ARE_TOKENS, newlines_are_tokens=NEWLINESARETOKENS)
+tokenizer = LetterTokenizer(
+    spaces_are_tokens=SPACES_ARE_TOKENS, newlines_are_tokens=NEWLINES_ARE_TOKENS
+)
 
 share = False
-#share = True  # share embedding table with output layer for weight tying, cf. Jurafsky and Martin 9.2.3
+# share = True  # share embedding table with output layer for weight tying, cf. Jurafsky and Martin 9.2.3
 
 # embed_size = 20
 # embed_size = 50
@@ -116,16 +149,22 @@ nEpochs = 50
 L2_lambda = 0.0
 # L2_lambda = 0.001
 
-model_path = f"{Path(__file__).parent}/models/"
-if not Path(model_path).exists():
-    Path(model_path).mkdir()
+model_path = "./models/"
 
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-print(f"torch version & device: {torch.version.__version__, device}")
+print(f"torch version & device: {torch.__version__, device}")
 
 
 class DataItem:
-    def __init__(self, text=None, text_number = None, indexes=None, mask=None, labels=None, position_in_original = None):
+    def __init__(
+        self,
+        text=None,
+        text_number=None,
+        indexes=None,
+        mask=None,
+        labels=None,
+        position_in_original=None,
+    ):
         self.text_number = text_number
         self.text = text  # original text
         self.indexes = indexes  # tensor of indexes of characters or tokens
@@ -133,7 +172,11 @@ class DataItem:
             mask  # list of indexes same size as index, true when character is masked
         )
         self.labels = labels  # list of indexes for attention mask
-        self.position_in_original = position_in_original # integer marking location of DataItem in original set of texts (including non-Greek texts)
+        self.position_in_original = position_in_original  # integer marking location of DataItem in original set of texts (including non-Greek texts)
+
+
+def get_home_path():
+    return os.path.expanduser("~")
 
 
 UNICODE_MARK_NONSPACING = "Mn"
@@ -161,14 +204,15 @@ def count_parameters(model):
 
     logging.info(f"total parameter count = {total:,}")
 
-def read_datafile(json_file: str, data_list = []) -> list:
+
+def read_datafile(json_file: str, data_list=[]) -> list:
     with open(json_file, "r") as file:
         for i, line in enumerate(file):
             jsonDict = json.loads(line)
-            try: 
+            try:
                 if len(jsonDict["text"]) == 0:
                     continue
-                data_list.append(DataItem(text = jsonDict["text"]))
+                data_list.append(DataItem(text=jsonDict["text"]))
             except Exception:
                 logger.warning(f"Incorrect formatting in line {i} of {json_file}")
 
@@ -225,13 +269,13 @@ def mask_input(model, data, mask_type, masking_strategy):
 
 def construct_trigram_lookup():
     # read in training data
-    with open(f"./data/train.json", "r") as jsonFile:
+    with open("./data/train.json", "r") as jsonFile:
         texts = [json.loads(line)["text"].strip() for line in jsonFile]
 
     ngram_counts = Counter()
     for text in texts:
         text = list(tokenizer.tokenize(text))
-        ngrams_obj = ngrams(text, 3, pad_left=True, left_pad_symbol='<s>')
+        ngrams_obj = ngrams(text, 3, pad_left=True, left_pad_symbol="<s>")
         ngram_counts.update(ngrams_obj)
 
     look_up = {}
@@ -248,7 +292,7 @@ def construct_trigram_lookup():
             look_up[first_second] = {entry[2]: ngram_counts[entry]}
 
     # write look_up tp file
-    with open(f"./data/trigram_lookup.json", 'w') as json_file:
+    with open("./data/trigram_lookup.json", "w") as json_file:
         json.dump(look_up, json_file, indent=4)
 
     return look_up
