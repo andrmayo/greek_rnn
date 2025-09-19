@@ -1,0 +1,26 @@
+2025-07-23 06:46:38,564 | INFO     | 0080 | start greek data processing -- 2025-07-23 06:46:38.564104
+2025-07-23 06:46:40,045 | INFO     | 0194 | Training model
+2025-07-23 06:46:40,045 | INFO     | 0196 | Train greek_rnn_no_dropout model specs: embed_size: 300, hidden_size: 300, proj_size: 150, rnn n layers: 4, share: False, dropout: 0.0
+2025-07-23 06:46:40,274 | INFO     | 0216 | RNN(
+  (embed): Embedding(35, 300)
+  (scale_up): Linear(in_features=300, out_features=300, bias=True)
+  (rnn): LSTM(300, 150, num_layers=4, batch_first=True, bidirectional=True)
+  (out): Linear(in_features=300, out_features=300, bias=True)
+  (dropout): Dropout(p=0.0, inplace=False)
+)
+2025-07-23 06:46:40,275 | INFO     | 0162 | total parameter count = 2,350,500
+2025-07-23 06:47:31,705 | INFO     | 0238 | Now training LSTM
+2025-07-23 06:47:31,706 | INFO     | 0205 | Mask type: smart - once
+2025-07-23 06:47:31,706 | INFO     | 0206 | Training data read in with 75500 lines
+2025-07-23 06:47:31,706 | INFO     | 0212 | Masking strategy is once, masking sentences...
+2025-07-23 06:48:01,481 | INFO     | 0218 | Masking complete
+2025-07-23 07:45:08,315 | INFO     | 0223 | train=75,500 23,007,539 27,416,340 1.2 dev=9,437 2,895,734 3,549,133 1.2 bs=1 lr=0.0003 [300, 300, 150, 4, False, 0.0, 0.15, 35]
+2025-07-23 07:45:08,316 | INFO     | 0231 | 0 tr loss   0.0923   0.0774 -- dev loss   0.3231   0.2636 -- incremental_batch_size:    1 time elapsed: 3424.6
+2025-07-23 07:45:08,316 | INFO     | 0247 | dev masked total: 307871, correct predictions: 37379, simple accuracy: 0.121
+2025-07-23 08:42:14,637 | INFO     | 0231 | 1 tr loss   0.0850   0.0713 -- dev loss   0.3193   0.2605 -- incremental_batch_size:    1 time elapsed: 6850.9
+2025-07-23 08:42:14,638 | INFO     | 0247 | dev masked total: 307871, correct predictions: 44062, simple accuracy: 0.143
+2025-07-23 09:41:37,060 | INFO     | 0231 | 2 tr loss   0.0809   0.0679 -- dev loss   0.3171   0.2587 -- incremental_batch_size:    2 time elapsed: 10413.4
+2025-07-23 09:41:37,062 | INFO     | 0247 | dev masked total: 307871, correct predictions: 50481, simple accuracy: 0.164
+2025-07-23 10:41:23,892 | INFO     | 0231 | 3 tr loss   0.0778   0.0653 -- dev loss   0.3189   0.2602 -- incremental_batch_size:    3 time elapsed: 14000.2
+2025-07-23 10:41:23,893 | INFO     | 0241 | early exit
+2025-07-23 10:45:43,089 | INFO     | 0332 | masked total: 307871, correct predictions: 55212, simple accuracy: 0.179, mismatch: 0

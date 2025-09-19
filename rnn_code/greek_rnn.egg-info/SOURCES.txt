@@ -1,7 +1,0 @@
-README.md
-pyproject.toml
-rnn_code/greek_rnn.egg-info/PKG-INFO
-rnn_code/greek_rnn.egg-info/SOURCES.txt
-rnn_code/greek_rnn.egg-info/dependency_links.txt
-rnn_code/greek_rnn.egg-info/requires.txt
-rnn_code/greek_rnn.egg-info/top_level.txt

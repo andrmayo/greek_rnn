@@ -1,0 +1,20 @@
+2025-07-23 04:40:58,811 | INFO     | 0080 | start greek data processing -- 2025-07-23 04:40:58.811833
+2025-07-23 04:41:00,286 | INFO     | 0194 | Training model
+2025-07-23 04:41:00,287 | INFO     | 0196 | Train greek_rnn_no_dropout model specs: embed_size: 300, hidden_size: 300, proj_size: 150, rnn n layers: 4, share: False, dropout: 0.0
+2025-07-23 04:41:00,606 | INFO     | 0216 | RNN(
+  (embed): Embedding(35, 300)
+  (scale_up): Linear(in_features=300, out_features=300, bias=True)
+  (rnn): LSTM(300, 150, num_layers=4, batch_first=True, bidirectional=True)
+  (out): Linear(in_features=300, out_features=300, bias=True)
+  (dropout): Dropout(p=0.0, inplace=False)
+)
+2025-07-23 04:41:00,607 | INFO     | 0162 | total parameter count = 2,350,500
+2025-07-23 04:41:51,989 | INFO     | 0238 | Now training LSTM
+2025-07-23 04:41:51,990 | INFO     | 0205 | Mask type: random - dynamic
+2025-07-23 04:41:51,990 | INFO     | 0206 | Training data read in with 75500 lines
+2025-07-23 05:41:58,818 | INFO     | 0223 | train=75,500 23,007,539 27,416,340 1.2 dev=9,437 2,895,734 3,549,133 1.2 bs=1 lr=0.0003 [300, 300, 150, 4, False, 0.0, 0.15, 35]
+2025-07-23 05:41:58,820 | INFO     | 0231 | 0 tr loss   0.1875   0.1573 -- dev loss   0.3061   0.2498 -- incremental_batch_size:    1 time elapsed: 3604.0
+2025-07-23 05:41:58,820 | INFO     | 0247 | dev masked total: 307871, correct predictions: 55424, simple accuracy: 0.18
+2025-07-23 06:42:10,141 | INFO     | 0231 | 1 tr loss   0.1435   0.1204 -- dev loss   0.3139   0.2561 -- incremental_batch_size:    1 time elapsed: 7215.4
+2025-07-23 06:42:10,142 | INFO     | 0241 | early exit
+2025-07-23 06:46:27,750 | INFO     | 0332 | masked total: 307871, correct predictions: 60360, simple accuracy: 0.196, mismatch: 0
