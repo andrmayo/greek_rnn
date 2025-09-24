@@ -1,39 +1,46 @@
 # Description
 
+import csv
+import itertools
+import json
+import logging
+import random
+import re
 import time
 from math import log
-import json
-import csv
-import random
 from random import shuffle
-import logging
-import re
-import itertools
 
-import torch
 import numpy
+import torch
 import torch.nn.functional as nnf
 from torch import nn
+
+import rnn_code.greek_utils as utils
 import wandb
-
-from greek_rnn import *
-import greek_utils as utils
-from greek_utils import *
-
-
+# RNN class imported when needed
+from rnn_code.greek_utils import (
+    DataItem,
+    device,
+    learning_rate,
+    nEpochs,
+    L2_lambda,
+    batch_size,
+    batch_size_multiplier,
+    model_path,
+    logger
+)
 
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+
 
 def check_accuracy(target, orig_data_item):
     masked = 0
     correct = 0
-    mismatch = 0 # We don't want to skip sentences with a restoration of different length than the original text
+    mismatch = 0  # We don't want to skip sentences with a restoration of different length than the original text
 
     # DataItem should have label[i] = -100 for unmasked tokens, otherwise the label should give the embedding index for the masked token
     if len(target) != len(orig_data_item.labels):
-        logging.info(
-            "Model predicted different number of characters - text skipped"
-        )
+        logging.info("Model predicted different number of characters - text skipped")
         mismatch += 1
     else:
         for j in range(len(orig_data_item.labels)):
@@ -44,8 +51,8 @@ def check_accuracy(target, orig_data_item):
                     # prediction is correct
                     correct += 1
 
-    # masked is the # of masked tokens in input, correct is the number of predictions that much the masked token, and 
-    # mismatch returns 1 if model returned different number of characters than there were characters in the lacunae 
+    # masked is the # of masked tokens in input, correct is the number of predictions that much the masked token, and
+    # mismatch returns 1 if model returned different number of characters than there were characters in the lacunae
     return masked, correct, mismatch
 
 
@@ -56,8 +63,8 @@ def train_batch(
     data,
     data_indexes,
     mask_type,
-    update=True, # update=False is used for dev set
-    mask=True
+    update=True,  # update=False is used for dev set
+    mask=True,
 ):
     model.zero_grad()
     total_loss, total_tokens, total_chars = 0, 0, 0
@@ -82,7 +89,7 @@ def train_batch(
         masked_idx = torch.BoolTensor(data_item.mask)
         # loss = criterion(out[0], label_tensor.view(-1))  # [1:] old loss method
 
-        train_masked += torch.numel(masked_idx) # to find the average loss
+        train_masked += torch.numel(masked_idx)  # to find the average loss
 
         masked_out = out[0, masked_idx]
         masked_label = label_tensor[masked_idx]
@@ -106,7 +113,9 @@ def train_batch(
             # logger.debug(f"self attn labels: {data_item.labels}")
             # logger.debug(f"target labels: {target}")
             # logger.info("No update")
-            dev_masked_current, dev_correct_current, _ = check_accuracy(target, data_item)
+            dev_masked_current, dev_correct_current, _ = check_accuracy(
+                target, data_item
+            )
             dev_masked += dev_masked_current
             dev_correct += dev_correct_current
 
@@ -119,35 +128,34 @@ def train_batch(
 def train_model(
     model,
     train_data,
-    dev_data=None, 
+    dev_data=None,
     output_name="greek_lacuna",
     mask=True,
-    mask_type=None
+    mask_type=None,
 ):
     # start a new wandb run to track this script
     wandb.init(
         # set the wandb project where this run will be logged
         project="greek_rnn",
-
         # track hyperparameters and run metadata
         config={
-        "learning_rate": learning_rate,
-        "architecture": "LSTM",
-        "dataset": "MAAT",
-        "epochs": nEpochs,
-        }
+            "learning_rate": learning_rate,
+            "architecture": "LSTM",
+            "dataset": "MAAT",
+            "epochs": nEpochs,
+        },
     )
-    
-    train_data = train_data[:] # to avoid modifying list passed to train_model()
+
+    train_data = train_data[:]  # to avoid modifying list passed to train_model()
     if dev_data is None:
-        data_set = train_data 
+        data_set = train_data
         shuffle(data_set)
         num_dev_items = min(int(0.05 * len(train_data)), 2000)
         dev_data = data_set[:num_dev_items]
         train_data = data_set[num_dev_items:]
     else:
-        dev_data = dev_data[:] 
-        
+        dev_data = dev_data[:]
+
     # Now whether dev_data was passed or not, there's a train_data list object and a dev_data list object
     train_list = [i for i in range(len(train_data))]
     dev_list = [i for i in range(len(dev_data))]
@@ -193,7 +201,13 @@ def train_model(
             train_tokens += num_tokens
             train_chars += num_characters
             train_mask_count += train_masked
-            wandb.log({"Epoch": epoch, "avg loss in epoch": train_loss/train_mask_count, "batch_size": incremental_batch_size})
+            wandb.log(
+                {
+                    "Epoch": epoch,
+                    "avg loss in epoch": train_loss / train_mask_count,
+                    "batch_size": incremental_batch_size,
+                }
+            )
 
             if num_characters > 0:
                 logger.debug(
@@ -216,7 +230,7 @@ def train_model(
             dev_list,
             mask_type,
             update=False,
-            mask=False, # Dev set is already masked, since lacunas are masked. 
+            mask=False,  # Dev set is already masked, since lacunas are masked.
         )
 
         if epoch == 0:
@@ -240,7 +254,7 @@ def train_model(
         if train_loss < prev_train_loss and dev_loss > prev_dev_loss:
             logger.info("early exit")
             break
-        
+
         prev_dev_loss = dev_loss
         prev_train_loss = train_loss
 
@@ -301,6 +315,7 @@ def fill_masks(model, text, mask_type, temp=0):
     sample_masked, sample_correct, _ = check_accuracy(target, test_data_item)
     return target_text, sample_masked, sample_correct
 
+
 # this should be able to evaluate both on dev set and test set
 def accuracy_evaluation(model, data, data_indexes):
     # first pass at simple accuracy function
@@ -311,7 +326,7 @@ def accuracy_evaluation(model, data, data_indexes):
     for i in data_indexes:
         # get model output
         data_item = data[i]
-        # 
+        #
         index_tensor = torch.tensor(data_item.indexes, dtype=torch.int64).to(device)
         out = model([index_tensor])
 
@@ -330,12 +345,13 @@ def accuracy_evaluation(model, data, data_indexes):
 
     if masked_total > 0:
         logging.info(
-            f"masked total: {masked_total}, correct predictions: {correct}, simple accuracy: {round(correct/masked_total, 3)}, mismatch: {mismatch_total}"
+            f"masked total: {masked_total}, correct predictions: {correct}, simple accuracy: {round(correct / masked_total, 3)}, mismatch: {mismatch_total}"
         )
     else:
         logging.info(
             f"masked total: {masked_total}, correct predictions: {correct}, mismatch {mismatch_total}"
         )
+
 
 # this is only for evaluating on the test set
 # everything involving trigrams needs work
@@ -345,10 +361,10 @@ def baseline_accuracy(model, data, data_indexes):
     correct_random = 0
     correct_trigram = 0
     # ο is the most common character in MAAT corpus
-    target_char_index = model.token_to_index["ο"] 
+    target_char_index = model.token_to_index["ο"]
     # Load tri-gram look-up if already constructed, else construct it
     try:
-        with open('data/trigram_lookup.json', 'r') as file:
+        with open("data/trigram_lookup.json", "r") as file:
             trigram_lookup = json.load(file)
     except:
         # return a dictionary of format {bigram: {char1: count, char2: count, ...}} that tells how often each character completes the trigram
@@ -367,11 +383,13 @@ def baseline_accuracy(model, data, data_indexes):
             if data_item.labels[j] > 0:
                 # if label is above 0, use trigram lookup
                 if len(trigram_target) >= 2:
-                    look_up_key = model.decode([trigram_target[-2]]) + model.decode([trigram_target[-1]])
+                    look_up_key = model.decode([trigram_target[-2]]) + model.decode(
+                        [trigram_target[-1]]
+                    )
                 elif len(trigram_target) == 1:
-                    look_up_key = '<s>' + model.decode([trigram_target[-1]])
+                    look_up_key = "<s>" + model.decode([trigram_target[-1]])
                 else:
-                    look_up_key = '<s><s>'
+                    look_up_key = "<s><s>"
                 if look_up_key in trigram_lookup:
                     y = trigram_lookup[look_up_key]
                     greek_char = max(y, key=lambda x: y[x])
@@ -394,7 +412,7 @@ def baseline_accuracy(model, data, data_indexes):
         correct_most_common_char += correct_guess_correct_most_common
         correct_random += correct_guess_random
         correct_trigram += correct_guess_trigram
-    #print(count_rand)
+    # print(count_rand)
     logging.info(
         f"Most Common Char Baseline; dev masked total: {masked_total}, correct predictions: {correct_most_common_char}, baseline accuracy: {round(correct_most_common_char / masked_total, 3)}"
     )
@@ -423,7 +441,9 @@ def predict(model, data_item):
     out_indexes = []
 
     # Get the characters generated by the model to fill lacunae
-    gen_chars = (char for char in model.decode(itertools.compress(target, data_item.mask)))
+    gen_chars = (
+        char for char in model.decode(itertools.compress(target, data_item.mask))
+    )
 
     # Iterate through all sequences enclosed in square brackets
     pattern = re.compile(r"\[(.+?)\]")
@@ -433,9 +453,9 @@ def predict(model, data_item):
     for lacuna in re.finditer(pattern, data_item.text):
         for i in range(len(lacuna.group(1))):
             try:
-                text_buffer[lacuna.start()+i+1] = next(gen_chars)
+                text_buffer[lacuna.start() + i + 1] = next(gen_chars)
             except:
-                text_buffer[lacuna.start()+i+1] = '_'
+                text_buffer[lacuna.start() + i + 1] = "_"
 
     output_string = "".join(text_buffer)
 
@@ -485,15 +505,15 @@ def predict_top_k(model, data_item, k=10):
     return_list = []
 
     # write top k to file
-    with open('top_k.csv', 'w', newline='') as csvfile:
+    with open("top_k.csv", "w", newline="") as csvfile:
         writer = csv.writer(csvfile)
-        writer.writerow(['Rank', 'Candidate', 'LogSum'])  # Write header
+        writer.writerow(["Rank", "Candidate", "LogSum"])  # Write header
         for index, seq_value in enumerate(top_k):
             seq = seq_value[0]
             value = seq_value[1]
             lacuna_string = model.decode(seq)
             return_list.append(lacuna_string)
-            writer.writerow([index+1, lacuna_string, value])
+            writer.writerow([index + 1, lacuna_string, value])
 
     return return_list
 

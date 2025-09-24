@@ -1,27 +1,36 @@
-import torch
-import torch.nn as nn
 import random
 
-from greek_utils import *
-import letter_tokenizer
+import torch
+import torch.nn as nn
 
-#MASK = "<mask>"
-MASK = '_'
-USER_MASK = '#'
+import rnn_code.letter_tokenizer as letter_tokenizer
+from rnn_code.greek_utils import DataItem
+
+# MASK = "<mask>"
+MASK = "_"
+USER_MASK = "#"
+
 
 class RNN(nn.Module):
-    def __init__(self, specs, spaces_are_tokens = False, newlines_are_tokens=True):
+    def __init__(self, specs, spaces_are_tokens=False, newlines_are_tokens=True):
         super(RNN, self).__init__()
         # ensure that character dictionary doesn't change
-        self.tokenizer = letter_tokenizer.LetterTokenizer(spaces_are_tokens, newlines_are_tokens) 
-        self.unk_char = '?'
+        self.tokenizer = letter_tokenizer.LetterTokenizer(
+            spaces_are_tokens, newlines_are_tokens
+        )
+        self.unk_char = "?"
         self.bot_char = "<"
         self.eot_char = ">"
         self.mask_char = MASK
         self.user_mask_char = USER_MASK
-        tokens = "αοιεϲντυρμωηκπλδγχβθφξζψϛϚϜ" + '.?<>\n!' + self.mask_char + self.user_mask_char
+        tokens = (
+            "αοιεϲντυρμωηκπλδγχβθφξζψϛϚϜ"
+            + ".?<>\n!"
+            + self.mask_char
+            + self.user_mask_char
+        )
         if spaces_are_tokens:
-            tokens += ' '
+            tokens += " "
         self.num_tokens = len(tokens)
         self.specs = specs + [self.num_tokens]
 
@@ -83,7 +92,9 @@ class RNN(nn.Module):
 
         if not self.share:
             output = self.out(output)
-            output = torch.matmul(output, torch.t(self.embed.weight)) # this was added as a fix
+            output = torch.matmul(
+                output, torch.t(self.embed.weight)
+            )  # this was added as a fix
         else:
             # use embedding table as output layer
             output = self.scale_down(output)
@@ -96,10 +107,14 @@ class RNN(nn.Module):
         text = self.tokenizer.tokenize(text)
         indexes = [self.token_to_index[token] for token in text]
         if add_control:
-            indexes = [self.token_to_index[self.bot_char]] + indexes + [self.token_to_index[self.eot_char]]
+            indexes = (
+                [self.token_to_index[self.bot_char]]
+                + indexes
+                + [self.token_to_index[self.eot_char]]
+            )
         return indexes
 
-    def decode(self, indexes) -> str: 
+    def decode(self, indexes) -> str:
         if isinstance(indexes, torch.Tensor):
             indexes = indexes.type(torch.int64).tolist()
         text = "".join([self.index_to_token[index] for index in indexes])
@@ -111,9 +126,11 @@ class RNN(nn.Module):
 
         text_length = len(data_item.indexes)
         mask = [True] * text_length
-        labels = [-100] * text_length # labels mark where actual masking is with a value > 0, and this value is the index of the masked token
+        labels = (
+            [-100] * text_length
+        )  # labels mark where actual masking is with a value > 0, and this value is the index of the masked token
 
-        mask_count = 0 # This counts only tokens actually masked, not those swapped for random character or retained
+        mask_count = 0  # This counts only tokens actually masked, not those swapped for random character or retained
         random_sub = 0
         orig_token = 0
 
@@ -131,7 +148,7 @@ class RNN(nn.Module):
                     elif r_mask_type < 0.9:
                         # replace with random character
                         # The integers that index to the embeddings are in the closed interval [0, num_tokens - 1]
-                        replacement = random.randint(0, self.num_tokens - 1) 
+                        replacement = random.randint(0, self.num_tokens - 1)
                         random_sub += 1
                     else:
                         # retain original (these retained tokens are still True in mask list of booleans)
@@ -198,8 +215,11 @@ class RNN(nn.Module):
 
         total_mask = mask_count + random_sub + orig_token
 
-        return data_item, total_mask # Total mask also includes tokens swapped for random character, and tokens retained
-    
+        return (
+            data_item,
+            total_mask,
+        )  # Total mask also includes tokens swapped for random character, and tokens retained
+
     # This is the function to use to mask and label the test set incorporating the actual lacunae as masks
     def actual_lacuna_mask_and_label(self, data_item):
         text_buffer = []
@@ -207,39 +227,41 @@ class RNN(nn.Module):
         mask = []
         labels = []
         in_lacuna = False
-        mask.append(False) # For BOT character, '<'
+        mask.append(False)  # For BOT character, '<'
         labels.append(-100)
 
         for i in range(len(data_item.text)):
-            tokenized = [char for char in self.tokenizer.tokenize(data_item.text[i])]
-            if len(tokenized) > 1: # handles iota subscripts
-                text_buffer += tokenized 
-            else:
-                text_buffer += data_item.text[i]
-            if data_item.text[i] == '[':
+            if data_item.text[i] == "[":
                 in_lacuna = True
                 continue
-            if data_item.text[i] == ']':
+            if data_item.text[i] == "]":
                 in_lacuna = False
                 continue
+            tokenized = [char for char in self.tokenizer.tokenize(data_item.text[i])]
+            if len(tokenized) > 1:  # handles iota subscripts
+                text_buffer += tokenized
+            else:
+                text_buffer += data_item.text[i]
             # Skip any characters not recognized by the tokenizer, so that data_item.mask lines up with data_item.indexes
             if len(tokenized) == 0:
-                continue             
+                continue
             if in_lacuna:
-                text_buffer[-len(tokenized): ] = MASK*len(tokenized)
-                mask += [True]*len(tokenized)
+                text_buffer[-len(tokenized) :] = MASK * len(tokenized)
+                mask += [True] * len(tokenized)
                 labels += [self.token_to_index[token] for token in tokenized]
             else:
-                mask += [False]*len(tokenized) # This handles characters with and without subscripts
-                labels += [-100]*len(tokenized)
+                mask += [False] * len(
+                    tokenized
+                )  # This handles characters with and without subscripts
+                labels += [-100] * len(tokenized)
         data_item.text = "".join(text_buffer)
         data_item.indexes = self.lookup_indexes(data_item.text)
-        mask.append(False) # for EOT character, '>'
+        mask.append(False)  # for EOT character, '>'
         labels.append(-100)
         data_item.mask = mask
         data_item.labels = labels
-            
-        # returned data_item has self.text with the masked text with [] removed, 
+
+        # returned data_item has self.text with the masked text with [] removed,
         # self.mask marking where there's masking,
         # self.labels with -100 for unmasked tokens and >= 0 with the embedding index for masked tokens.
         return data_item

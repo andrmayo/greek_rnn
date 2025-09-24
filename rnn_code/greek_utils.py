@@ -1,54 +1,16 @@
+import json
 import logging
 import os
-import sys
-import unicodedata
 import re
 import string
-import json
-from nltk.util import ngrams
+import sys
+import unicodedata
 from collections import Counter
+
 import torch
+from nltk.util import ngrams
 
 from rnn_code.letter_tokenizer import LetterTokenizer
-
-__all__ = [
-    # Configuration variables
-    "logger",
-    "SPACES_ARE_TOKENS",
-    "NEWLINES_ARE_TOKENS",
-    "tokenizer",
-    "share",
-    "embed_size",
-    "proj_size",
-    "hidden_size",
-    "rnn_nLayers",
-    "masking_proportion",
-    "dropout",
-    "specs",
-    "learning_rate",
-    "batch_size",
-    "batch_size_multiplier",
-    "nEpochs",
-    "L2_lambda",
-    "model_path",
-    "device",
-    # Constants
-    "UNICODE_MARK_NONSPACING",
-    "COMBINING_DOT",
-    "MN_KEEP_LIST",
-    # Classes
-    "DataItem",
-    # Functions
-    "get_home_path",
-    "filter_diacritics",
-    "count_parameters",
-    "read_datafile",
-    "filter_brackets",
-    "skip_sentence",
-    "has_more_than_one_latin_character",
-    "mask_input",
-    "construct_trigram_lookup",
-]
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -185,8 +147,10 @@ MN_KEEP_LIST = [COMBINING_DOT]
 
 
 def filter_diacritics(string):
+    # First decompose the string to separate base characters from combining marks
+    decomposed = unicodedata.normalize("NFD", string)
     new_string = ""
-    for character in string:
+    for character in decomposed:
         if (
             unicodedata.category(character) != UNICODE_MARK_NONSPACING
             or unicodedata.name(character) in MN_KEEP_LIST
@@ -205,7 +169,10 @@ def count_parameters(model):
     logging.info(f"total parameter count = {total:,}")
 
 
-def read_datafile(json_file: str, data_list=[]) -> list:
+def read_datafile(json_file: str, data_list=None) -> list:
+    if data_list is None:
+        data_list = []
+
     with open(json_file, "r") as file:
         for i, line in enumerate(file):
             jsonDict = json.loads(line)

@@ -1,6 +1,7 @@
 # write a tokenizer that takes a string and returns a list of tokens
 # each token should a letter
 import unicodedata
+
 import regex as re
 
 

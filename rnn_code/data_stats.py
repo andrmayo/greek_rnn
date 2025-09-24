@@ -1,9 +1,9 @@
 # Note: this module can be run as a script to print stats, see if __name__ == "__main__" block at end
 
-from collections import Counter
 import re
+from collections import Counter
 
-from greek_utils import logger
+from rnn_code.greek_utils import logger
 
 FULL_DATA = "../data/full_data.csv"
 RECONSTRUCTED_DATA = "./data/masked_test_reconstructed_lacuna.csv"
@@ -86,7 +86,7 @@ def gap_counts(file_path):
     if gap_count > 0:
         logger.info(
             f"Total gap characters: {gap_char_count}, total gaps: {gap_count}, "
-            f"average length per gap {round(gap_char_count/gap_count, 2)}"
+            f"average length per gap {round(gap_char_count / gap_count, 2)}"
         )
 
 
