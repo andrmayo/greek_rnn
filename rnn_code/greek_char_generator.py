@@ -1,11 +1,9 @@
 # Description
 
 import csv
-import itertools
 import json
 import logging
 import random
-import re
 import time
 from math import log
 from random import shuffle
@@ -457,7 +455,8 @@ def predict(model, data_item):
     return output_text
 
 
-def predict_top_k(model, data_item, k=10):
+# file names for csv will be automatically generated from timestamp if save_to_file=True and output_file=None
+def predict_top_k(model, data_item, k=10, save_to_file=True, output_file=None):
     # beam search
     logging.info(f"input text: {data_item.text}")
 
@@ -477,9 +476,20 @@ def predict_top_k(model, data_item, k=10):
         target_candidates.append(sorted_vocabid_probs)
 
     lacuna_candidates = []
-    for i in range(len(data_item.indexes)):
-        if data_item.indexes[i] == model.mask:
+    for i in range(len(data_item.mask)):
+        if i >= len(target_candidates):
+            logging.warning(
+                f"Mask array longer than target_candidates: mask[{len(data_item.mask)}] vs target_candidates[{len(target_candidates)}]"
+            )
+            continue
+        if data_item.mask[i]:
             lacuna_candidates.append(target_candidates[i])
+
+    if not lacuna_candidates:
+        logging.warning(
+            "No lacuna positions found for top-k prediction for data_item with text number {data_item.text_number}, and text {data_item.text}\n"
+        )
+        return []
 
     top_k = [[list(), 0.0]]
     # walk over each step in sequence
@@ -498,16 +508,29 @@ def predict_top_k(model, data_item, k=10):
 
     return_list = []
 
-    # write top k to file
-    with open("top_k.csv", "w", newline="") as csvfile:
-        writer = csv.writer(csvfile)
-        writer.writerow(["Rank", "Candidate", "LogSum"])  # Write header
+    if save_to_file:
+        # Generate filename if not provided
+        if output_file is None:
+            import datetime
+
+            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            output_file = f"top_k_{timestamp}.csv"
+
+        with open(output_file, "w", newline="") as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(["Rank", "Candidate", "LogSum"])  # Write header
+            for index, seq_value in enumerate(top_k):
+                seq = seq_value[0]
+                value = seq_value[1]
+                lacuna_string = model.decode(seq)
+                return_list.append(lacuna_string)
+                writer.writerow([index + 1, lacuna_string, value])
+    else:
+        # No file writing, just build return list
         for index, seq_value in enumerate(top_k):
             seq = seq_value[0]
-            value = seq_value[1]
             lacuna_string = model.decode(seq)
             return_list.append(lacuna_string)
-            writer.writerow([index + 1, lacuna_string, value])
 
     return return_list
 
