@@ -21,6 +21,8 @@
 echo “hello world”
 nvidia-smi
 
+pwd | echo
+
 source ~/.bashrc
 
 cd ..
