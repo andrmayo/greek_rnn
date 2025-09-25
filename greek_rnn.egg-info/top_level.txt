@@ -1,2 +1,3 @@
+log
 rnn_code
 strat_experiments

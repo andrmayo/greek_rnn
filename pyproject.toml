@@ -57,5 +57,14 @@ dependencies = [
     "regex>=2025.9.18",
     "torch>=2.4.1",
 ]
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["rnn_code"]
+
 [tool.setuptools.packages.find]
-exclude = ["tests", "data", "scripts"]
+where = ["."]
+include = ["rnn_code*"]
+exclude = ["tests*", "data*", "scripts*", "log*", "wandb*", "strat_experiments*"]
