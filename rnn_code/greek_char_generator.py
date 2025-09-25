@@ -6,6 +6,7 @@ import logging
 import random
 import time
 from math import log
+from pathlib import Path
 from random import shuffle
 from typing import List
 
@@ -188,7 +189,9 @@ def train_model(
             if isinstance(item, str):
                 data_item = DataItem(text=item)
             else:
-                data_item = DataItem(text=item.text if hasattr(item, 'text') else str(item))
+                data_item = DataItem(
+                    text=item.text if hasattr(item, "text") else str(item)
+                )
             processed_item = model.actual_lacuna_mask_and_label(data_item)
         processed_dev_data.append(processed_item)
     dev_data = processed_dev_data
@@ -298,6 +301,7 @@ def train_model(
             patience_counter = 0
             logger.info(f"New best dev loss: {dev_loss:.6f} at epoch {epoch}")
             # Save best model
+            Path(model_path).mkdir(parents=True, exist_ok=True)
             torch.save(model, f"{model_path}/{output_name}_best.pth")
         else:
             patience_counter += 1
@@ -317,6 +321,7 @@ def train_model(
         )
 
         # Save current model (for debugging/backup)
+        Path(model_path).mkdir(parents=True, exist_ok=True)
         torch.save(model, f"{model_path}/{output_name}_latest.pth")
 
         # sample_masked = 0
@@ -337,6 +342,7 @@ def train_model(
             f"Restored best model from epoch {best_epoch} with dev loss {best_dev_loss:.6f}"
         )
         # Save final best model
+        Path(model_path).mkdir(parents=True, exist_ok=True)
         torch.save(model, f"{model_path}/{output_name}.pth")
     else:
         logger.warning("No best model state found - using final epoch model")

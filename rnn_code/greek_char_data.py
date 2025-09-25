@@ -3,6 +3,7 @@ import logging
 import os
 import random
 from pathlib import Path
+from typing import Dict, List, Tuple
 
 import regex as re
 
@@ -13,7 +14,9 @@ MASK = "_"
 USER_MASK = "#"
 
 
-def read_datafiles(json_list):
+def read_datafiles(
+    json_list: List,
+) -> Tuple[List[str], List[str], List[str], List[int], List[str], Dict[int, int]]:
     """
     This function takes in a list of files and looks at the Greek text in all of them.
     Sentences with reconstructed lacunae, sentences with empty lacunae, and sentences with no lacunae are separated out.
