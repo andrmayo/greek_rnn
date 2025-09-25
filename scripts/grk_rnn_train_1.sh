@@ -34,5 +34,7 @@ python -c "import multiprocessing as mp; print(f'{mp.cpu_count()} CPUs available
 mkdir -p log/strat_experiments
 
 python rnn_code/main.py -tr --masking random --masking-strategy once -p -ev
+
+mkdir -p rnn_code/log
 mv rnn_code/log/"$(ls -t rnn_code/log | head -n 1)" log/strat_experiments/rand_once_"$(ls -t rnn_code/log | head -n 1)"
 mv rnn_code/models/"$(ls -t rnn_code/models | head -n 1)" rnn_code/models/rand_once_"$(ls -t rnn_code/models | head -n 1)"
