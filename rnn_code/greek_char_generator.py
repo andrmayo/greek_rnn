@@ -182,8 +182,13 @@ def train_model(
     processed_dev_data = []
     for item in dev_data:
         if isinstance(item, DataItem):
-            # Already a DataItem, just process lacunae
-            processed_item = model.actual_lacuna_mask_and_label(item)
+            # Already a DataItem, check if already processed
+            if hasattr(item, 'mask') and item.mask is not None:
+                # Already processed, use as-is
+                processed_item = item
+            else:
+                # Process lacunae
+                processed_item = model.actual_lacuna_mask_and_label(item)
         else:
             # String or dict, create DataItem first
             if isinstance(item, str):
