@@ -61,6 +61,7 @@ six==1.16.0
 smmap==5.0.1
 stack-data==0.6.3
 sympy==1.13.2
+torch==2.4.1
 tqdm==4.66.5
 traitlets==5.14.3
 triton==3.0.0
