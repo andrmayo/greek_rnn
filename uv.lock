@@ -168,7 +168,7 @@ wheels = [
 [[package]]
 name = "greek-rnn"
 version = "0.1.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "certifi", marker = "python_full_version < '4.0'" },
     { name = "charset-normalizer", marker = "python_full_version < '4.0'" },

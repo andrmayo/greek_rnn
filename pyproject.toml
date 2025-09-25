@@ -61,9 +61,6 @@ dependencies = [
 requires = ["setuptools>=45", "wheel"]
 build-backend = "setuptools.build_meta"
 
-[tool.setuptools]
-packages = ["rnn_code"]
-
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["rnn_code*"]
