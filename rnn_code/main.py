@@ -19,7 +19,7 @@ from rnn_code.greek_char_generator import (
     rank,
     train_model,
 )
-from rnn_code.greek_utils import device, logger, model_path, specs
+from rnn_code.greek_utils import device, logger, model_path, seed, specs
 
 # Note to self: the model at present seems to veer towards just predicting the most common character in the corpus
 
@@ -287,6 +287,7 @@ if __name__ == "__main__":
             output_name=model_name,
             mask=mask,  # true if masking_strategy is dynamic, false if masking_strategy is once
             mask_type=mask_type,
+            seed=seed,
         )
 
     if args.eval:

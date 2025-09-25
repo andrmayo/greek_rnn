@@ -26,6 +26,8 @@ file_handler.setLevel(logging.INFO)
 logger.addHandler(file_handler)
 logger.addHandler(stdout_handler)
 
+seed = 1234
+
 SPACES_ARE_TOKENS = False
 NEWLINES_ARE_TOKENS = False
 

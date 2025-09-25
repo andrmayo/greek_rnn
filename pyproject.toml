@@ -20,8 +20,6 @@ dependencies = [
     "markupsafe==2.1.5 ; python_full_version >= '3.12' and python_full_version < '4.0'",
     "mpmath==1.3.0 ; python_full_version >= '3.12' and python_full_version < '4.0'",
     "networkx==3.3 ; python_full_version >= '3.12' and python_full_version < '4.0'",
-    "nltk>=3.9.1",
-    "nltk==3.9.1 ; python_full_version >= '3.12' and python_full_version < '4.0'",
     "numpy==2.1.0 ; python_full_version >= '3.12' and python_full_version < '4.0'",
     "nvidia-cublas-cu12==12.1.3.1 ; python_full_version >= '3.12' and python_full_version < '4.0' and platform_machine == 'x86_64' and sys_platform == 'linux'",
     "nvidia-cuda-cupti-cu12==12.1.105 ; python_full_version >= '3.12' and python_full_version < '4.0' and platform_machine == 'x86_64' and sys_platform == 'linux'",
@@ -39,7 +37,6 @@ dependencies = [
     "protobuf==5.28.3 ; python_full_version >= '3.12' and python_full_version < '4.0'",
     "psutil==6.0.0 ; python_full_version >= '3.12' and python_full_version < '4.0'",
     "pyyaml==6.0.2 ; python_full_version >= '3.12' and python_full_version < '4.0'",
-    "regex==2024.7.24 ; python_full_version >= '3.12' and python_full_version < '4.0'",
     "requests==2.32.3 ; python_full_version >= '3.12' and python_full_version < '4.0'",
     "sentry-sdk==2.18.0 ; python_full_version >= '3.12' and python_full_version < '4.0'",
     "setproctitle==1.3.4 ; python_full_version >= '3.12' and python_full_version < '4.0'",
@@ -47,7 +44,6 @@ dependencies = [
     "six==1.16.0 ; python_full_version >= '3.12' and python_full_version < '4.0'",
     "smmap==5.0.1 ; python_full_version >= '3.12' and python_full_version < '4.0'",
     "sympy==1.13.2 ; python_full_version >= '3.12' and python_full_version < '4.0'",
-    "torch==2.4.0 ; python_full_version >= '3.12' and python_full_version < '4.0'",
     "tqdm==4.66.5 ; python_full_version >= '3.12' and python_full_version < '4.0'",
     "triton==3.0.0 ; python_full_version == '3.12.*' and platform_machine == 'x86_64' and sys_platform == 'linux'",
     "typing-extensions==4.12.2 ; python_full_version >= '3.12' and python_full_version < '4.0'",
@@ -57,6 +53,8 @@ dependencies = [
     "ipython>=9.4.0",
     "pytest>=8.4.1",
     "ruff>=0.13.1",
+    "nltk>=3.9.1",
+    "regex>=2025.9.18",
 ]
 [tool.setuptools.packages.find]
 exclude = ["tests", "data", "scripts"]

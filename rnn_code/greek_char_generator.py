@@ -131,7 +131,10 @@ def train_model(
     output_name="greek_lacuna",
     mask=True,
     mask_type=None,
+    seed=None,
 ):
+    if seed is not None:
+        random.seed(seed)
     # start a new wandb run to track this script
     wandb.init(
         # set the wandb project where this run will be logged
