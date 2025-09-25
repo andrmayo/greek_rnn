@@ -81,6 +81,10 @@ def train_batch(
                 data_item, mask_type=mask_type
             )
 
+        # Ensure indexes are populated even if not masking dynamically
+        if data_item.indexes is None:
+            data_item.indexes = model.lookup_indexes(data_item.text)
+
         index_tensor = torch.tensor(data_item.indexes, dtype=torch.int64).to(device)
         label_tensor = torch.tensor(data_item.labels, dtype=torch.int64).to(device)
         out = model([index_tensor])  # [:-1]
@@ -164,7 +168,12 @@ def train_model(
     # Convert train_data strings to DataItem objects
     processed_train_data = []
     for text in train_data:
-        data_item = DataItem(text=text)
+        if isinstance(text, DataItem):
+            # Already a DataItem
+            data_item = text
+        else:
+            # String, create DataItem
+            data_item = DataItem(text=text)
         processed_train_data.append(data_item)
     train_data = processed_train_data
 

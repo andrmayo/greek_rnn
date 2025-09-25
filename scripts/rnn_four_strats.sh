@@ -2,8 +2,7 @@
 
 # need to submit jobs to SLURM such that each job waits for the prior job to finish
 
-echo "Running master script; starting in directory:"
-echo $(pwd)
+echo "Running master script"
 
 JOBID1=$(sbatch --parsable grk_rnn_train_1.sh)
 
