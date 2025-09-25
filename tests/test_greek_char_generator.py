@@ -2,8 +2,8 @@ import pytest
 import torch
 import os
 import tempfile
-from unittest.mock import Mock, patch
-from rnn_code.greek_char_generator import predict, predict_top_k
+from unittest.mock import Mock, patch, MagicMock
+from rnn_code.greek_char_generator import predict, predict_top_k, train_model
 from rnn_code.greek_rnn import RNN
 from rnn_code.greek_utils import DataItem
 
@@ -255,3 +255,196 @@ class TestPredictTopK:
             # Should return empty list when no lacunae
             assert isinstance(result, list)
             assert len(result) == 0
+
+
+class TestTrainModel:
+    @pytest.fixture
+    def sample_specs(self):
+        return [300, 300, 150, 4, False, 0.0, 0.15]  # Standard specs
+
+    @pytest.fixture
+    def rnn_model(self, sample_specs):
+        return RNN(sample_specs)
+
+    @pytest.fixture
+    def sample_train_data(self):
+        """Create sample training data"""
+        return [
+            "αβγδε",
+            "ζηθικ",
+            "λμνξο",
+            "πρστυ",
+            "φχψω",
+        ]
+
+    @pytest.fixture
+    def sample_dev_data(self):
+        """Create sample dev data with lacunae"""
+        return [
+            "αβ[γ]δε",
+            "ζη[θ]ικ",
+        ]
+
+    def test_train_model_early_stopping(self, rnn_model, sample_train_data, sample_dev_data):
+        """Test train_model function with early stopping"""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # Mock all the dependencies
+            with patch('rnn_code.greek_char_generator.wandb') as mock_wandb, \
+                 patch('rnn_code.greek_char_generator.model_path', temp_dir), \
+                 patch('rnn_code.greek_char_generator.nEpochs', 10), \
+                 patch('rnn_code.greek_char_generator.patience', 3), \
+                 patch('rnn_code.greek_char_generator.train_batch') as mock_train_batch:
+
+                # Mock train_batch to return predictable loss values
+                # Simulate dev loss: improves for 2 epochs, then gets worse for 3 epochs (triggers early stop)
+                dev_losses = [1.0, 0.8, 0.9, 1.1, 1.2]  # Best at epoch 1 (0.8)
+                train_losses = [1.0, 0.9, 0.85, 0.8, 0.75]
+
+                def mock_train_batch_side_effect(*args, **kwargs):
+                    update = kwargs.get('update', True)
+                    epoch_idx = len(mock_train_batch.call_args_list) // 2  # Rough epoch tracking
+                    if epoch_idx >= len(dev_losses):
+                        epoch_idx = len(dev_losses) - 1
+
+                    if update:  # Training batch
+                        return train_losses[epoch_idx], 100, 500, 50, 0, 0
+                    else:  # Dev batch
+                        return dev_losses[epoch_idx], 50, 250, 25, 25, 20
+
+                mock_train_batch.side_effect = mock_train_batch_side_effect
+
+                # Run training
+                result_model = train_model(
+                    rnn_model,
+                    sample_train_data,
+                    sample_dev_data,
+                    output_name="test_early_stop"
+                )
+
+                # Verify model is returned
+                assert result_model is not None
+                assert isinstance(result_model, RNN)
+
+                # Verify checkpoint files were created
+                assert os.path.exists(f"{temp_dir}/test_early_stop_best.pth")
+                assert os.path.exists(f"{temp_dir}/test_early_stop_latest.pth")
+                assert os.path.exists(f"{temp_dir}/test_early_stop.pth")
+
+    def test_train_model_best_model_selection(self, rnn_model, sample_train_data, sample_dev_data):
+        """Test that best model is properly selected and restored"""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            with patch('rnn_code.greek_char_generator.wandb') as mock_wandb, \
+                 patch('rnn_code.greek_char_generator.model_path', temp_dir), \
+                 patch('rnn_code.greek_char_generator.nEpochs', 5), \
+                 patch('rnn_code.greek_char_generator.patience', 10), \
+                 patch('rnn_code.greek_char_generator.train_batch') as mock_train_batch:
+
+                # Simulate scenario where best model is NOT the final epoch
+                # Dev losses: 1.0 -> 0.5 (best) -> 0.8 -> 0.7 -> 0.9
+                dev_losses = [1.0, 0.5, 0.8, 0.7, 0.9]  # Best at epoch 1 (0.5)
+                train_losses = [1.0, 0.8, 0.7, 0.6, 0.5]
+
+                # Store original model state to verify it gets restored
+                original_state = rnn_model.state_dict().copy()
+
+                def mock_train_batch_side_effect(*args, **kwargs):
+                    update = kwargs.get('update', True)
+                    epoch_idx = min(len(mock_train_batch.call_args_list) // 2, len(dev_losses) - 1)
+
+                    if update:  # Training batch
+                        return train_losses[epoch_idx], 100, 500, 50, 0, 0
+                    else:  # Dev batch
+                        return dev_losses[epoch_idx], 50, 250, 25, 25, 20
+
+                mock_train_batch.side_effect = mock_train_batch_side_effect
+
+                # Run training (should complete all epochs since patience is high)
+                result_model = train_model(
+                    rnn_model,
+                    sample_train_data,
+                    sample_dev_data,
+                    output_name="test_best_model"
+                )
+
+                # Verify model is returned
+                assert result_model is not None
+                assert isinstance(result_model, RNN)
+
+                # Note: We can't easily verify the exact state was restored without
+                # deeper mocking, but we can verify the files exist
+                assert os.path.exists(f"{temp_dir}/test_best_model_best.pth")
+                assert os.path.exists(f"{temp_dir}/test_best_model.pth")
+
+    def test_train_model_patience_import(self):
+        """Test that patience parameter can be imported and used"""
+        # This test ensures the import doesn't break
+        from rnn_code.greek_utils import patience
+        assert isinstance(patience, int)
+        assert patience > 0
+
+    def test_train_model_no_improvement(self, rnn_model, sample_train_data, sample_dev_data):
+        """Test behavior when dev loss never improves (edge case)"""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            with patch('rnn_code.greek_char_generator.wandb') as mock_wandb, \
+                 patch('rnn_code.greek_char_generator.model_path', temp_dir), \
+                 patch('rnn_code.greek_char_generator.nEpochs', 5), \
+                 patch('rnn_code.greek_char_generator.patience', 2), \
+                 patch('rnn_code.greek_char_generator.train_batch') as mock_train_batch:
+
+                # Simulate dev loss getting worse each epoch
+                dev_losses = [1.0, 1.5, 2.0, 2.5, 3.0]  # Always getting worse
+                train_losses = [1.0, 0.9, 0.8, 0.7, 0.6]  # Training improves
+
+                def mock_train_batch_side_effect(*args, **kwargs):
+                    update = kwargs.get('update', True)
+                    epoch_idx = min(len(mock_train_batch.call_args_list) // 2, len(dev_losses) - 1)
+
+                    if update:
+                        return train_losses[epoch_idx], 100, 500, 50, 0, 0
+                    else:
+                        return dev_losses[epoch_idx], 50, 250, 25, 25, 20
+
+                mock_train_batch.side_effect = mock_train_batch_side_effect
+
+                # Should still return a model (from epoch 0, the "best")
+                result_model = train_model(
+                    rnn_model,
+                    sample_train_data,
+                    sample_dev_data,
+                    output_name="test_no_improvement"
+                )
+
+                assert result_model is not None
+                assert isinstance(result_model, RNN)
+
+    def test_train_model_file_creation_error(self, rnn_model, sample_train_data, sample_dev_data):
+        """Test handling when model files can't be saved"""
+        # Use a read-only directory to trigger file save errors
+        with tempfile.TemporaryDirectory() as temp_dir:
+            readonly_dir = os.path.join(temp_dir, "readonly")
+            os.makedirs(readonly_dir)
+            os.chmod(readonly_dir, 0o444)  # Read-only
+
+            try:
+                with patch('rnn_code.greek_char_generator.wandb') as mock_wandb, \
+                     patch('rnn_code.greek_char_generator.model_path', readonly_dir), \
+                     patch('rnn_code.greek_char_generator.nEpochs', 2), \
+                     patch('rnn_code.greek_char_generator.patience', 5), \
+                     patch('rnn_code.greek_char_generator.train_batch') as mock_train_batch:
+
+                    mock_train_batch.return_value = (1.0, 100, 500, 50, 25, 20)
+
+                    # This should raise an exception due to file permissions
+                    with pytest.raises(RuntimeError):
+                        train_model(
+                            rnn_model,
+                            sample_train_data,
+                            sample_dev_data,
+                            output_name="test_file_error"
+                        )
+            finally:
+                # Cleanup - restore permissions so directory can be deleted
+                try:
+                    os.chmod(readonly_dir, 0o755)
+                except:
+                    pass

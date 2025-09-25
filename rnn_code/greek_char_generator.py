@@ -7,6 +7,7 @@ import random
 import time
 from math import log
 from random import shuffle
+from typing import List
 
 import numpy
 import torch
@@ -16,7 +17,7 @@ from torch import nn
 import rnn_code.greek_utils as utils
 import wandb
 
-# RNN class imported when needed
+from rnn_code.greek_rnn import RNN
 from rnn_code.greek_utils import (
     DataItem,
     L2_lambda,
@@ -27,6 +28,7 @@ from rnn_code.greek_utils import (
     logger,
     model_path,
     nEpochs,
+    patience,
 )
 
 
@@ -54,7 +56,7 @@ def check_accuracy(target, orig_data_item):
 
 
 def train_batch(
-    model,
+    model: RNN,
     optimizer,
     criterion,
     data,
@@ -123,7 +125,7 @@ def train_batch(
 
 
 def train_model(
-    model,
+    model: RNN,
     train_data,
     dev_data=None,
     output_name="greek_lacuna",
@@ -143,6 +145,9 @@ def train_model(
         },
     )
 
+    # Move model to device
+    model = model.to(device)
+
     train_data = train_data[:]  # to avoid modifying list passed to train_model()
     if dev_data is None:
         data_set = train_data
@@ -153,7 +158,23 @@ def train_model(
     else:
         dev_data = dev_data[:]
 
-    # Now whether dev_data was passed or not, there's a train_data list object and a dev_data list object
+    # Convert train_data strings to DataItem objects
+    processed_train_data = []
+    for text in train_data:
+        data_item = DataItem(text=text)
+        processed_train_data.append(data_item)
+    train_data = processed_train_data
+
+    # Convert dev_data strings to DataItem objects with processed lacunae (once at start)
+    processed_dev_data = []
+    for text in dev_data:
+        data_item = DataItem(text=text)
+        # Process lacunae to get proper mask and labels
+        processed_item = model.actual_lacuna_mask_and_label(data_item)
+        processed_dev_data.append(processed_item)
+    dev_data = processed_dev_data
+
+    # Now whether dev_data was passed or not, there's a train_data list object and a dev_data list object (DataItems)
     train_list = [i for i in range(len(train_data))]
     dev_list = [i for i in range(len(dev_data))]
 
@@ -167,10 +188,12 @@ def train_model(
 
     start = time.time()
     bs = batch_size
-    prev_dev_loss = 0
-    prev_train_loss = 0
-    prev_prev_dev_loss = 0
-    prev_prev_train_loss = 0
+
+    # Early stopping and best model tracking
+    best_dev_loss = float("inf")
+    best_model_state = None
+    patience_counter = 0
+    best_epoch = 0
 
     for epoch in range(nEpochs):
         if epoch > 0:
@@ -248,17 +271,34 @@ def train_model(
 
         wandb.log({"dev loss after epoch": dev_loss})
 
-        if train_loss < prev_train_loss and dev_loss > prev_dev_loss:
-            logger.info("early exit")
-            break
+        # Early stopping with patience and best model checkpointing
+        if dev_loss < best_dev_loss:
+            best_dev_loss = dev_loss
+            best_model_state = model.state_dict().copy()
+            best_epoch = epoch
+            patience_counter = 0
+            logger.info(f"New best dev loss: {dev_loss:.6f} at epoch {epoch}")
+            # Save best model
+            torch.save(model, f"{model_path}/{output_name}_best.pth")
+        else:
+            patience_counter += 1
+            logger.info(
+                f"Dev loss did not improve. Patience: {patience_counter}/{patience}"
+            )
 
-        prev_dev_loss = dev_loss
-        prev_train_loss = train_loss
+        # Check if we should stop early
+        if patience_counter >= patience:
+            logger.info(
+                f"Early stopping at epoch {epoch}. Best dev loss: {best_dev_loss:.6f} at epoch {best_epoch}"
+            )
+            break
 
         logging.info(
             f"dev masked total: {dev_masked}, correct predictions: {dev_correct}, simple accuracy: {round(dev_correct / dev_masked, 3)}"
         )
-        torch.save(model, f"{model_path}/{output_name}.pth")
+
+        # Save current model (for debugging/backup)
+        torch.save(model, f"{model_path}/{output_name}_latest.pth")
 
         # sample_masked = 0
         # sample_correct = 0
@@ -271,6 +311,17 @@ def train_model(
         #
         # logging.info(f"sample accuracy: {round(sample_correct/sample_masked, 3)}")
 
+    # Restore best model state if we found one
+    if best_model_state is not None:
+        model.load_state_dict(best_model_state)
+        logger.info(
+            f"Restored best model from epoch {best_epoch} with dev loss {best_dev_loss:.6f}"
+        )
+        # Save final best model
+        torch.save(model, f"{model_path}/{output_name}.pth")
+    else:
+        logger.warning("No best model state found - using final epoch model")
+
     # dev_data is being passed in here in the same format as training data is passed to RNN model
     accuracy_evaluation(model, dev_data, dev_list)
     # baseline_accuracy(model, dev_data, dev_list)
@@ -278,7 +329,7 @@ def train_model(
     return model
 
 
-def fill_masks(model, text, mask_type, temp=0):
+def fill_masks(model: RNN, text, mask_type, temp=0):
     logging.info(f"prompt: {text}")
     test_data_item = DataItem(text=text)
     data_item, _ = model.mask_and_label_characters(test_data_item, mask_type=mask_type)
@@ -314,7 +365,7 @@ def fill_masks(model, text, mask_type, temp=0):
 
 
 # this should be able to evaluate both on dev set and test set
-def accuracy_evaluation(model, data, data_indexes):
+def accuracy_evaluation(model: RNN, data: List[DataItem], data_indexes):
     # first pass at simple accuracy function
     masked_total = 0
     correct = 0
@@ -352,7 +403,7 @@ def accuracy_evaluation(model, data, data_indexes):
 
 # this is only for evaluating on the test set
 # everything involving trigrams needs work
-def baseline_accuracy(model, data, data_indexes):
+def baseline_accuracy(model: RNN, data, data_indexes):
     masked_total = 0
     correct_most_common_char = 0
     correct_random = 0
@@ -421,7 +472,7 @@ def baseline_accuracy(model, data, data_indexes):
     )
 
 
-def predict(model, data_item):
+def predict(model: RNN, data_item):
     logging.info(f"input text: {data_item.text}")
 
     index_tensor = torch.tensor(data_item.indexes, dtype=torch.int64).to(device)
@@ -456,7 +507,7 @@ def predict(model, data_item):
 
 
 # file names for csv will be automatically generated from timestamp if save_to_file=True and output_file=None
-def predict_top_k(model, data_item, k=10, save_to_file=True, output_file=None):
+def predict_top_k(model: RNN, data_item, k=10, save_to_file=True, output_file=None):
     # beam search
     logging.info(f"input text: {data_item.text}")
 
@@ -535,7 +586,7 @@ def predict_top_k(model, data_item, k=10, save_to_file=True, output_file=None):
     return return_list
 
 
-def rank(model, sentence, options, char_indexes):
+def rank(model: RNN, sentence, options, char_indexes):
     # filter diacritics
     sentence = utils.filter_diacritics(sentence)
     data_item = model.actual_lacuna_mask_and_label(DataItem(), sentence)

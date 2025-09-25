@@ -111,6 +111,11 @@ nEpochs = 50
 L2_lambda = 0.0
 # L2_lambda = 0.001
 
+# Early stopping patience - number of epochs to wait before stopping if dev loss doesn't improve
+patience = 5
+# patience = 3
+# patience = 10
+
 model_path = "./models/"
 
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
