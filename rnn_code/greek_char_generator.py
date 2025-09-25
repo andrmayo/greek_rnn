@@ -168,12 +168,19 @@ def train_model(
         processed_train_data.append(data_item)
     train_data = processed_train_data
 
-    # Convert dev_data strings to DataItem objects with processed lacunae (once at start)
+    # Convert dev_data to DataItem objects with processed lacunae (once at start)
     processed_dev_data = []
-    for text in dev_data:
-        data_item = DataItem(text=text)
-        # Process lacunae to get proper mask and labels
-        processed_item = model.actual_lacuna_mask_and_label(data_item)
+    for item in dev_data:
+        if isinstance(item, DataItem):
+            # Already a DataItem, just process lacunae
+            processed_item = model.actual_lacuna_mask_and_label(item)
+        else:
+            # String or dict, create DataItem first
+            if isinstance(item, str):
+                data_item = DataItem(text=item)
+            else:
+                data_item = DataItem(text=item.text if hasattr(item, 'text') else str(item))
+            processed_item = model.actual_lacuna_mask_and_label(data_item)
         processed_dev_data.append(processed_item)
     dev_data = processed_dev_data
 
