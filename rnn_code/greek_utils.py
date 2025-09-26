@@ -114,8 +114,7 @@ L2_lambda = 0.0
 # L2_lambda = 0.001
 
 # Early stopping patience - number of epochs to wait before stopping if dev loss doesn't improve
-# patience = 3
-patience = 4
+patience = 3
 # patience = 5
 # patience = 10
 
