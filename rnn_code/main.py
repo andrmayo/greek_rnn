@@ -291,7 +291,6 @@ if __name__ == "__main__":
         )
 
     if args.eval:
-        # you need to redo a bunch of stuff here
         # run model on test set
         # random_test_data, _ = utils.mask_input(model, test_json, "random", "once") # I don't think we need to mask test_data
         # random_test_list = [i for i in range(len(random_test_data))]
@@ -308,7 +307,7 @@ if __name__ == "__main__":
         # load sentences
         # to eval pull from reconstructions according to the random_index entries corresponding to test_data
 
-        file_path = "./data/" + test_json
+        file_path = f"{__file__}/data/" + test_json
         test_texts = utils.read_datafile(
             file_path
         )  # returns of a list of utils.DataItem objects
