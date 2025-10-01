@@ -307,7 +307,7 @@ if __name__ == "__main__":
         # load sentences
         # to eval pull from reconstructions according to the random_index entries corresponding to test_data
 
-        file_path = f"{__file__}/data/" + test_json
+        file_path = f"{Path(__file__).parent}/data/" + test_json
         test_texts = utils.read_datafile(
             file_path
         )  # returns of a list of utils.DataItem objects
