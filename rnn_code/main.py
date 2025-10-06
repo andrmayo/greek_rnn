@@ -157,11 +157,11 @@ if __name__ == "__main__":
         for line in file:
             jsonDict = json.loads(line)
             train_data.append(jsonDict)
-    with open(f"{cur_path}//data/{dev_json}", "r") as file:
+    with open(f"{cur_path}/data/{dev_json}", "r") as file:
         for line in file:
             jsonDict = json.loads(line)
             dev_data.append(jsonDict)
-    with open(f"{cur_path}//data/{test_json}", "r") as file:
+    with open(f"{cur_path}/data/{test_json}", "r") as file:
         for line in file:
             jsonDict = json.loads(line)
             test_data.append(jsonDict)
@@ -322,7 +322,9 @@ if __name__ == "__main__":
 
         reconstructed_lacunae = []
 
-        with open(f"./data/{reconstruction_json}", "r") as jsonfile:
+        with open(
+            f"{Path(__file__).parent}/data/" + reconstruction_json, "r"
+        ) as jsonfile:
             for line in jsonfile:
                 jsonDict = json.loads(line)
                 reconstructed_lacunae.append(jsonDict["reconstructions"])
