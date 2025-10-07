@@ -2,12 +2,15 @@
 
 import re
 from collections import Counter
+from pathlib import Path
 
 from rnn_code.greek_utils import logger
 
-FULL_DATA = "../data/full_data.csv"
-RECONSTRUCTED_DATA = "./data/masked_test_reconstructed_lacuna.csv"
-EMPTY_LACUNA_DATA = "./data/test_empty_lacuna.csv"
+FULL_DATA = f"{Path(__file__).parent}/data/full_data.csv"
+RECONSTRUCTED_DATA = (
+    f"{Path(__file__).parent}/data/masked_test_reconstructed_lacuna.csv"
+)
+EMPTY_LACUNA_DATA = f"{Path(__file__).parent}/data/test_empty_lacuna.csv"
 
 FILES = [FULL_DATA, RECONSTRUCTED_DATA, EMPTY_LACUNA_DATA]
 

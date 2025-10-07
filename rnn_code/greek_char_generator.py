@@ -183,7 +183,7 @@ def train_model(
     for item in dev_data:
         if isinstance(item, DataItem):
             # Already a DataItem, check if already processed
-            if hasattr(item, 'mask') and item.mask is not None:
+            if hasattr(item, "mask") and item.mask is not None:
                 # Already processed, use as-is
                 processed_item = item
             else:
@@ -442,7 +442,7 @@ def baseline_accuracy(model: RNN, data, data_indexes):
     target_char_index = model.token_to_index["ο"]
     # Load tri-gram look-up if already constructed, else construct it
     try:
-        with open("data/trigram_lookup.json", "r") as file:
+        with open(f"{Path(__file__).parent}/data/trigram_lookup.json", "r") as file:
             trigram_lookup = json.load(file)
     except FileNotFoundError:
         # return a dictionary of format {bigram: {char1: count, char2: count, ...}} that tells how often each character completes the trigram
@@ -595,7 +595,8 @@ def predict_top_k(model: RNN, data_item, k=10, save_to_file=True, output_file=No
             import datetime
 
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-            output_file = f"top_k_{timestamp}.csv"
+            output_file = f"{Path(__file__).parent}/results/top_k_{timestamp}.csv"
+            Path(output_file).parent.mkdir(parents=True, exist_ok=True)
 
         with open(output_file, "w", newline="") as csvfile:
             writer = csv.writer(csvfile)

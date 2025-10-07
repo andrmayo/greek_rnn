@@ -6,6 +6,7 @@ import string
 import sys
 import unicodedata
 from collections import Counter
+from pathlib import Path
 
 import torch
 from nltk.util import ngrams
@@ -20,7 +21,7 @@ stdout_handler = logging.StreamHandler(sys.stdout)
 stdout_handler.setLevel(logging.DEBUG)
 stdout_handler.setFormatter(formatter)
 
-file_handler = logging.FileHandler("log/greek_data_processing.log")
+file_handler = logging.FileHandler(f"{Path(__file__).parent}/log/greek_data_processing.log")
 file_handler.setLevel(logging.INFO)
 
 logger.addHandler(file_handler)
@@ -118,7 +119,7 @@ L2_lambda = 0.0
 patience = 5
 # patience = 10
 
-model_path = "./models/"
+model_path = str(Path(__file__).parent / "models")
 
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 print(f"torch version & device: {torch.__version__, device}")
@@ -243,7 +244,7 @@ def mask_input(model, data, mask_type, masking_strategy):
 
 def construct_trigram_lookup():
     # read in training data
-    with open("./data/train.json", "r") as jsonFile:
+    with open(f"{Path(__file__).parent}/data/train.json", "r") as jsonFile:
         texts = [json.loads(line)["text"].strip() for line in jsonFile]
 
     ngram_counts = Counter()
@@ -266,7 +267,7 @@ def construct_trigram_lookup():
             look_up[first_second] = {entry[2]: ngram_counts[entry]}
 
     # write look_up tp file
-    with open("./data/trigram_lookup.json", "w") as json_file:
+    with open(f"{Path(__file__).parent}/data/trigram_lookup.json", "w") as json_file:
         json.dump(look_up, json_file, indent=4)
 
     return look_up
