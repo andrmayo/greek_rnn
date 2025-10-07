@@ -378,7 +378,12 @@ if __name__ == "__main__":
     if args.predict_top_k:
         k = 1000
         sentence = args.predict_top_k
-        data_item = model.actual_lacuna_mask_and_label(DataItem(), sentence)
+        sentence = re.sub("<gap/>", "!", sentence)
+        pattern = re.compile(r"\[.*?\]")
+        sentence = pattern.sub(lambda x: x.group().replace(" ", ""), sentence)
+
+        instance = DataItem(text=sentence)
+        data_item = model.actual_lacuna_mask_and_label(instance)
         predict_top_k(model, data_item, k)
 
     if args.rank:

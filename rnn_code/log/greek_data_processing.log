@@ -1,1 +1,86 @@
 start greek data processing -- 2025-10-07 14:32:07.127899
+start greek data processing -- 2025-10-07 15:02:35.905333
+Using a pre-trained model
+start greek data processing -- 2025-10-07 15:03:22.345008
+Using a pre-trained model
+Loading model: /home/archytas/Projects/greek_rnn/rnn_code/models/best/rand_dynam_greek_rnn_no_dropout.pth
+Load model: RNN(
+  (embed): Embedding(35, 300)
+  (scale_up): Linear(in_features=300, out_features=300, bias=True)
+  (rnn): LSTM(300, 150, num_layers=4, batch_first=True, bidirectional=True)
+  (out): Linear(in_features=300, out_features=300, bias=True)
+  (dropout): Dropout(p=0.0, inplace=False)
+) with specs: embed_size: 300, hidden_size: 300, proj_size: 150, rnn n layers: 4, share: False, dropout: 0.0
+RNN(
+  (embed): Embedding(35, 300)
+  (scale_up): Linear(in_features=300, out_features=300, bias=True)
+  (rnn): LSTM(300, 150, num_layers=4, batch_first=True, bidirectional=True)
+  (out): Linear(in_features=300, out_features=300, bias=True)
+  (dropout): Dropout(p=0.0, inplace=False)
+)
+total parameter count = 2,350,500
+input text: ἀγαθὸς ___ ἐστιν
+output text: αγαθοϲκανεϲτιν
+end generator -- 2025-10-07 15:03:50.099647
+
+start greek data processing -- 2025-10-07 15:04:35.414520
+Using a pre-trained model
+Loading model: /home/archytas/Projects/greek_rnn/rnn_code/models/best/rand_dynam_greek_rnn_no_dropout.pth
+Load model: RNN(
+  (embed): Embedding(35, 300)
+  (scale_up): Linear(in_features=300, out_features=300, bias=True)
+  (rnn): LSTM(300, 150, num_layers=4, batch_first=True, bidirectional=True)
+  (out): Linear(in_features=300, out_features=300, bias=True)
+  (dropout): Dropout(p=0.0, inplace=False)
+) with specs: embed_size: 300, hidden_size: 300, proj_size: 150, rnn n layers: 4, share: False, dropout: 0.0
+RNN(
+  (embed): Embedding(35, 300)
+  (scale_up): Linear(in_features=300, out_features=300, bias=True)
+  (rnn): LSTM(300, 150, num_layers=4, batch_first=True, bidirectional=True)
+  (out): Linear(in_features=300, out_features=300, bias=True)
+  (dropout): Dropout(p=0.0, inplace=False)
+)
+total parameter count = 2,350,500
+input text: ἀγαθὸ_ ἐστιν
+output text: αγαθονεϲτιν
+end generator -- 2025-10-07 15:05:03.227343
+
+start greek data processing -- 2025-10-07 15:05:28.699543
+Using a pre-trained model
+Loading model: /home/archytas/Projects/greek_rnn/rnn_code/models/best/rand_dynam_greek_rnn_no_dropout.pth
+Load model: RNN(
+  (embed): Embedding(35, 300)
+  (scale_up): Linear(in_features=300, out_features=300, bias=True)
+  (rnn): LSTM(300, 150, num_layers=4, batch_first=True, bidirectional=True)
+  (out): Linear(in_features=300, out_features=300, bias=True)
+  (dropout): Dropout(p=0.0, inplace=False)
+) with specs: embed_size: 300, hidden_size: 300, proj_size: 150, rnn n layers: 4, share: False, dropout: 0.0
+RNN(
+  (embed): Embedding(35, 300)
+  (scale_up): Linear(in_features=300, out_features=300, bias=True)
+  (rnn): LSTM(300, 150, num_layers=4, batch_first=True, bidirectional=True)
+  (out): Linear(in_features=300, out_features=300, bias=True)
+  (dropout): Dropout(p=0.0, inplace=False)
+)
+total parameter count = 2,350,500
+start greek data processing -- 2025-10-07 15:07:28.527681
+Using a pre-trained model
+Loading model: /home/archytas/Projects/greek_rnn/rnn_code/models/best/rand_dynam_greek_rnn_no_dropout.pth
+Load model: RNN(
+  (embed): Embedding(35, 300)
+  (scale_up): Linear(in_features=300, out_features=300, bias=True)
+  (rnn): LSTM(300, 150, num_layers=4, batch_first=True, bidirectional=True)
+  (out): Linear(in_features=300, out_features=300, bias=True)
+  (dropout): Dropout(p=0.0, inplace=False)
+) with specs: embed_size: 300, hidden_size: 300, proj_size: 150, rnn n layers: 4, share: False, dropout: 0.0
+RNN(
+  (embed): Embedding(35, 300)
+  (scale_up): Linear(in_features=300, out_features=300, bias=True)
+  (rnn): LSTM(300, 150, num_layers=4, batch_first=True, bidirectional=True)
+  (out): Linear(in_features=300, out_features=300, bias=True)
+  (dropout): Dropout(p=0.0, inplace=False)
+)
+total parameter count = 2,350,500
+input text: ἀγαθὸ_ ἐστιν
+end generator -- 2025-10-07 15:07:58.534909
+
