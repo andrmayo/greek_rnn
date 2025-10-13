@@ -237,7 +237,7 @@ if __name__ == "__main__":
         model = model.to(utils.device)
     else:
         logger.info("Using a pre-trained model")
-        preload_model = cur_path / "models" / "best"
+        preload_model = Path(model_path) / "best"
         preload_model = [mod for mod in preload_model.glob("*.pth")]
         if not preload_model:
             raise FileNotFoundError(f"No pth file found in {cur_path}/models/best")
@@ -387,16 +387,12 @@ if __name__ == "__main__":
         predict_top_k(model, data_item, k)
 
     if args.rank:
-        # sentence = "ⲛⲛⲉⲧⲛⲟⲩⲱϣϥⲛⲟⲩⲕⲁⲥⲉⲃⲟⲗⲛϩⲏⲧϥⲉⲕⲉⲁⲥⲡⲉϫⲁϥⲛⲧⲉ###ⲛⲟⲩⲟⲩϣⲏⲛⲟⲩⲱⲧⲉⲧⲉⲧⲛⲉⲟⲩⲟⲙϥⲕⲁⲧⲁⲛⲉⲧⲙⲡⲁⲧⲣⲓⲁⲙⲛⲛⲉⲧⲛⲇⲏⲙⲟⲥ"
-        # options = ["ⲩⲉⲓ", "ⲓϩⲉ", "ⲧⲉⲓ", "ⲉⲉⲉ", "ⲁⲁⲗ"]
-        # sentence = "ⲁⲕⲛⲟϭⲛⲉϭⲡϫⲟⲉⲓⲥⲁⲕϫⲟⲟⲥϫⲉϩⲙⲡⲁϣⲁⲓⲛⲛϩⲁⲣⲙⲁϯ#####ⲉϩⲣⲁⲓⲉⲡϫⲓⲥⲉ"
-        # options = ["ⲟⲁⲟⲟⲓ", "ⲛⲁⲟⲩⲉ", "ⲛⲁⲁⲗⲉ", "ⲙⲟⲟϣⲉ"]
-        # options = ["ⲛⲁⲃⲱⲕ", "ⲛⲁⲁⲗⲉ", "ⲙⲟⲟϣⲉ"]
-        sentence = "ⲁⲥⲡⲁⲍⲉⲙⲙⲟⲥⲁⲧⲉⲥ#####ⲛϩⲁϩⲛⲥⲟⲡ"
-        # sentence = "ⲁⲥⲡⲁⲍⲉⲙⲙⲟⲥⲉⲧⲉⲥ#####ⲛϩⲁϩⲛⲥⲟⲡ"
-        options = ["ϩⲏⲩⲉⲛ", "ⲧⲁⲡⲣⲟ", "ⲡⲁⲓϭⲉ", "ⲟⲩⲟϭⲉ", "ϭⲁⲗⲟϫ", "ⲧⲉϩⲛⲉ", "ϩⲟⲟⲉⲉ"]
-        char_indexes = [ind for ind, ele in enumerate(sentence) if ele == "#"]
-        ranking = rank(model, sentence, options, char_indexes)
+        # '#' used here instead of ! or _, so that rank could in principle be used
+        # with sentence containing other lacuna without options to rank
+        sentence = "ἄνδρες [###] γυναῖκες"
+        options = ["και", "γαρ", "τον", "αιδ", "σομ", "πετ", "ιυδ"]
+        # char_indexes = [ind for ind, ele in enumerate(sentence) if ele == "#"]
+        ranking = rank(model, sentence, options)
         print("Ranking:")
         print("(option, log_sum)")
         for option in ranking:

@@ -221,7 +221,11 @@ class RNN(nn.Module):
         )  # Total mask also includes tokens swapped for random character, and tokens retained
 
     # This is the function to use to mask and label the test set incorporating the actual lacunae as masks
-    def actual_lacuna_mask_and_label(self, data_item):
+    def actual_lacuna_mask_and_label(self, data_item: DataItem) -> DataItem:
+        if not isinstance(data_item.text, str):
+            raise TypeError(
+                "DataItem passed to actual_lacuna_mask_and_label must a string associated with it as text attribute"
+            )
         text_buffer = []
 
         mask = []

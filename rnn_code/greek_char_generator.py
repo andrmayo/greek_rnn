@@ -8,7 +8,7 @@ import time
 from math import log
 from pathlib import Path
 from random import shuffle
-from typing import List
+from typing import cast, List, Tuple
 
 import numpy
 import torch
@@ -78,7 +78,7 @@ def train_batch(
         data_item = data[i]
 
         if mask:
-            data_item, mask_count = model.mask_and_label_characters(
+            data_item, _ = model.mask_and_label_characters(
                 data_item, mask_type=mask_type
             )
 
@@ -206,7 +206,7 @@ def train_model(
     dev_list = [i for i in range(len(dev_data))]
 
     criterion = nn.CrossEntropyLoss(reduction="sum")
-    optimizer = torch.optim.AdamW(
+    optimizer = torch.optim.AdamW(  # type: ignore[reportPrivateImportUsage]
         model.parameters(), lr=learning_rate, weight_decay=L2_lambda
     )
     # optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=L2_lambda)
@@ -617,17 +617,23 @@ def predict_top_k(model: RNN, data_item, k=10, save_to_file=True, output_file=No
     return return_list
 
 
-def rank(model: RNN, sentence, options, char_indexes):
+def rank(model: RNN, sentence: str, options: List[str]) -> List[Tuple[str, float]]:
     # filter diacritics
     sentence = utils.filter_diacritics(sentence)
-    data_item = model.actual_lacuna_mask_and_label(DataItem(), sentence)
+    data_item = DataItem(sentence)
+    print(data_item.text)
+    data_item = model.actual_lacuna_mask_and_label(data_item)
+    char_indexes = [
+        ind for ind, ele in enumerate(cast(str, data_item.text)) if ele == "_"
+    ]
+    print(data_item.text)
     # adjust char indexes for padding of data item
     char_indexes = [x + 2 for x in char_indexes]
     option_indexes = []
     option_probs = []
     for i in range(len(options)):
         options[i] = utils.filter_diacritics(options[i])
-        opt_i_indexes = model.lookup_indexes(options[i], add_control=False)[1:]
+        opt_i_indexes = model.lookup_indexes(options[i], add_control=False)
         option_indexes.append(opt_i_indexes)
         option_probs.append([])
 

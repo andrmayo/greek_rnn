@@ -230,8 +230,9 @@ class TestPredictTopK:
 
                 assert isinstance(result, list)
 
-                # File should have been created with timestamp
-                expected_filename = "top_k_20250924_123456.csv"
+                # File should have been created with timestamp in results directory
+                from pathlib import Path
+                expected_filename = Path(__file__).parent.parent / "rnn_code" / "results" / "top_k_20250924_123456.csv"
                 try:
                     assert os.path.exists(expected_filename)
                 finally:

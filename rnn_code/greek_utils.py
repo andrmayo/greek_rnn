@@ -7,6 +7,7 @@ import sys
 import unicodedata
 from collections import Counter
 from pathlib import Path
+from typing import List, Optional
 
 import torch
 from nltk.util import ngrams
@@ -21,7 +22,9 @@ stdout_handler = logging.StreamHandler(sys.stdout)
 stdout_handler.setLevel(logging.DEBUG)
 stdout_handler.setFormatter(formatter)
 
-file_handler = logging.FileHandler(f"{Path(__file__).parent}/log/greek_data_processing.log")
+file_handler = logging.FileHandler(
+    f"{Path(__file__).parent}/log/greek_data_processing.log"
+)
 file_handler.setLevel(logging.INFO)
 
 logger.addHandler(file_handler)
@@ -128,12 +131,12 @@ print(f"torch version & device: {torch.__version__, device}")
 class DataItem:
     def __init__(
         self,
-        text=None,
-        text_number=None,
-        indexes=None,
-        mask=None,
-        labels=None,
-        position_in_original=None,
+        text: Optional[str] = None,
+        text_number: Optional[int] = None,
+        indexes: Optional[List[int]] = None,
+        mask: Optional[List[bool]] = None,
+        labels: Optional[List[int]] = None,
+        position_in_original: Optional[int] = None,
     ):
         self.text_number = text_number
         self.text = text  # original text

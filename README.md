@@ -50,3 +50,37 @@ the texts and available scholarly reconstructions of these lacunae.
   statistics.
 
 ## Usage
+
+### Using locally trained model
+
+When training is run successfully, on each run the weights will be saved
+`{model_path}/{output_name}_latest.pth`, which by default will be
+`rnn_code/models/greek_lacuna_latest.pth`. To use these weights for inference,
+this file needs to be moved to `rnn_code/models/best/`.
+
+### Loading pretrained model
+
+If the `-t` / `--train` option isn't passed to `main.py` in the CLI, the program
+will search for an existing model as a `.pth` file in `rnn_code/models/best`,
+and will select the most recently modified file.
+To set this up based on the compressed `.pth` file in `rnn_code/models/compressed-weights`,
+run `source setup.sh` in the project root directory.
+
+### Inference
+
+The two inference options to pass to the `main.py` CLI are `-pr` and `-prk`.
+Both take a Greek sentence as a positional argument, with lacunae to be filled
+indicated either with `_` for known-length lacunae or `<gap>` for unkown length.
+For instance,
+
+- `python main.py -pr 'ἀγαθὸς [___] ἐστιν'`
+
+This fills in a lacuna of three characters.
+
+- `python main.py -pr 'ἀγαθὸς <gap/> ἐστιν'`
+
+This will also try to predict the length of the lacuna.
+
+If `-prk` is used instead of `-pr`, the top 1000 most likely predictions
+will be saved to a CSV file in `rnn_code/results` with a filename in the format
+`top_k_{timestamp}.csv`.

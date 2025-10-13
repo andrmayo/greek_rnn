@@ -84,3 +84,134 @@ total parameter count = 2,350,500
 input text: ἀγαθὸ_ ἐστιν
 end generator -- 2025-10-07 15:07:58.534909
 
+start greek data processing -- 2025-10-10 05:36:12.615363
+Using a pre-trained model
+Loading model: /home/archytas/Projects/greek_rnn/rnn_code/models/best/rand_dynam_greek_rnn_no_dropout.pth
+Load model: RNN(
+  (embed): Embedding(35, 300)
+  (scale_up): Linear(in_features=300, out_features=300, bias=True)
+  (rnn): LSTM(300, 150, num_layers=4, batch_first=True, bidirectional=True)
+  (out): Linear(in_features=300, out_features=300, bias=True)
+  (dropout): Dropout(p=0.0, inplace=False)
+) with specs: embed_size: 300, hidden_size: 300, proj_size: 150, rnn n layers: 4, share: False, dropout: 0.0
+RNN(
+  (embed): Embedding(35, 300)
+  (scale_up): Linear(in_features=300, out_features=300, bias=True)
+  (rnn): LSTM(300, 150, num_layers=4, batch_first=True, bidirectional=True)
+  (out): Linear(in_features=300, out_features=300, bias=True)
+  (dropout): Dropout(p=0.0, inplace=False)
+)
+total parameter count = 2,350,500
+start greek data processing -- 2025-10-10 05:47:31.158875
+Using a pre-trained model
+Loading model: /home/archytas/Projects/greek_rnn/rnn_code/models/best/rand_dynam_greek_rnn_no_dropout.pth
+Load model: RNN(
+  (embed): Embedding(35, 300)
+  (scale_up): Linear(in_features=300, out_features=300, bias=True)
+  (rnn): LSTM(300, 150, num_layers=4, batch_first=True, bidirectional=True)
+  (out): Linear(in_features=300, out_features=300, bias=True)
+  (dropout): Dropout(p=0.0, inplace=False)
+) with specs: embed_size: 300, hidden_size: 300, proj_size: 150, rnn n layers: 4, share: False, dropout: 0.0
+RNN(
+  (embed): Embedding(35, 300)
+  (scale_up): Linear(in_features=300, out_features=300, bias=True)
+  (rnn): LSTM(300, 150, num_layers=4, batch_first=True, bidirectional=True)
+  (out): Linear(in_features=300, out_features=300, bias=True)
+  (dropout): Dropout(p=0.0, inplace=False)
+)
+total parameter count = 2,350,500
+start greek data processing -- 2025-10-10 05:50:15.554890
+Using a pre-trained model
+Loading model: /home/archytas/Projects/greek_rnn/rnn_code/models/best/rand_dynam_greek_rnn_no_dropout.pth
+Load model: RNN(
+  (embed): Embedding(35, 300)
+  (scale_up): Linear(in_features=300, out_features=300, bias=True)
+  (rnn): LSTM(300, 150, num_layers=4, batch_first=True, bidirectional=True)
+  (out): Linear(in_features=300, out_features=300, bias=True)
+  (dropout): Dropout(p=0.0, inplace=False)
+) with specs: embed_size: 300, hidden_size: 300, proj_size: 150, rnn n layers: 4, share: False, dropout: 0.0
+RNN(
+  (embed): Embedding(35, 300)
+  (scale_up): Linear(in_features=300, out_features=300, bias=True)
+  (rnn): LSTM(300, 150, num_layers=4, batch_first=True, bidirectional=True)
+  (out): Linear(in_features=300, out_features=300, bias=True)
+  (dropout): Dropout(p=0.0, inplace=False)
+)
+total parameter count = 2,350,500
+start greek data processing -- 2025-10-10 06:59:35.679956
+Using a pre-trained model
+Loading model: /home/archytas/Projects/greek_rnn/rnn_code/models/best/rand_dynam_greek_rnn_no_dropout.pth
+Load model: RNN(
+  (embed): Embedding(35, 300)
+  (scale_up): Linear(in_features=300, out_features=300, bias=True)
+  (rnn): LSTM(300, 150, num_layers=4, batch_first=True, bidirectional=True)
+  (out): Linear(in_features=300, out_features=300, bias=True)
+  (dropout): Dropout(p=0.0, inplace=False)
+) with specs: embed_size: 300, hidden_size: 300, proj_size: 150, rnn n layers: 4, share: False, dropout: 0.0
+RNN(
+  (embed): Embedding(35, 300)
+  (scale_up): Linear(in_features=300, out_features=300, bias=True)
+  (rnn): LSTM(300, 150, num_layers=4, batch_first=True, bidirectional=True)
+  (out): Linear(in_features=300, out_features=300, bias=True)
+  (dropout): Dropout(p=0.0, inplace=False)
+)
+total parameter count = 2,350,500
+input text: ἀγαθὸς ___ ἐστιν
+end generator -- 2025-10-10 07:00:02.685488
+
+start greek data processing -- 2025-10-12 20:41:58.359755
+Using a pre-trained model
+Loading model: /home/archytas/Projects/greek_rnn/rnn_code/models/best/rand_dynam_greek_rnn_no_dropout.pth
+Load model: RNN(
+  (embed): Embedding(35, 300)
+  (scale_up): Linear(in_features=300, out_features=300, bias=True)
+  (rnn): LSTM(300, 150, num_layers=4, batch_first=True, bidirectional=True)
+  (out): Linear(in_features=300, out_features=300, bias=True)
+  (dropout): Dropout(p=0.0, inplace=False)
+) with specs: embed_size: 300, hidden_size: 300, proj_size: 150, rnn n layers: 4, share: False, dropout: 0.0
+RNN(
+  (embed): Embedding(35, 300)
+  (scale_up): Linear(in_features=300, out_features=300, bias=True)
+  (rnn): LSTM(300, 150, num_layers=4, batch_first=True, bidirectional=True)
+  (out): Linear(in_features=300, out_features=300, bias=True)
+  (dropout): Dropout(p=0.0, inplace=False)
+)
+total parameter count = 2,350,500
+start greek data processing -- 2025-10-12 21:47:49.564797
+Using a pre-trained model
+Loading model: /home/archytas/Projects/greek_rnn/rnn_code/models/best/rand_dynam_greek_rnn_no_dropout.pth
+Load model: RNN(
+  (embed): Embedding(35, 300)
+  (scale_up): Linear(in_features=300, out_features=300, bias=True)
+  (rnn): LSTM(300, 150, num_layers=4, batch_first=True, bidirectional=True)
+  (out): Linear(in_features=300, out_features=300, bias=True)
+  (dropout): Dropout(p=0.0, inplace=False)
+) with specs: embed_size: 300, hidden_size: 300, proj_size: 150, rnn n layers: 4, share: False, dropout: 0.0
+RNN(
+  (embed): Embedding(35, 300)
+  (scale_up): Linear(in_features=300, out_features=300, bias=True)
+  (rnn): LSTM(300, 150, num_layers=4, batch_first=True, bidirectional=True)
+  (out): Linear(in_features=300, out_features=300, bias=True)
+  (dropout): Dropout(p=0.0, inplace=False)
+)
+total parameter count = 2,350,500
+start greek data processing -- 2025-10-12 21:49:53.439763
+Using a pre-trained model
+Loading model: /home/archytas/Projects/greek_rnn/rnn_code/models/best/rand_dynam_greek_rnn_no_dropout.pth
+Load model: RNN(
+  (embed): Embedding(35, 300)
+  (scale_up): Linear(in_features=300, out_features=300, bias=True)
+  (rnn): LSTM(300, 150, num_layers=4, batch_first=True, bidirectional=True)
+  (out): Linear(in_features=300, out_features=300, bias=True)
+  (dropout): Dropout(p=0.0, inplace=False)
+) with specs: embed_size: 300, hidden_size: 300, proj_size: 150, rnn n layers: 4, share: False, dropout: 0.0
+RNN(
+  (embed): Embedding(35, 300)
+  (scale_up): Linear(in_features=300, out_features=300, bias=True)
+  (rnn): LSTM(300, 150, num_layers=4, batch_first=True, bidirectional=True)
+  (out): Linear(in_features=300, out_features=300, bias=True)
+  (dropout): Dropout(p=0.0, inplace=False)
+)
+total parameter count = 2,350,500
+end generator -- 2025-10-12 21:50:20.898102
+
