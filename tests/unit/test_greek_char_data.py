@@ -1,8 +1,8 @@
-import pytest
 import json
-import tempfile
 import os
-from unittest.mock import patch, mock_open, MagicMock
+import tempfile
+from unittest.mock import patch
+
 from rnn_code.greek_char_data import read_datafiles, write_to_json
 
 

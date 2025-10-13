@@ -1,4 +1,3 @@
-import pytest
 from rnn_code.letter_tokenizer import LetterTokenizer
 
 

@@ -8,7 +8,7 @@ import time
 from math import log
 from pathlib import Path
 from random import shuffle
-from typing import cast, List, Tuple
+from typing import List, Tuple, cast
 
 import numpy
 import torch
@@ -17,7 +17,6 @@ from torch import nn
 
 import rnn_code.greek_utils as utils
 import wandb
-
 from rnn_code.greek_rnn import RNN
 from rnn_code.greek_utils import (
     DataItem,

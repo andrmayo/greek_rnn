@@ -1,21 +1,20 @@
-import pytest
-import torch
-import tempfile
 import json
 import os
-from unittest.mock import patch, MagicMock
+import tempfile
+from unittest.mock import MagicMock, patch
 
+import torch
 from rnn_code.greek_utils import (
     DataItem,
-    filter_diacritics,
+    construct_trigram_lookup,
     count_parameters,
-    read_datafile,
     filter_brackets,
-    skip_sentence,
+    filter_diacritics,
+    get_home_path,
     has_more_than_one_latin_character,
     mask_input,
-    construct_trigram_lookup,
-    get_home_path
+    read_datafile,
+    skip_sentence,
 )
 
 

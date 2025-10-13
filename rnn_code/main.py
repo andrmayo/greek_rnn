@@ -81,8 +81,9 @@ if __name__ == "__main__":
         "-r",
         "--rank",
         required=False,
-        help="ranking likelihood of options",
-        action="store_true",
+        nargs="*",
+        help="ranking likelihood of options, e.g. --rank 'ἄνδρες [###] γυναῖκες' και γαρ τον αιδ",
+        action="store",
     )
     args = parser.parse_args()
 
@@ -386,11 +387,26 @@ if __name__ == "__main__":
         data_item = model.actual_lacuna_mask_and_label(instance)
         predict_top_k(model, data_item, k)
 
-    if args.rank:
+    if args.rank is not None:
+        import shlex
+
         # '#' used here instead of ! or _, so that rank could in principle be used
         # with sentence containing other lacuna without options to rank
-        sentence = "ἄνδρες [###] γυναῖκες"
-        options = ["και", "γαρ", "τον", "αιδ", "σομ", "πετ", "ιυδ"]
+        sentence = options = None
+        if len(args.rank) > 0:
+            sentence = args.rank[0]
+            if len(args.rank) > 1:
+                options = args.rank[1:]
+        if sentence is None:
+            sentence = input(
+                "Please enter sentence with lacuna marked with [###], with one # for each character:"
+            )
+        if options is None:
+            options = input(
+                "Please enter options of same length as lacuna, separated by spaces with quotation marks if needed:"
+            )
+            options = shlex.split(options)
+
         # char_indexes = [ind for ind, ele in enumerate(sentence) if ele == "#"]
         ranking = rank(model, sentence, options)
         print("Ranking:")

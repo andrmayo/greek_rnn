@@ -1,9 +1,8 @@
-import pytest
-import tempfile
 import os
-from unittest.mock import patch, MagicMock
+import tempfile
 from collections import Counter
-from rnn_code.data_stats import char_histogram, char_counts, gap_counts
+
+from rnn_code.data_stats import char_counts, char_histogram, gap_counts
 
 
 class TestCharHistogram:

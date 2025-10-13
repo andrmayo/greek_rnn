@@ -1,8 +1,9 @@
-import pytest
-import torch
 import os
 import tempfile
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import patch
+
+import pytest
+import torch
 from rnn_code.greek_char_generator import predict, predict_top_k, train_model
 from rnn_code.greek_rnn import RNN
 from rnn_code.greek_utils import DataItem
@@ -25,7 +26,7 @@ class TestPredict:
         data_item = rnn_model.actual_lacuna_mask_and_label(original_data)
 
         # Mock the model's forward pass to return predictable output
-        with patch.object(rnn_model, 'forward') as mock_forward:
+        with patch.object(rnn_model, "forward") as mock_forward:
             # Create mock output tensor - shape should match (1, seq_len, vocab_size)
             seq_len = len(data_item.indexes)
             vocab_size = rnn_model.num_tokens
@@ -35,7 +36,7 @@ class TestPredict:
             for i, is_masked in enumerate(data_item.mask):
                 if is_masked:
                     # Make 'γ' token have highest probability at masked positions
-                    gamma_index = rnn_model.token_to_index.get('γ', 0)
+                    gamma_index = rnn_model.token_to_index.get("γ", 0)
                     mock_output[0, i, gamma_index] = 10.0  # High logit
 
             mock_forward.return_value = mock_output
@@ -46,11 +47,11 @@ class TestPredict:
             # Verify the result is a string
             assert isinstance(result, str)
             # Should not contain control characters
-            assert '<' not in result
-            assert '>' not in result
+            assert "<" not in result
+            assert ">" not in result
             # Should contain our predicted characters
-            assert 'α' in result  # Original unmasked character
-            assert 'ε' in result  # Original unmasked character
+            assert "α" in result  # Original unmasked character
+            assert "ε" in result  # Original unmasked character
 
     def test_predict_no_masking(self, rnn_model):
         """Test predict function when no positions are masked"""
@@ -58,7 +59,7 @@ class TestPredict:
         original_data = DataItem(text="αβγδε")
         data_item = rnn_model.actual_lacuna_mask_and_label(original_data)
 
-        with patch.object(rnn_model, 'forward') as mock_forward:
+        with patch.object(rnn_model, "forward") as mock_forward:
             seq_len = len(data_item.indexes)
             vocab_size = rnn_model.num_tokens
             mock_output = torch.randn(1, seq_len, vocab_size)
@@ -68,7 +69,7 @@ class TestPredict:
 
             # Should return the original text (minus control chars)
             assert isinstance(result, str)
-            assert 'αβγδε' == result
+            assert "αβγδε" == result
 
     def test_predict_all_masked(self, rnn_model):
         """Test predict function when all positions are masked"""
@@ -76,7 +77,7 @@ class TestPredict:
         original_data = DataItem(text="[αβγ]")
         data_item = rnn_model.actual_lacuna_mask_and_label(original_data)
 
-        with patch.object(rnn_model, 'forward') as mock_forward:
+        with patch.object(rnn_model, "forward") as mock_forward:
             seq_len = len(data_item.indexes)
             vocab_size = rnn_model.num_tokens
             mock_output = torch.randn(1, seq_len, vocab_size)
@@ -85,7 +86,7 @@ class TestPredict:
             for i, is_masked in enumerate(data_item.mask):
                 if is_masked:
                     # Predict 'α' for all masked positions
-                    alpha_index = rnn_model.token_to_index.get('α', 0)
+                    alpha_index = rnn_model.token_to_index.get("α", 0)
                     mock_output[0, i, alpha_index] = 10.0
 
             mock_forward.return_value = mock_output
@@ -95,15 +96,15 @@ class TestPredict:
             assert isinstance(result, str)
             # Result should contain predicted characters
             assert len(result) > 0
-            assert '<' not in result
-            assert '>' not in result
+            assert "<" not in result
+            assert ">" not in result
 
     def test_predict_mixed_content(self, rnn_model):
         """Test predict function with mixed Greek and punctuation"""
         original_data = DataItem(text="αβ[γ]δε.ζη")
         data_item = rnn_model.actual_lacuna_mask_and_label(original_data)
 
-        with patch.object(rnn_model, 'forward') as mock_forward:
+        with patch.object(rnn_model, "forward") as mock_forward:
             seq_len = len(data_item.indexes)
             vocab_size = rnn_model.num_tokens
             mock_output = torch.randn(1, seq_len, vocab_size)
@@ -111,7 +112,7 @@ class TestPredict:
             # Set predictions for masked positions
             for i, is_masked in enumerate(data_item.mask):
                 if is_masked:
-                    theta_index = rnn_model.token_to_index.get('θ', 0)
+                    theta_index = rnn_model.token_to_index.get("θ", 0)
                     mock_output[0, i, theta_index] = 10.0
 
             mock_forward.return_value = mock_output
@@ -120,10 +121,10 @@ class TestPredict:
 
             assert isinstance(result, str)
             # Should contain original punctuation
-            assert '.' in result
+            assert "." in result
             # Should contain original Greek characters
-            assert 'α' in result
-            assert 'β' in result
+            assert "α" in result
+            assert "β" in result
 
 
 class TestPredictTopK:
@@ -140,7 +141,7 @@ class TestPredictTopK:
         original_data = DataItem(text="αβ[γδ]εζ")
         data_item = rnn_model.actual_lacuna_mask_and_label(original_data)
 
-        with patch.object(rnn_model, 'forward') as mock_forward:
+        with patch.object(rnn_model, "forward") as mock_forward:
             seq_len = len(data_item.indexes)
             vocab_size = rnn_model.num_tokens
             mock_output = torch.randn(1, seq_len, vocab_size)
@@ -149,8 +150,8 @@ class TestPredictTopK:
             for i, is_masked in enumerate(data_item.mask):
                 if is_masked:
                     # Make different tokens have high probability
-                    alpha_index = rnn_model.token_to_index.get('α', 0)
-                    beta_index = rnn_model.token_to_index.get('β', 0)
+                    alpha_index = rnn_model.token_to_index.get("α", 0)
+                    beta_index = rnn_model.token_to_index.get("β", 0)
                     mock_output[0, i, alpha_index] = 10.0
                     mock_output[0, i, beta_index] = 9.0
 
@@ -169,7 +170,7 @@ class TestPredictTopK:
         original_data = DataItem(text="αβ[γ]εζ")
         data_item = rnn_model.actual_lacuna_mask_and_label(original_data)
 
-        with patch.object(rnn_model, 'forward') as mock_forward:
+        with patch.object(rnn_model, "forward") as mock_forward:
             seq_len = len(data_item.indexes)
             vocab_size = rnn_model.num_tokens
             mock_output = torch.randn(1, seq_len, vocab_size)
@@ -177,28 +178,36 @@ class TestPredictTopK:
             # Set high values for predictable results
             for i, is_masked in enumerate(data_item.mask):
                 if is_masked:
-                    gamma_index = rnn_model.token_to_index.get('γ', 0)
+                    gamma_index = rnn_model.token_to_index.get("γ", 0)
                     mock_output[0, i, gamma_index] = 10.0
 
             mock_forward.return_value = mock_output
 
             # Use temporary file
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False) as temp_file:
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".csv", delete=False
+            ) as temp_file:
                 temp_filename = temp_file.name
 
             try:
-                result = predict_top_k(rnn_model, data_item, k=2, save_to_file=True, output_file=temp_filename)
+                result = predict_top_k(
+                    rnn_model,
+                    data_item,
+                    k=2,
+                    save_to_file=True,
+                    output_file=temp_filename,
+                )
 
                 assert isinstance(result, list)
                 assert len(result) <= 2
 
                 # Check that file was created and has content
                 assert os.path.exists(temp_filename)
-                with open(temp_filename, 'r') as f:
+                with open(temp_filename, "r") as f:
                     content = f.read()
-                    assert 'Rank' in content  # Header should be present
-                    assert 'Candidate' in content
-                    assert 'LogSum' in content
+                    assert "Rank" in content  # Header should be present
+                    assert "Candidate" in content
+                    assert "LogSum" in content
 
             finally:
                 # Clean up temp file
@@ -210,20 +219,20 @@ class TestPredictTopK:
         original_data = DataItem(text="α[β]γ")
         data_item = rnn_model.actual_lacuna_mask_and_label(original_data)
 
-        with patch.object(rnn_model, 'forward') as mock_forward:
+        with patch.object(rnn_model, "forward") as mock_forward:
             seq_len = len(data_item.indexes)
             vocab_size = rnn_model.num_tokens
             mock_output = torch.randn(1, seq_len, vocab_size)
 
             for i, is_masked in enumerate(data_item.mask):
                 if is_masked:
-                    delta_index = rnn_model.token_to_index.get('δ', 0)
+                    delta_index = rnn_model.token_to_index.get("δ", 0)
                     mock_output[0, i, delta_index] = 10.0
 
             mock_forward.return_value = mock_output
 
             # Mock datetime to control filename
-            with patch('datetime.datetime') as mock_datetime:
+            with patch("datetime.datetime") as mock_datetime:
                 mock_datetime.now.return_value.strftime.return_value = "20250924_123456"
 
                 result = predict_top_k(rnn_model, data_item, k=1, save_to_file=True)
@@ -232,7 +241,13 @@ class TestPredictTopK:
 
                 # File should have been created with timestamp in results directory
                 from pathlib import Path
-                expected_filename = Path(__file__).parent.parent / "rnn_code" / "results" / "top_k_20250924_123456.csv"
+
+                expected_filename = (
+                    Path(__file__).parent.parent.parent
+                    / "rnn_code"
+                    / "results"
+                    / "top_k_20250924_123456.csv"
+                )
                 try:
                     assert os.path.exists(expected_filename)
                 finally:
@@ -245,7 +260,7 @@ class TestPredictTopK:
         original_data = DataItem(text="αβγδε")  # No lacunae
         data_item = rnn_model.actual_lacuna_mask_and_label(original_data)
 
-        with patch.object(rnn_model, 'forward') as mock_forward:
+        with patch.object(rnn_model, "forward") as mock_forward:
             seq_len = len(data_item.indexes)
             vocab_size = rnn_model.num_tokens
             mock_output = torch.randn(1, seq_len, vocab_size)
@@ -286,24 +301,29 @@ class TestTrainModel:
             "ζη[θ]ικ",
         ]
 
-    def test_train_model_early_stopping(self, rnn_model, sample_train_data, sample_dev_data):
+    def test_train_model_early_stopping(
+        self, rnn_model, sample_train_data, sample_dev_data
+    ):
         """Test train_model function with early stopping"""
         with tempfile.TemporaryDirectory() as temp_dir:
             # Mock all the dependencies
-            with patch('rnn_code.greek_char_generator.wandb') as mock_wandb, \
-                 patch('rnn_code.greek_char_generator.model_path', temp_dir), \
-                 patch('rnn_code.greek_char_generator.nEpochs', 10), \
-                 patch('rnn_code.greek_char_generator.patience', 3), \
-                 patch('rnn_code.greek_char_generator.train_batch') as mock_train_batch:
-
+            with (
+                patch("rnn_code.greek_char_generator.wandb") as mock_wandb,
+                patch("rnn_code.greek_char_generator.model_path", temp_dir),
+                patch("rnn_code.greek_char_generator.nEpochs", 10),
+                patch("rnn_code.greek_char_generator.patience", 3),
+                patch("rnn_code.greek_char_generator.train_batch") as mock_train_batch,
+            ):
                 # Mock train_batch to return predictable loss values
                 # Simulate dev loss: improves for 2 epochs, then gets worse for 3 epochs (triggers early stop)
                 dev_losses = [1.0, 0.8, 0.9, 1.1, 1.2]  # Best at epoch 1 (0.8)
                 train_losses = [1.0, 0.9, 0.85, 0.8, 0.75]
 
                 def mock_train_batch_side_effect(*args, **kwargs):
-                    update = kwargs.get('update', True)
-                    epoch_idx = len(mock_train_batch.call_args_list) // 2  # Rough epoch tracking
+                    update = kwargs.get("update", True)
+                    epoch_idx = (
+                        len(mock_train_batch.call_args_list) // 2
+                    )  # Rough epoch tracking
                     if epoch_idx >= len(dev_losses):
                         epoch_idx = len(dev_losses) - 1
 
@@ -319,7 +339,7 @@ class TestTrainModel:
                     rnn_model,
                     sample_train_data,
                     sample_dev_data,
-                    output_name="test_early_stop"
+                    output_name="test_early_stop",
                 )
 
                 # Verify model is returned
@@ -331,15 +351,18 @@ class TestTrainModel:
                 assert os.path.exists(f"{temp_dir}/test_early_stop_latest.pth")
                 assert os.path.exists(f"{temp_dir}/test_early_stop.pth")
 
-    def test_train_model_best_model_selection(self, rnn_model, sample_train_data, sample_dev_data):
+    def test_train_model_best_model_selection(
+        self, rnn_model, sample_train_data, sample_dev_data
+    ):
         """Test that best model is properly selected and restored"""
         with tempfile.TemporaryDirectory() as temp_dir:
-            with patch('rnn_code.greek_char_generator.wandb') as mock_wandb, \
-                 patch('rnn_code.greek_char_generator.model_path', temp_dir), \
-                 patch('rnn_code.greek_char_generator.nEpochs', 5), \
-                 patch('rnn_code.greek_char_generator.patience', 10), \
-                 patch('rnn_code.greek_char_generator.train_batch') as mock_train_batch:
-
+            with (
+                patch("rnn_code.greek_char_generator.wandb") as mock_wandb,
+                patch("rnn_code.greek_char_generator.model_path", temp_dir),
+                patch("rnn_code.greek_char_generator.nEpochs", 5),
+                patch("rnn_code.greek_char_generator.patience", 10),
+                patch("rnn_code.greek_char_generator.train_batch") as mock_train_batch,
+            ):
                 # Simulate scenario where best model is NOT the final epoch
                 # Dev losses: 1.0 -> 0.5 (best) -> 0.8 -> 0.7 -> 0.9
                 dev_losses = [1.0, 0.5, 0.8, 0.7, 0.9]  # Best at epoch 1 (0.5)
@@ -349,8 +372,10 @@ class TestTrainModel:
                 original_state = rnn_model.state_dict().copy()
 
                 def mock_train_batch_side_effect(*args, **kwargs):
-                    update = kwargs.get('update', True)
-                    epoch_idx = min(len(mock_train_batch.call_args_list) // 2, len(dev_losses) - 1)
+                    update = kwargs.get("update", True)
+                    epoch_idx = min(
+                        len(mock_train_batch.call_args_list) // 2, len(dev_losses) - 1
+                    )
 
                     if update:  # Training batch
                         return train_losses[epoch_idx], 100, 500, 50, 0, 0
@@ -364,7 +389,7 @@ class TestTrainModel:
                     rnn_model,
                     sample_train_data,
                     sample_dev_data,
-                    output_name="test_best_model"
+                    output_name="test_best_model",
                 )
 
                 # Verify model is returned
@@ -380,25 +405,31 @@ class TestTrainModel:
         """Test that patience parameter can be imported and used"""
         # This test ensures the import doesn't break
         from rnn_code.greek_utils import patience
+
         assert isinstance(patience, int)
         assert patience > 0
 
-    def test_train_model_no_improvement(self, rnn_model, sample_train_data, sample_dev_data):
+    def test_train_model_no_improvement(
+        self, rnn_model, sample_train_data, sample_dev_data
+    ):
         """Test behavior when dev loss never improves (edge case)"""
         with tempfile.TemporaryDirectory() as temp_dir:
-            with patch('rnn_code.greek_char_generator.wandb') as mock_wandb, \
-                 patch('rnn_code.greek_char_generator.model_path', temp_dir), \
-                 patch('rnn_code.greek_char_generator.nEpochs', 5), \
-                 patch('rnn_code.greek_char_generator.patience', 2), \
-                 patch('rnn_code.greek_char_generator.train_batch') as mock_train_batch:
-
+            with (
+                patch("rnn_code.greek_char_generator.wandb") as mock_wandb,
+                patch("rnn_code.greek_char_generator.model_path", temp_dir),
+                patch("rnn_code.greek_char_generator.nEpochs", 5),
+                patch("rnn_code.greek_char_generator.patience", 2),
+                patch("rnn_code.greek_char_generator.train_batch") as mock_train_batch,
+            ):
                 # Simulate dev loss getting worse each epoch
                 dev_losses = [1.0, 1.5, 2.0, 2.5, 3.0]  # Always getting worse
                 train_losses = [1.0, 0.9, 0.8, 0.7, 0.6]  # Training improves
 
                 def mock_train_batch_side_effect(*args, **kwargs):
-                    update = kwargs.get('update', True)
-                    epoch_idx = min(len(mock_train_batch.call_args_list) // 2, len(dev_losses) - 1)
+                    update = kwargs.get("update", True)
+                    epoch_idx = min(
+                        len(mock_train_batch.call_args_list) // 2, len(dev_losses) - 1
+                    )
 
                     if update:
                         return train_losses[epoch_idx], 100, 500, 50, 0, 0
@@ -412,13 +443,15 @@ class TestTrainModel:
                     rnn_model,
                     sample_train_data,
                     sample_dev_data,
-                    output_name="test_no_improvement"
+                    output_name="test_no_improvement",
                 )
 
                 assert result_model is not None
                 assert isinstance(result_model, RNN)
 
-    def test_train_model_file_creation_error(self, rnn_model, sample_train_data, sample_dev_data):
+    def test_train_model_file_creation_error(
+        self, rnn_model, sample_train_data, sample_dev_data
+    ):
         """Test handling when model files can't be saved"""
         # Use a read-only directory to trigger file save errors
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -427,12 +460,15 @@ class TestTrainModel:
             os.chmod(readonly_dir, 0o444)  # Read-only
 
             try:
-                with patch('rnn_code.greek_char_generator.wandb') as mock_wandb, \
-                     patch('rnn_code.greek_char_generator.model_path', readonly_dir), \
-                     patch('rnn_code.greek_char_generator.nEpochs', 2), \
-                     patch('rnn_code.greek_char_generator.patience', 5), \
-                     patch('rnn_code.greek_char_generator.train_batch') as mock_train_batch:
-
+                with (
+                    patch("rnn_code.greek_char_generator.wandb") as mock_wandb,
+                    patch("rnn_code.greek_char_generator.model_path", readonly_dir),
+                    patch("rnn_code.greek_char_generator.nEpochs", 2),
+                    patch("rnn_code.greek_char_generator.patience", 5),
+                    patch(
+                        "rnn_code.greek_char_generator.train_batch"
+                    ) as mock_train_batch,
+                ):
                     mock_train_batch.return_value = (1.0, 100, 500, 50, 25, 20)
 
                     # This should raise an exception due to file permissions
@@ -441,7 +477,7 @@ class TestTrainModel:
                             rnn_model,
                             sample_train_data,
                             sample_dev_data,
-                            output_name="test_file_error"
+                            output_name="test_file_error",
                         )
             finally:
                 # Cleanup - restore permissions so directory can be deleted
@@ -449,3 +485,4 @@ class TestTrainModel:
                     os.chmod(readonly_dir, 0o755)
                 except:
                     pass
+
