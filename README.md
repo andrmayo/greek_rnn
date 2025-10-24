@@ -68,8 +68,9 @@ run `source setup.sh` in the project root directory.
 
 ### Inference
 
-The two inference options to pass to the `main.py` CLI are `-pr` and `-prk`.
-Both take a Greek sentence as a positional argument, with lacunae to be filled
+The three inference options to pass to the `main.py` CLI are
+`-pr` (`--predict`), `-prk` (`--predict_top_k`), and `-r` (`--rank`).
+Each takes a Greek sentence as a positional argument, with lacunae to be filled
 indicated either with `_` for known-length lacunae or `<gap>` for unkown length.
 For instance,
 
@@ -84,3 +85,11 @@ This will also try to predict the length of the lacuna.
 If `-prk` is used instead of `-pr`, the top 1000 most likely predictions
 will be saved to a CSV file in `rnn_code/results` with a filename in the format
 `top_k_{timestamp}.csv`.
+
+Passing `-r` followed by a sentence with a lacuna and options
+of the same length as the lacuna will rank the proposed
+reconstructions from most to least likely. White space
+and punctuation don't count towards matching the lacuna length,
+and currently this doesn't work with lacunae of unspecified length.
+
+- `python main.py -r 'ἄνδρες [___] γυναῖκες' και 'τα δ' γαρ τον`

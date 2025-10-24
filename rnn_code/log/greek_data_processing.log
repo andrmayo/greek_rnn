@@ -255,3 +255,43 @@ RNN(
 total parameter count = 2,350,500
 end generator -- 2025-10-13 12:05:39.162301
 
+start greek data processing -- 2025-10-13 14:25:20.484351
+Using a pre-trained model
+Loading model: /home/archytas/Projects/greek_rnn/rnn_code/models/best/rand_dynam_greek_rnn_no_dropout.pth
+Load model: RNN(
+  (embed): Embedding(35, 300)
+  (scale_up): Linear(in_features=300, out_features=300, bias=True)
+  (rnn): LSTM(300, 150, num_layers=4, batch_first=True, bidirectional=True)
+  (out): Linear(in_features=300, out_features=300, bias=True)
+  (dropout): Dropout(p=0.0, inplace=False)
+) with specs: embed_size: 300, hidden_size: 300, proj_size: 150, rnn n layers: 4, share: False, dropout: 0.0
+RNN(
+  (embed): Embedding(35, 300)
+  (scale_up): Linear(in_features=300, out_features=300, bias=True)
+  (rnn): LSTM(300, 150, num_layers=4, batch_first=True, bidirectional=True)
+  (out): Linear(in_features=300, out_features=300, bias=True)
+  (dropout): Dropout(p=0.0, inplace=False)
+)
+total parameter count = 2,350,500
+end generator -- 2025-10-13 14:25:47.566749
+
+start greek data processing -- 2025-10-24 13:23:55.624234
+Using a pre-trained model
+Loading model: /home/archytas/Projects/greek_rnn/rnn_code/models/best/rand_dynam_greek_rnn_no_dropout.pth
+Load model: RNN(
+  (embed): Embedding(35, 300)
+  (scale_up): Linear(in_features=300, out_features=300, bias=True)
+  (rnn): LSTM(300, 150, num_layers=4, batch_first=True, bidirectional=True)
+  (out): Linear(in_features=300, out_features=300, bias=True)
+  (dropout): Dropout(p=0.0, inplace=False)
+) with specs: embed_size: 300, hidden_size: 300, proj_size: 150, rnn n layers: 4, share: False, dropout: 0.0
+RNN(
+  (embed): Embedding(35, 300)
+  (scale_up): Linear(in_features=300, out_features=300, bias=True)
+  (rnn): LSTM(300, 150, num_layers=4, batch_first=True, bidirectional=True)
+  (out): Linear(in_features=300, out_features=300, bias=True)
+  (dropout): Dropout(p=0.0, inplace=False)
+)
+total parameter count = 2,350,500
+end generator -- 2025-10-24 13:24:24.589004
+

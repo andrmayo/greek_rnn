@@ -390,8 +390,6 @@ if __name__ == "__main__":
     if args.rank is not None:
         import shlex
 
-        # '#' used here instead of ! or _, so that rank could in principle be used
-        # with sentence containing other lacuna without options to rank
         sentence = options = None
         if len(args.rank) > 0:
             sentence = args.rank[0]
@@ -407,7 +405,6 @@ if __name__ == "__main__":
             )
             options = shlex.split(options)
 
-        # char_indexes = [ind for ind, ele in enumerate(sentence) if ele == "#"]
         ranking = rank(model, sentence, options)
         print("Ranking:")
         print("(option, log_sum)")

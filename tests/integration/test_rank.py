@@ -5,7 +5,7 @@ from pathlib import Path
 
 def test_rank_cli():
     """Test ranking options through CLI"""
-    sentence = "ἄνδρες [###] γυναῖκες"
+    sentence = "ἄνδρες [___] γυναῖκες"
     options = ["και", "γαρ", "τον", "αιδ", "σομ", "πετ", "ιυδ"]
     main_path = Path(__file__).parent.parent.parent / "rnn_code" / "main.py"
     # sys.executable specifies Python interpreter

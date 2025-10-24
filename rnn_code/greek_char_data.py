@@ -16,12 +16,18 @@ USER_MASK = "#"
 
 def read_datafiles(
     json_list: List,
-) -> Tuple[List[str], List[str], List[str], List[int], List[str], Dict[int, int]]:
+) -> Tuple[List[str], List[str], List[str], List[int], List[List[str]], Dict[int, int]]:
     """
     This function takes in a list of files and looks at the Greek text in all of them.
-    Sentences with reconstructed lacunae, sentences with empty lacunae, and sentences with no lacunae are separated out.
-    Sentences without lacunae are split into train, test, dev (80:10:10). The reconstructed lacunae are then split, and some are masked.
-    Function returns a tuple of lists of sentences (train, dev, test, no lacunae, unmasked lacunae, masked lacunae.)
+    It processes all lacunae in texts. For training, it folds reconstructions into text.
+    For validation and test sets, reconstructions are marked with square brackets.
+    Function returns: a list of training texts, a list of dev texts,
+    a list of test texts, a list that maps items in train + dev + test to original order
+    of texts as read in from json file(s), a list of reconstructions i same order
+    as original json items (with empty list for texts with no reconstructions),
+    and a mapping from a text's place is json_blocks (which is just Greek texts)
+    to its place in the original json files, in the order processed (which include
+    non-Greek texts).
     """
 
     json_blocks = []
@@ -68,7 +74,7 @@ def read_datafiles(
     random_index = [i for i in range(n_texts)]
     random.shuffle(random_index)
 
-    # dev_data and test_data are coming from lacuna_texts because the masking is actual lacunae, and character generation is evaluated against multiple reconstructions
+    # dev_data and test_data are coming from lacuna_texts because the masking is actual lacunae, and character generation is evaluated against reconstructions
     train_data = [training_texts[i] for i in random_index[:train_length]]
     dev_data = [
         lacuna_texts[i]
