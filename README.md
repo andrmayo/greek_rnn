@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The code here borrows a great deal from the Coptic RNN developed by
+The approach here is inspired by the Coptic RNN developed by
 [Levine et al.](https://arxiv.org/html/2407.12247v1). As with the Coptic RNN
 project, the main goal here is to generate textual reconstructions of a given
 lacuna, ranked according to their probability of being correct.
