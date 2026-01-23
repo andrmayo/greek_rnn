@@ -12,7 +12,12 @@ USER_MASK = "#"
 
 
 class RNN(nn.Module):
-    def __init__(self, specs, spaces_are_tokens=False, newlines_are_tokens=True):
+    def __init__(
+        self,
+        specs: list[int | float],
+        spaces_are_tokens: bool = False,
+        newlines_are_tokens: bool = True,
+    ):
         super(RNN, self).__init__()
         # ensure that character dictionary doesn't change
         self.tokenizer = letter_tokenizer.LetterTokenizer(
@@ -120,15 +125,25 @@ class RNN(nn.Module):
         text = "".join([self.index_to_token[index] for index in indexes])
         return text
 
-    # Function is used in greek_utils: data_item is a DataItem object as defined in greek_utils
-    def mask_and_label_characters(self, data_item, mask_type="random"):
+    # Function is used in greek_utils
+    def mask_and_label_characters(
+        self, data_item: DataItem, mask_type: str = "random"
+    ) -> tuple[DataItem, int]:
         data_item.indexes = self.lookup_indexes(data_item.text)
 
         text_length = len(data_item.indexes)
-        mask = [True] * text_length
+
         labels = (
             [-100] * text_length
         )  # labels mark where actual masking is with a value > 0, and this value is the index of the masked token
+
+        # guard against short texts
+        if text_length < 3:
+            data_item.mask = [False] * text_length
+            total_mask = 0
+            return data_item, total_mask
+
+        mask = [True] * text_length
 
         mask_count = 0  # This counts only tokens actually masked, not those swapped for random character or retained
         random_sub = 0
@@ -136,7 +151,13 @@ class RNN(nn.Module):
 
         if mask_type == "random":
             for i in range(text_length):
+                # we want to skip masking actual lacunae
                 current_token = data_item.indexes[i]
+                token_char = self.index_to_token[current_token]
+                if token_char in ("!", "."):
+                    mask[i] = False
+                    continue
+
                 r_mask_status = random.random()
                 r_mask_type = random.random()
 
@@ -161,17 +182,16 @@ class RNN(nn.Module):
                 else:
                     mask[i] = False
 
-                data_item.mask = mask
-                data_item.labels = labels
+            data_item.mask = mask
+            data_item.labels = labels
 
         elif mask_type == "smart":
             r_mask_quantity = random.randint(1, 5)
 
-            mask_index = [0] * text_length
-            i = 0
+            should_mask = [False] * text_length
 
-            while i < r_mask_quantity:
-                r_start_loc = random.randint(0, text_length)
+            for _ in range(r_mask_quantity):
+                r_start_loc = random.randint(0, text_length - 1)
                 r_mask_length = random.random()
                 if r_mask_length <= 0.48:
                     mask_length = 1
@@ -181,20 +201,25 @@ class RNN(nn.Module):
                     mask_length = 3
                 else:
                     mask_length = random.randint(4, 35)
-                mask_end = r_start_loc + mask_length
-                mask_type = random.random()
-                mask_index[r_start_loc:mask_end] = [mask_type] * mask_length
-                i += 1
+                mask_end = r_start_loc + min(mask_length, text_length)
+                should_mask[r_start_loc:mask_end] = [True] * mask_length
 
-            mask_start = 0
             for i in range(text_length):
                 current_token = data_item.indexes[i]
-                if mask_index[i] > 0:
-                    if mask_index[i] < 0.8:
+                token_char = self.index_to_token[current_token]
+
+                # Skip masking actual lacunae
+                if token_char in ("!", "."):
+                    mask[i] = False
+                    continue
+
+                if should_mask[i]:
+                    r_mask_type = random.random()
+                    if r_mask_type < 0.8:
                         # replace with MASK symbol
                         replacement = self.token_to_index[self.mask_char]
                         mask_count += 1
-                    elif mask_index[i] < 0.9:
+                    elif r_mask_type < 0.9:
                         # replace with random character
                         replacement = random.randint(0, self.num_tokens - 1)
                         random_sub += 1
@@ -205,13 +230,11 @@ class RNN(nn.Module):
 
                     data_item.indexes[i] = replacement
                     labels[i] = current_token
-
-                    mask_start += 1
                 else:
                     mask[i] = False
 
-                data_item.mask = mask
-                data_item.labels = labels
+            data_item.mask = mask
+            data_item.labels = labels
 
         total_mask = mask_count + random_sub + orig_token
 

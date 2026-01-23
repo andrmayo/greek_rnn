@@ -2,10 +2,18 @@
 
 ## Purpose
 
-The approach here is inspired by the Coptic RNN developed by
-[Levine et al.](https://arxiv.org/html/2407.12247v1). As with the Coptic RNN
-project, the main goal here is to generate textual reconstructions of a given
-lacuna, ranked according to their probability of being correct.
+The main purpose here is to develop a philological tool for working with Greek
+papyrus texts. A core hypothesis here is that the strong sequential and recency
+biases of LSTMs is, in fact, a good thing for working with a small datasets like
+the Greek papyri.
+
+NB: the approach taken here is to evaluate the final model against scholarly
+reconstructions, rather than against random mask filling. This has the advantage
+of being less variable: whole texts include both
+
+## TODO
+
+- ensure that during training lacuna markers don't get masked and filled
 
 ## Data
 
@@ -15,6 +23,14 @@ of Greek papyri texts created by Will Fitzgerald and Justin Barney. This corpus
 provides convenient JSON representations for the texts of just about all
 digitally available Greek papyri, along with indications of lacunae (gaps) in
 the texts and available scholarly reconstructions of these lacunae.
+
+## Prior work
+
+The use of an LSTM here is inspired by the Coptic RNN developed by
+[Levine et al.](https://arxiv.org/html/2407.12247v1), after having experimented
+with BERT models. As with the Coptic RNN project, the main goal here is to
+generate textual reconstructions of a given lacuna, ranked according to their
+probability of being correct.
 
 ## How Training and Evaluation Work
 
@@ -56,13 +72,13 @@ function randomly or contiguously masks 15% of characters:
 - 10% of masked tokens → replaced with random character
 - 10% of masked tokens → kept as original
 
-The model learns to predict the original character at each masked position.
-Loss is computed **only on masked positions**, not on unmasked context.
+The model learns to predict the original character at each masked position. Loss
+is computed **only on masked positions**, not on unmasked context.
 
-**Note:** The model trains on scholarly reconstructions as if they are
-certain, preserved text. In general, whether right or wrong, scholarly
-reconstructions should be plausible enough so as not to degrade
-the quality of the training data.
+**Note:** The model trains on scholarly reconstructions as if they are certain,
+preserved text. In general, whether right or wrong, scholarly reconstructions
+should be plausible enough so as not to degrade the quality of the training
+data.
 
 ### Validation and Test Phase
 
@@ -106,8 +122,8 @@ reconstruction.
   is rewarded for reproducing the same reconstruction that scholars proposed,
   whether or not that reconstruction is actually correct.
 - Only the **first alternative** is used when multiple scholarly reconstructions
-  exist for the same lacuna (per comment at `greek_char_data.py:82`).
-  With the current MAAT corpus, this makes the most sense, since alternative
+  exist for the same lacuna (per comment at `greek_char_data.py:82`). With the
+  current MAAT corpus, this makes the most sense, since alternative
   reconstructions are very rarely present.
 - The model never sees the actual lacunae (with brackets) during training - it
   only sees them during dev/test evaluation.
@@ -146,9 +162,9 @@ and be rewarded for reproducing them.
   hyperparameters, logging setup, the `DataItem` class for text processing,
   diacritic filtering, and various data processing utilities.
 
-- **`greek_char_data.py`**: Data loading and preprocessing. Handles reading
-  JSON files, train/dev/test splitting, data partitioning, and writing
-  processed data to files.
+- **`greek_char_data.py`**: Data loading and preprocessing. Handles reading JSON
+  files, train/dev/test splitting, data partitioning, and writing processed data
+  to files.
 
 - **`letter_tokenizer.py`**: Character-level tokenization for Greek text.
   Handles special characters, diacritics, and creates mappings between
@@ -171,17 +187,17 @@ this file needs to be moved to `rnn_code/models/best/`.
 
 If the `-t` / `--train` option isn't passed to `main.py` in the CLI, the program
 will search for an existing model as a `.pth` file in `rnn_code/models/best`,
-and will select the most recently modified file.
-To set this up based on the compressed `.pth` file in `rnn_code/models/compressed-weights`,
-run `source setup.sh` in the project root directory.
+and will select the most recently modified file. To set this up based on the
+compressed `.pth` file in `rnn_code/models/compressed-weights`, run
+`source setup.sh` in the project root directory.
 
 ### Inference
 
-The three inference options to pass to the `main.py` CLI are
-`-pr` (`--predict`), `-prk` (`--predict_top_k`), and `-r` (`--rank`).
-Each takes a Greek sentence as a positional argument, with lacunae to be filled
-indicated either with `_` for known-length lacunae or `<gap>` for unkown length.
-For instance,
+The three inference options to pass to the `main.py` CLI are `-pr`
+(`--predict`), `-prk` (`--predict_top_k`), and `-r` (`--rank`). Each takes a
+Greek sentence as a positional argument, with lacunae to be filled indicated
+either with `_` for known-length lacunae or `<gap>` for unkown length. For
+instance,
 
 - `python main.py -pr 'ἀγαθὸς [___] ἐστιν'`
 
@@ -191,14 +207,13 @@ This fills in a lacuna of three characters.
 
 This will also try to predict the length of the lacuna.
 
-If `-prk` is used instead of `-pr`, the top 1000 most likely predictions
-will be saved to a CSV file in `rnn_code/results` with a filename in the format
+If `-prk` is used instead of `-pr`, the top 1000 most likely predictions will be
+saved to a CSV file in `rnn_code/results` with a filename in the format
 `top_k_{timestamp}.csv`.
 
-Passing `-r` followed by a sentence with a lacuna and options
-of the same length as the lacuna will rank the proposed
-reconstructions from most to least likely. White space
-and punctuation don't count towards matching the lacuna length,
-and currently this doesn't work with lacunae of unspecified length.
+Passing `-r` followed by a sentence with a lacuna and options of the same length
+as the lacuna will rank the proposed reconstructions from most to least likely.
+White space and punctuation don't count towards matching the lacuna length, and
+currently this doesn't work with lacunae of unspecified length.
 
 - `python main.py -r 'ἄνδρες [___] γυναῖκες' και 'τα δ' γαρ τον`
