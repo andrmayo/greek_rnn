@@ -3,37 +3,23 @@ import logging
 import os
 import re
 import string
-import sys
 import unicodedata
 from collections import Counter
 from pathlib import Path
 from typing import List, Optional
 
 import torch
+from torch import nn
 from nltk.util import ngrams
 
 from rnn_code.letter_tokenizer import LetterTokenizer
-
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
-formatter = logging.Formatter("%(asctime)s | %(levelname)s | %(message)s")
-
-stdout_handler = logging.StreamHandler(sys.stdout)
-stdout_handler.setLevel(logging.DEBUG)
-stdout_handler.setFormatter(formatter)
-
-file_handler = logging.FileHandler(
-    f"{Path(__file__).parent}/log/greek_data_processing.log"
-)
-file_handler.setLevel(logging.INFO)
-
-logger.addHandler(file_handler)
-logger.addHandler(stdout_handler)
 
 seed = 1234
 
 SPACES_ARE_TOKENS = False
 NEWLINES_ARE_TOKENS = False
+
+logger = logging.getLogger(__name__)
 
 # This module contains the model hyperparameters as well as various functions for data processing and logging information about the model
 
@@ -148,7 +134,7 @@ class DataItem:
         self.position_in_original = position_in_original  # integer marking location of DataItem in original set of texts (including non-Greek texts)
 
 
-def get_home_path():
+def get_home_path() -> str:
     return os.path.expanduser("~")
 
 
@@ -157,7 +143,7 @@ COMBINING_DOT = "COMBINING DOT BELOW"
 MN_KEEP_LIST = [COMBINING_DOT]
 
 
-def filter_diacritics(string):
+def filter_diacritics(string: str) -> str:
     # First decompose the string to separate base characters from combining marks
     decomposed = unicodedata.normalize("NFD", string)
     new_string = ""
@@ -174,13 +160,13 @@ def count_parameters(model):
     total = 0
     for name, p in model.named_parameters():
         if p.dim() > 1:
-            logging.debug(f"{p.numel():,}\t{name}")
+            logger.debug(f"{p.numel():,}\t{name}")
             total += p.numel()
 
-    logging.info(f"total parameter count = {total:,}")
+    logger.info(f"total parameter count = {total:,}")
 
 
-def read_datafile(json_file: str, data_list=None) -> list:
+def read_datafile(json_file: str, data_list=None) -> list[DataItem]:
     if data_list is None:
         data_list = []
 
@@ -197,7 +183,7 @@ def read_datafile(json_file: str, data_list=None) -> list:
     return data_list
 
 
-def filter_brackets(input_string):
+def filter_brackets(input_string: str) -> str:
     input_string = re.sub(r"\|", "", input_string)
     input_string = re.sub(r"\{", "", input_string)
     input_string = re.sub(r"\}", "", input_string)
@@ -207,7 +193,7 @@ def filter_brackets(input_string):
     return input_string
 
 
-def skip_sentence(input_string):
+def skip_sentence(input_string: str) -> bool:
     skip = False
     if has_more_than_one_latin_character(input_string):
         skip = True
@@ -218,12 +204,12 @@ def skip_sentence(input_string):
     return skip
 
 
-def has_more_than_one_latin_character(input_string):
+def has_more_than_one_latin_character(input_string: str) -> bool:
     latin_count = sum(1 for char in input_string if char in string.ascii_letters)
     return latin_count > 1
 
 
-def mask_input(model, data, mask_type, masking_strategy):
+def mask_input(model: nn.Module, data, mask_type, masking_strategy):
     logger.info(f"Mask type: {mask_type} - {masking_strategy}")
     logger.info(f"Training data read in with {len(data)} lines")
 
@@ -245,7 +231,7 @@ def mask_input(model, data, mask_type, masking_strategy):
     return data_for_model, mask
 
 
-def construct_trigram_lookup():
+def construct_trigram_lookup() -> dict:
     # read in training data
     with open(f"{Path(__file__).parent}/data/train.json", "r") as jsonFile:
         texts = [json.loads(line)["text"].strip() for line in jsonFile]

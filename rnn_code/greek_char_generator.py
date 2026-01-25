@@ -25,21 +25,27 @@ from rnn_code.greek_utils import (
     batch_size_multiplier,
     device,
     learning_rate,
-    logger,
     model_path,
     nEpochs,
     patience,
 )
 
+logger = logging.getLogger(__name__)
 
-def check_accuracy(target, orig_data_item):
+
+def check_accuracy(target: list[int], orig_data_item: DataItem) -> tuple[int, int, int]:
     masked = 0
     correct = 0
     mismatch = 0  # We don't want to skip sentences with a restoration of different length than the original text
 
+    if orig_data_item.labels is None:
+        raise ValueError(
+            "check_accuracy must be called with DataItem with initialized labels"
+        )
+
     # DataItem should have label[i] = -100 for unmasked tokens, otherwise the label should give the embedding index for the masked token
     if len(target) != len(orig_data_item.labels):
-        logging.info("Model predicted different number of characters - text skipped")
+        logger.info("Model predicted different number of characters - text skipped")
         mismatch += 1
     else:
         for j in range(len(orig_data_item.labels)):
@@ -56,15 +62,15 @@ def check_accuracy(target, orig_data_item):
 
 
 def train_batch(
-    model: RNN,
-    optimizer,
-    criterion,
-    data,
-    data_indexes,
-    mask_type,
-    update=True,  # update=False is used for dev set
-    mask=True,
-):
+    model: nn.Module,
+    optimizer: torch.optim.optimizer.Optimizer,
+    criterion: nn.Module,
+    data: list[DataItem],
+    data_indexes: list[int],
+    mask_type: str,
+    update: bool = True,  # update=False is used for dev set
+    mask: bool = True,
+) -> tuple:
     model.zero_grad()
     total_loss, total_tokens, total_chars = 0, 0, 0
 
@@ -98,9 +104,16 @@ def train_batch(
         masked_label = label_tensor[masked_idx]
         loss = criterion(masked_out, masked_label)
 
-        total_loss += loss.data.item()
+        try:
+            total_loss += loss.item()
+        except RuntimeError as e:
+            raise RuntimeError(
+                f"Error accessing loss as scalar, criterion probably not applying reduction to loss tensor: {e}"
+            )
         total_tokens += len(out[0])
-        total_chars += len(data_item.text) + 1
+        if data_item.text is None:
+            raise ValueError("DataItem passed to train_batch has uninitialized text")
+        total_chars += len(data_item.text)
 
         if update:
             loss.backward()
@@ -130,25 +143,35 @@ def train_batch(
 
 def train_model(
     model: RNN,
-    train_data,
+    train_data: list[DataItem],
     dev_data=None,
-    output_name="greek_lacuna",
-    mask=True,
-    mask_type=None,
+    output_name: str = "greek_lacuna",
+    mask: bool = True,
+    mask_type: str | None = None,
     seed=None,
 ):
+    if mask_type is None:
+        raise ValueError(
+            "mask_type from [random, smart] must be specified for training from"
+        )
     if seed is not None:
         random.seed(seed)
     # start a new wandb run to track this script
     wandb.init(
-        # set the wandb project where this run will be logged
         project="greek_rnn",
-        # track hyperparameters and run metadata
         config={
             "learning_rate": learning_rate,
             "architecture": "LSTM",
             "dataset": "MAAT",
             "epochs": nEpochs,
+            "batch_size": batch_size,
+            "patience": patience,
+            "mask_type": mask_type,
+            "embed_size": model.specs[0],
+            "hidden_size": model.specs[1],
+            "rnn_layers": model.specs[3],
+            "dropout": model.specs[5],
+            "masking_proportion": model.specs[6],
         },
     )
 
@@ -205,7 +228,7 @@ def train_model(
     dev_list = [i for i in range(len(dev_data))]
 
     criterion = nn.CrossEntropyLoss(reduction="sum")
-    optimizer = torch.optim.AdamW(  # type: ignore[reportPrivateImportUsage]
+    optimizer = torch.optim.adamw.AdamW(
         model.parameters(), lr=learning_rate, weight_decay=L2_lambda
     )
     # optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=L2_lambda)
@@ -247,13 +270,6 @@ def train_model(
             train_tokens += num_tokens
             train_chars += num_characters
             train_mask_count += train_masked
-            wandb.log(
-                {
-                    "Epoch": epoch,
-                    "avg loss in epoch": train_loss / train_mask_count,
-                    "batch_size": incremental_batch_size,
-                }
-            )
 
             if num_characters > 0:
                 logger.debug(
@@ -294,8 +310,16 @@ def train_model(
 
         train_loss = train_loss / train_tokens
         dev_loss = dev_loss / dev_tokens
+        dev_accuracy = dev_correct / dev_masked if dev_masked > 0 else 0.0
 
-        wandb.log({"dev loss after epoch": dev_loss})
+        wandb.log(
+            {
+                "epoch": epoch,
+                "train_loss": train_loss,
+                "dev_loss": dev_loss,
+                "dev_accuracy": dev_accuracy,
+            }
+        )
 
         # Early stopping with patience and best model checkpointing
         if dev_loss < best_dev_loss:
@@ -320,7 +344,7 @@ def train_model(
             )
             break
 
-        logging.info(
+        logger.info(
             f"dev masked total: {dev_masked}, correct predictions: {dev_correct}, simple accuracy: {round(dev_correct / dev_masked, 3)}"
         )
 
@@ -337,7 +361,7 @@ def train_model(
         # sample_masked += masked
         # sample_correct += correct
         #
-        # logging.info(f"sample accuracy: {round(sample_correct/sample_masked, 3)}")
+        # logger.info(f"sample accuracy: {round(sample_correct/sample_masked, 3)}")
 
     # Restore best model state if we found one
     if best_model_state is not None:
@@ -358,8 +382,8 @@ def train_model(
     return model
 
 
-def fill_masks(model: RNN, text, mask_type, temp=0):
-    logging.info(f"prompt: {text}")
+def fill_masks(model: RNN, text: str, mask_type: str, temp=0):
+    logger.info(f"prompt: {text}")
     test_data_item = DataItem(text=text)
     data_item, _ = model.mask_and_label_characters(test_data_item, mask_type=mask_type)
     index_tensor = torch.tensor(data_item.indexes, dtype=torch.int64).to(device)
@@ -382,12 +406,16 @@ def fill_masks(model: RNN, text, mask_type, temp=0):
     # input vs masked pairs
     pairs = []
     pairs_index = []
+    if not isinstance(data_item.mask, list):
+        raise ValueError("data_item.mask not initalized")
+    if not isinstance(data_item.labels, list):
+        raise ValueError("data_item.labels not initialized")
     for i in range((len(data_item.mask))):
         if data_item.mask[i]:
             pairs.append((model.decode(data_item.labels[i]), model.decode(target[i])))
             pairs_index.append((data_item.labels[i], target[i]))
-    logging.info(f"orig vs predicted char: {pairs}")
-    logging.info(f"orig vs predicted char: {pairs_index}")
+    logger.info(f"orig vs predicted char: {pairs}")
+    logger.info(f"orig vs predicted char: {pairs_index}")
 
     sample_masked, sample_correct, _ = check_accuracy(target, test_data_item)
     return target_text, sample_masked, sample_correct
@@ -421,17 +449,16 @@ def accuracy_evaluation(model: RNN, data: List[DataItem], data_indexes):
         mismatch_total += mismatch
 
     if masked_total > 0:
-        logging.info(
+        logger.info(
             f"masked total: {masked_total}, correct predictions: {correct}, simple accuracy: {round(correct / masked_total, 3)}, mismatch: {mismatch_total}"
         )
     else:
-        logging.info(
+        logger.info(
             f"masked total: {masked_total}, correct predictions: {correct}, mismatch {mismatch_total}"
         )
 
 
 # this is only for evaluating on the test set
-# everything involving trigrams needs work
 def baseline_accuracy(model: RNN, data, data_indexes):
     masked_total = 0
     correct_most_common_char = 0
@@ -490,19 +517,19 @@ def baseline_accuracy(model: RNN, data, data_indexes):
         correct_random += correct_guess_random
         correct_trigram += correct_guess_trigram
     # print(count_rand)
-    logging.info(
+    logger.info(
         f"Most Common Char Baseline; dev masked total: {masked_total}, correct predictions: {correct_most_common_char}, baseline accuracy: {round(correct_most_common_char / masked_total, 3)}"
     )
-    logging.info(
+    logger.info(
         f"Random Baseline; dev masked total: {masked_total}, correct predictions: {correct_random}, baseline accuracy: {round(correct_random / masked_total, 3)}"
     )
-    logging.info(
+    logger.info(
         f"Trigram Baseline; dev masked total: {masked_total}, correct predictions: {correct_trigram}, baseline accuracy: {round(correct_trigram / masked_total, 3)}"
     )
 
 
 def predict(model: RNN, data_item):
-    logging.info(f"input text: {data_item.text}")
+    logger.info(f"input text: {data_item.text}")
 
     index_tensor = torch.tensor(data_item.indexes, dtype=torch.int64).to(device)
     out = model([index_tensor])
@@ -531,14 +558,14 @@ def predict(model: RNN, data_item):
     output_text = "".join(output_chars)
     output_text = output_text.replace(model.bot_char, "").replace(model.eot_char, "")
 
-    logging.info(f"output text: {output_text}")
+    logger.info(f"output text: {output_text}")
     return output_text
 
 
 # file names for csv will be automatically generated from timestamp if save_to_file=True and output_file=None
 def predict_top_k(model: RNN, data_item, k=10, save_to_file=True, output_file=None):
     # beam search
-    logging.info(f"input text: {data_item.text}")
+    logger.info(f"input text: {data_item.text}")
 
     index_tensor = torch.tensor(data_item.indexes, dtype=torch.int64).to(device)
     out = model([index_tensor])
@@ -558,7 +585,7 @@ def predict_top_k(model: RNN, data_item, k=10, save_to_file=True, output_file=No
     lacuna_candidates = []
     for i in range(len(data_item.mask)):
         if i >= len(target_candidates):
-            logging.warning(
+            logger.warning(
                 f"Mask array longer than target_candidates: mask[{len(data_item.mask)}] vs target_candidates[{len(target_candidates)}]"
             )
             continue
@@ -566,7 +593,7 @@ def predict_top_k(model: RNN, data_item, k=10, save_to_file=True, output_file=No
             lacuna_candidates.append(target_candidates[i])
 
     if not lacuna_candidates:
-        logging.warning(
+        logger.warning(
             "No lacuna positions found for top-k prediction for data_item with text number {data_item.text_number}, and text {data_item.text}\n"
         )
         return []

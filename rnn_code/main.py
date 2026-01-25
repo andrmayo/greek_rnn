@@ -4,6 +4,7 @@ import logging
 import re
 from datetime import datetime
 from pathlib import Path
+from typing import cast
 
 import torch
 
@@ -19,11 +20,13 @@ from rnn_code.greek_char_generator import (
     rank,
     train_model,
 )
-from rnn_code.greek_utils import device, logger, model_path, seed, specs
+from rnn_code.greek_utils import device, model_path, seed, specs
 
 # Note to self: the model at present seems to veer towards just predicting the most common character in the corpus
 
 if __name__ == "__main__":
+    logger = logging.getLogger(__name__)
+
     cur_path = Path(__file__).parent.absolute()
     parser = argparse.ArgumentParser(description="Greek character level generator")
     parser.add_argument(
@@ -105,10 +108,10 @@ if __name__ == "__main__":
 
     if args.partition:
         # Do full data partition
-        logging.info("Now partitioning data")
-        logging.info(f"{len(json_list)} json file(s) found: ")
+        logger.info("Now partitioning data")
+        logger.info(f"{len(json_list)} json file(s) found: ")
         for json_file in json_list:
-            logging.info(f"{json_file}")
+            logger.info(f"{json_file}")
         (
             train_data,
             dev_data,
@@ -250,6 +253,9 @@ if __name__ == "__main__":
             f"Load model: {model} with specs: embed_size: {model.specs[0]}, hidden_size: {model.specs[1]}, proj_size: {model.specs[2]}, rnn n layers: {model.specs[3]}, share: {model.specs[4]}, dropout: {model.specs[5]}"
         )
 
+    if not isinstance(model, greek_rnn.RNN):
+        raise ValueError("Invalid model loaded")
+    model = cast(greek_rnn.RNN, model)
     logger.info(model)
     utils.count_parameters(model)
 
@@ -272,8 +278,7 @@ if __name__ == "__main__":
         # if masking_strategy is "dynamic", utils.mask_input returns the data as passed to it, and mask = True
         # if masking_strategy is "once", utils.mask_input adds masking to data by calling model.mask_and_label_characters(),
         # and returns newly masked ata and mask = False.
-        logging.info("Now training LSTM")
-        # utils.mask_input expects train_data to be a list of objects of class greek_utils.DataItem.
+        logger.info("Now training LSTM")
         training_data, mask = utils.mask_input(
             model, train_data, mask_type, masking_strategy
         )
@@ -298,10 +303,10 @@ if __name__ == "__main__":
         # smart_test_data, _ = utils.mask_input(model, test_json, "smart", "once")
         # smart_test_list = [i for i in range(len(smart_test_data))]
 
-        # logging.info("Test Random:")
+        # logger.info("Test Random:")
         # accuracy_evaluation(model, random_test_data, random_test_list)
         # baseline_accuracy(model, random_test_data, random_test_list)
-        # logging.info("Test Smart:")
+        # logger.info("Test Smart:")
         # accuracy_evaluation(model, smart_test_data, smart_test_list)
         # baseline_accuracy(model, smart_test_data, smart_test_list)
 
@@ -359,10 +364,12 @@ if __name__ == "__main__":
 
         test_list = [i for i in range(len(test_texts))]
         # accuracy evaluation
-        logging.info("Test Reconstructed:")
+        logger.info("Test Reconstructed:")
+        model = cast(greek_rnn.RNN, model)
         accuracy_evaluation(model, test_texts, test_list)  # in greek_char_generator
         baseline_accuracy(model, test_texts, test_list)  # in greek_char_generator
 
+    model = cast(greek_rnn.RNN, model)
     if args.predict:
         sentence = args.predict
         sentence = re.sub("<gap/>", "!", sentence)
@@ -370,7 +377,7 @@ if __name__ == "__main__":
         sentence = pattern.sub(lambda x: x.group().replace(" ", ""), sentence)
 
         if not isinstance(sentence, str):
-            logging.warning("Input to predict is not a string.")
+            logger.warning("Input to predict is not a string.")
         else:
             instance = DataItem(text=sentence)
             data_item = model.actual_lacuna_mask_and_label(instance)

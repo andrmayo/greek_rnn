@@ -190,3 +190,73 @@ class TestRNN:
         # Sequence length should be preserved (plus BOT/EOT)
         expected_length = len(rnn_model.lookup_indexes(original_text))
         assert len(masked_item.indexes) == expected_length
+
+    @pytest.mark.parametrize("mask_type", ["random", "smart"])
+    def test_single_char_lacuna_marker_not_masked(self, rnn_model, mask_type):
+        """Test that '.' (single missing char marker) is never masked."""
+        # Use text with '.' characters representing unknown single characters
+        text = "αβγ.δε.ζηθ"
+        data_item = DataItem(text=text)
+
+        # Run masking multiple times to account for randomness
+        for _ in range(10):
+            data_item_copy = DataItem(text=text)
+            masked_item, _ = rnn_model.mask_and_label_characters(
+                data_item_copy, mask_type=mask_type
+            )
+
+            # Find positions of '.' in the token sequence (accounting for BOT token)
+            dot_index = rnn_model.token_to_index['.']
+            for i, idx in enumerate(masked_item.indexes):
+                if idx == dot_index:
+                    # '.' should never be masked
+                    assert masked_item.mask[i] is False, \
+                        f"'.' at position {i} was masked in {mask_type} mode"
+                    assert masked_item.labels[i] == -100, \
+                        f"'.' at position {i} has label in {mask_type} mode"
+
+    @pytest.mark.parametrize("mask_type", ["random", "smart"])
+    def test_gap_marker_not_masked(self, rnn_model, mask_type):
+        """Test that '!' (variable-length gap marker) is never masked."""
+        # Use text with '!' characters representing gaps of unknown length
+        text = "αβγ!δεζ!ηθι"
+        data_item = DataItem(text=text)
+
+        # Run masking multiple times to account for randomness
+        for _ in range(10):
+            data_item_copy = DataItem(text=text)
+            masked_item, _ = rnn_model.mask_and_label_characters(
+                data_item_copy, mask_type=mask_type
+            )
+
+            # Find positions of '!' in the token sequence
+            gap_index = rnn_model.token_to_index['!']
+            for i, idx in enumerate(masked_item.indexes):
+                if idx == gap_index:
+                    # '!' should never be masked
+                    assert masked_item.mask[i] is False, \
+                        f"'!' at position {i} was masked in {mask_type} mode"
+                    assert masked_item.labels[i] == -100, \
+                        f"'!' at position {i} has label in {mask_type} mode"
+
+    @pytest.mark.parametrize("mask_type", ["random", "smart"])
+    def test_mixed_lacuna_markers_not_masked(self, rnn_model, mask_type):
+        """Test that both '.' and '!' markers are skipped when mixed in text."""
+        text = "αβ.γδ!εζ.ηθ!ικλμνξοπ"
+        data_item = DataItem(text=text)
+
+        for _ in range(10):
+            data_item_copy = DataItem(text=text)
+            masked_item, _ = rnn_model.mask_and_label_characters(
+                data_item_copy, mask_type=mask_type
+            )
+
+            dot_index = rnn_model.token_to_index['.']
+            gap_index = rnn_model.token_to_index['!']
+
+            for i, idx in enumerate(masked_item.indexes):
+                if idx in (dot_index, gap_index):
+                    assert masked_item.mask[i] is False, \
+                        f"Lacuna marker at position {i} was masked in {mask_type} mode"
+                    assert masked_item.labels[i] == -100, \
+                        f"Lacuna marker at position {i} has label in {mask_type} mode"

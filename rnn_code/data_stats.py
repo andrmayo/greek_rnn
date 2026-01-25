@@ -1,10 +1,12 @@
 # Note: this module can be run as a script to print stats, see if __name__ == "__main__" block at end
 
+import logging
 import re
 from collections import Counter
+from os import PathLike
 from pathlib import Path
 
-from rnn_code.greek_utils import logger
+logger = logging.getLogger(__name__)
 
 FULL_DATA = f"{Path(__file__).parent}/data/full_data.csv"
 RECONSTRUCTED_DATA = (
@@ -15,7 +17,7 @@ EMPTY_LACUNA_DATA = f"{Path(__file__).parent}/data/test_empty_lacuna.csv"
 FILES = [FULL_DATA, RECONSTRUCTED_DATA, EMPTY_LACUNA_DATA]
 
 
-def char_histogram(file_name):
+def char_histogram(file_name: PathLike | str) -> Counter:
     with open(file_name, "r") as f:
         file_text = f.read()
         file_text = file_text.strip()
@@ -23,7 +25,7 @@ def char_histogram(file_name):
     return char_counts
 
 
-def char_counts(file_path):
+def char_counts(file_path: PathLike | str) -> None:
     logger.info(f"Gathering character stats for {file_path}")
     with open(file_path, "r") as f:
         file_text = f.read()
@@ -47,7 +49,7 @@ def char_counts(file_path):
     logger.info(f"Average sentence length: {round(ave_sentence_len, 2)}")
 
 
-def gap_counts(file_path):
+def gap_counts(file_path: PathLike | str) -> None:
     logger.info(f"Gathering gap stats for {file_path}")
     with open(file_path, "r") as f:
         file_text = f.read()
@@ -83,7 +85,7 @@ def gap_counts(file_path):
     logger.info(f"Length per gap: {sorted_length_per_gap}")
 
     gap_count = 0
-    for key, value in sorted_length_per_gap.items():
+    for _, value in sorted_length_per_gap.items():
         gap_count += value
 
     if gap_count > 0:

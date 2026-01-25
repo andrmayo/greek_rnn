@@ -7,6 +7,8 @@ from typing import Dict, List, Tuple
 
 import regex as re
 
+logger = logging.getLogger(__name__)
+
 # RECONSTRUCTED_LACUNA_MAX = 100
 # We may want to use this so that the  model avoids texts that are hopelessly lacunose
 
@@ -42,7 +44,7 @@ def read_datafiles(
                     json_blocks.append(jsonDict)
                 i += 1
 
-    logging.info(
+    logger.info(
         f"Lines read in from json files by greek_char_data.read_datafiles: {i}"
     )
 
@@ -66,7 +68,7 @@ def read_datafiles(
 
     # calculate lengths for each partition based on ratios (80:10:10)
     n_texts = len(training_texts)
-    logging.info(f"n of training texts is {n_texts}")
+    logger.info(f"n of training texts is {n_texts}")
     train_length = int(n_texts * 0.8)
     dev_test_length = int(n_texts * 0.1)
 
@@ -100,10 +102,10 @@ def read_datafiles(
                 lacunae.append(case["alternatives"][0])
         reconstructions.append(lacunae)
 
-    logging.info("greek_char_data.read_datafiles has partitioned data")
-    logging.info(f"train_data has {len(train_data)} entries")
-    logging.info(f"dev_data has {len(dev_data)} entries")
-    logging.info(f"test_data has {len(test_data)} entries")
+    logger.info("greek_char_data.read_datafiles has partitioned data")
+    logger.info(f"train_data has {len(train_data)} entries")
+    logger.info(f"dev_data has {len(dev_data)} entries")
+    logger.info(f"test_data has {len(test_data)} entries")
     # Return includes json_blocks (with alternate readings) and random_index
     # random_index is in same order as train_data + dev_data + test_data, and lists indexes to json_blocks
     # json_blocks contains texts in the order they stand in the json files, and the json files in the order in which they stand in the file_list argument
@@ -118,7 +120,10 @@ def read_datafiles(
 
 
 def write_to_json(
-    file_name: str, text_list: list, text_index: list, mapping_greek_to_original: dict
+    file_name: str,
+    text_list: list[str],
+    text_index: list[int],
+    mapping_greek_to_original: dict[int, int],
 ):
     cur_path = Path(__file__).absolute().parent
     path = f"{cur_path}/data/{file_name}"

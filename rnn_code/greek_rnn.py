@@ -1,4 +1,5 @@
 import random
+from typing import cast
 
 import torch
 import torch.nn as nn
@@ -6,7 +7,6 @@ import torch.nn as nn
 import rnn_code.letter_tokenizer as letter_tokenizer
 from rnn_code.greek_utils import DataItem
 
-# MASK = "<mask>"
 MASK = "_"
 USER_MASK = "#"
 
@@ -49,6 +49,8 @@ class RNN(nn.Module):
             masking_proportion,
         ) = specs
 
+        embed_size, hidden_size = cast(int, embed_size), cast(int, hidden_size)
+
         self.token_to_index = {}
         self.index_to_token = {}
         for i, token in enumerate(tokens):
@@ -67,6 +69,7 @@ class RNN(nn.Module):
             bidirectional=True,
             dropout=dropout,
             batch_first=True,
+            proj_size=proj_size,
         )
 
         if not self.share:
