@@ -6,13 +6,12 @@ import string
 import unicodedata
 from collections import Counter
 from pathlib import Path
-from typing import List, Optional
 
 import torch
-from torch import nn
 from nltk.util import ngrams
 
 from rnn_code.letter_tokenizer import LetterTokenizer
+from rnn_code.greek_rnn import RNN
 
 seed = 1234
 
@@ -117,12 +116,12 @@ print(f"torch version & device: {torch.__version__, device}")
 class DataItem:
     def __init__(
         self,
-        text: Optional[str] = None,
-        text_number: Optional[int] = None,
-        indexes: Optional[List[int]] = None,
-        mask: Optional[List[bool]] = None,
-        labels: Optional[List[int]] = None,
-        position_in_original: Optional[int] = None,
+        text: str | None = None,
+        text_number: int | None = None,
+        indexes: list[int] | None = None,
+        mask: list[bool] | None = None,
+        labels: list[int] | None = None,
+        position_in_original: int | None = None,
     ):
         self.text_number = text_number
         self.text = text  # original text
@@ -156,7 +155,7 @@ def filter_diacritics(string: str) -> str:
     return new_string.lower()
 
 
-def count_parameters(model):
+def count_parameters(model: RNN):
     total = 0
     for name, p in model.named_parameters():
         if p.dim() > 1:
@@ -209,7 +208,9 @@ def has_more_than_one_latin_character(input_string: str) -> bool:
     return latin_count > 1
 
 
-def mask_input(model: nn.Module, data, mask_type, masking_strategy):
+def mask_input(
+    model: RNN, data: list[DataItem], mask_type: str, masking_strategy: str
+) -> tuple[list[DataItem], bool]:
     logger.info(f"Mask type: {mask_type} - {masking_strategy}")
     logger.info(f"Training data read in with {len(data)} lines")
 
@@ -231,12 +232,12 @@ def mask_input(model: nn.Module, data, mask_type, masking_strategy):
     return data_for_model, mask
 
 
-def construct_trigram_lookup() -> dict:
+def construct_trigram_lookup() -> dict[str, dict[str, int]]:
     # read in training data
     with open(f"{Path(__file__).parent}/data/train.json", "r") as jsonFile:
         texts = [json.loads(line)["text"].strip() for line in jsonFile]
 
-    ngram_counts = Counter()
+    ngram_counts: dict[tuple, int] = Counter()
     for text in texts:
         text = list(tokenizer.tokenize(text))
         ngrams_obj = ngrams(text, 3, pad_left=True, left_pad_symbol="<s>")
@@ -248,8 +249,9 @@ def construct_trigram_lookup() -> dict:
         third = entry[2]
         if first_second in look_up:
             if third in look_up[first_second]:
-                # it never should be...
-                look_up[first_second][third] += ngram_counts[entry]
+                raise ValueError(
+                    "A trigram has been encountered twice, which shouldn't happen"
+                )
             else:
                 look_up[first_second][third] = ngram_counts[entry]
         else:

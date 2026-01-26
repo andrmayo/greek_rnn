@@ -44,9 +44,7 @@ def read_datafiles(
                     json_blocks.append(jsonDict)
                 i += 1
 
-    logger.info(
-        f"Lines read in from json files by greek_char_data.read_datafiles: {i}"
-    )
+    logger.info(f"Lines read in from json files by greek_char_data.read_datafiles: {i}")
 
     training_texts = []
     lacuna_texts = []

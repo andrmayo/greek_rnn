@@ -3,6 +3,7 @@
 import csv
 import json
 import logging
+import os
 import random
 import time
 from math import log
@@ -70,7 +71,7 @@ def train_batch(
     mask_type: str,
     update: bool = True,  # update=False is used for dev set
     mask: bool = True,
-) -> tuple:
+) -> tuple[float, int, int, int, int, int]:
     model.zero_grad()
     total_loss, total_tokens, total_chars = 0, 0, 0
 
@@ -459,7 +460,7 @@ def accuracy_evaluation(model: RNN, data: List[DataItem], data_indexes):
 
 
 # this is only for evaluating on the test set
-def baseline_accuracy(model: RNN, data, data_indexes):
+def baseline_accuracy(model: RNN, data: list[DataItem], data_indexes: list[int]):
     masked_total = 0
     correct_most_common_char = 0
     correct_random = 0
@@ -476,6 +477,10 @@ def baseline_accuracy(model: RNN, data, data_indexes):
     count_rand = 0
     for i in data_indexes:
         data_item = data[i]
+        if data_item.labels is None:
+            raise ValueError(
+                "data passed to baseline_accuracy contains DataItem with unitialized labels"
+            )
         most_common_char_target = [target_char_index] * len(data_item.labels)
         random_target = [
             random.randint(3, model.num_tokens - 1)
@@ -505,6 +510,10 @@ def baseline_accuracy(model: RNN, data, data_indexes):
                     trigram_target.append(random.randint(3, model.num_tokens - 1))
             else:
                 # if label is 0, keep what is in the data item
+                if data_item.indexes is None:
+                    raise ValueError(
+                        "data passed to baseline_accuracy contains DataItem with unitialized indexes"
+                    )
                 trigram_target.append(data_item.indexes[j])
 
         _, correct_guess_correct_most_common, _ = check_accuracy(
@@ -516,7 +525,6 @@ def baseline_accuracy(model: RNN, data, data_indexes):
         correct_most_common_char += correct_guess_correct_most_common
         correct_random += correct_guess_random
         correct_trigram += correct_guess_trigram
-    # print(count_rand)
     logger.info(
         f"Most Common Char Baseline; dev masked total: {masked_total}, correct predictions: {correct_most_common_char}, baseline accuracy: {round(correct_most_common_char / masked_total, 3)}"
     )
@@ -528,7 +536,12 @@ def baseline_accuracy(model: RNN, data, data_indexes):
     )
 
 
-def predict(model: RNN, data_item):
+def predict(model: RNN, data_item: DataItem):
+    if data_item.indexes is None:
+        raise ValueError("data_item passed to predict has unitialized indexes")
+    if data_item.mask is None:
+        raise ValueError("data_item passed to predict has unitialized mask")
+
     logger.info(f"input text: {data_item.text}")
 
     index_tensor = torch.tensor(data_item.indexes, dtype=torch.int64).to(device)
@@ -563,7 +576,15 @@ def predict(model: RNN, data_item):
 
 
 # file names for csv will be automatically generated from timestamp if save_to_file=True and output_file=None
-def predict_top_k(model: RNN, data_item, k=10, save_to_file=True, output_file=None):
+def predict_top_k(
+    model: RNN,
+    data_item: DataItem,
+    k: int = 10,
+    save_to_file: bool = True,
+    output_file: str | os.PathLike | None = None,
+):
+    if data_item.mask is None:
+        raise ValueError("DataItem passed to predict_top_k has uninitialized mask")
     # beam search
     logger.info(f"input text: {data_item.text}")
 

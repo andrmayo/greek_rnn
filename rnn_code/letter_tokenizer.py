@@ -27,7 +27,7 @@ class LetterTokenizer:
             for token in self.process_token(char):
                 yield token
 
-    def process_token(self, char) -> Iterator[str]:
+    def process_token(self, char: str) -> Iterator[str]:
         # lowercase
         char = char.lower()
         for c in unicodedata.normalize("NFD", char):
