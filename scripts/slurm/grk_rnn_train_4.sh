@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 # The interpreter used to execute the script
 
 #“#SBATCH” directives that convey submission options, can use account acmayo0
