@@ -3,7 +3,6 @@ import logging
 import os
 import random
 from pathlib import Path
-from typing import Dict, List, Tuple
 
 import regex as re
 
@@ -17,8 +16,8 @@ USER_MASK = "#"
 
 
 def read_datafiles(
-    json_list: List,
-) -> Tuple[List[str], List[str], List[str], List[int], List[List[str]], Dict[int, int]]:
+    json_list: list[str | os.PathLike],
+) -> tuple[list[str], list[str], list[str], list[int], list[list[str]], dict[int, int]]:
     """
     This function takes in a list of files and looks at the Greek text in all of them.
     It processes all lacunae in texts. For training, it folds reconstructions into text.

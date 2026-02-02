@@ -18,7 +18,7 @@ class RNN(nn.Module):
         spaces_are_tokens: bool = False,
         newlines_are_tokens: bool = True,
     ):
-        super(RNN, self).__init__()
+        super().__init__()
         # ensure that character dictionary doesn't change
         self.tokenizer = letter_tokenizer.LetterTokenizer(
             spaces_are_tokens, newlines_are_tokens
@@ -29,10 +29,10 @@ class RNN(nn.Module):
         self.mask_char = MASK
         self.user_mask_char = USER_MASK
         tokens = (
-            "αοιεϲντυρμωηκπλδγχβθφξζψϛϚϜ"
-            + ".?<>\n!"
-            + self.mask_char
-            + self.user_mask_char
+            list(letter_tokenizer.LetterTokenizer.greek_chars)
+            + list(".?<>\n!")
+            + [self.mask_char]
+            + [self.user_mask_char]
         )
         if spaces_are_tokens:
             tokens += " "

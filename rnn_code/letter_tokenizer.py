@@ -9,6 +9,8 @@ logger = logging.getLogger(__name__)
 
 
 class LetterTokenizer:
+    greek_chars = tuple("αοιεϲντυρμωηκπλδγχβθφξζψϚϜ")
+
     def __init__(
         self, spaces_are_tokens: bool = True, newlines_are_tokens: bool = True
     ):
@@ -58,7 +60,7 @@ class LetterTokenizer:
                     yield "Ϝ"
                 else:
                     if "GREEK" in unicodedata.name(c, ""):
-                        if c in "αοιεϲντυρμωηκπλδγχβθφξζψ":
+                        if c in LetterTokenizer.greek_chars:
                             yield c
                         else:
                             yield "?"
