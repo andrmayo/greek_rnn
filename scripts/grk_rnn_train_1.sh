@@ -4,11 +4,10 @@
 echo “hello world”
 nvidia-smi
 
+PROJ_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$PROJ_ROOT"
+
 echo $(pwd)
-
-source ~/.bashrc
-
-cd ..
 
 source .venv/bin/activate
 
