@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-LOG_FILE="$SCRIPT_DIR/four_strats.log"
+
+LOG_FILE="$SCRIPT_DIR/logs/four_strats.log"
 
 echo "=== Running master script ===" | tee -a "$LOG_FILE"
 echo "Date: $(date +%Y%m%d_%H%M%S)" >>"$LOG_FILE"
