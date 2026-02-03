@@ -158,17 +158,22 @@ class RNN(nn.Module):
 
         text_length = len(data_item.indexes)
 
-        labels = (
+        data_item.labels = (
             [-100] * text_length
         )  # labels mark where actual masking is with a value > 0, and this value is the index of the masked token
 
         # guard against short texts
+        short_text_n = 0
         if text_length < 3:
+            short_text_n += 1
             data_item.mask = [False] * text_length
             total_mask = 0
             return data_item, total_mask
 
-        mask = [True] * text_length
+        logger.info(
+            f"Encountered {short_text_n} texts with less than 3 characters, which have not been masked"
+        )
+        data_item.mask = [True] * text_length
 
         mask_count = 0  # This counts only tokens actually masked, not those swapped for random character or retained
         random_sub = 0
@@ -180,7 +185,7 @@ class RNN(nn.Module):
                 current_token = data_item.indexes[i]
                 token_char = self.index_to_token[current_token]
                 if token_char in ("!", "."):
-                    mask[i] = False
+                    data_item.mask[i] = False
                     continue
 
                 r_mask_status = random.random()
@@ -202,13 +207,10 @@ class RNN(nn.Module):
                         orig_token += 1
 
                     data_item.indexes[i] = replacement
-                    labels[i] = current_token
+                    data_item.labels[i] = current_token
 
                 else:
-                    mask[i] = False
-
-            data_item.mask = mask
-            data_item.labels = labels
+                    data_item.mask[i] = False
 
         elif mask_type == "smart":
             r_mask_quantity = random.randint(1, 5)
@@ -235,7 +237,7 @@ class RNN(nn.Module):
 
                 # Skip masking actual lacunae
                 if token_char in ("!", "."):
-                    mask[i] = False
+                    data_item.mask[i] = False
                     continue
 
                 if should_mask[i]:
@@ -254,12 +256,9 @@ class RNN(nn.Module):
                         orig_token += 1
 
                     data_item.indexes[i] = replacement
-                    labels[i] = current_token
+                    data_item.labels[i] = current_token
                 else:
-                    mask[i] = False
-
-            data_item.mask = mask
-            data_item.labels = labels
+                    data_item.mask[i] = False
 
         total_mask = mask_count + random_sub + orig_token
 

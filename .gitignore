@@ -1,6 +1,7 @@
 old_version
 notes.txt
 corpus/*
+!corpus/.gitkeep
 rnn_code/wandb
 rnn_code/models/best/*
 rnn_code/models/old-weights/*

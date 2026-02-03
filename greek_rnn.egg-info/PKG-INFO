@@ -55,6 +55,7 @@ Requires-Dist: ruff>=0.13.1
 Requires-Dist: nltk>=3.9.1
 Requires-Dist: regex>=2025.9.18
 Requires-Dist: torch>=2.4.1
+Requires-Dist: typer>=0.21.1
 
 # Lacuna filler for Greek Papyri
 

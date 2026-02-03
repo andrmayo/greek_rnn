@@ -39,7 +39,7 @@ def read_datafiles(
             for line in file:
                 jsonDict = json.loads(line)
                 if jsonDict["language"] == "grc":
-                    mapping_greek_to_original[len(json_blocks)] = [i]
+                    mapping_greek_to_original[len(json_blocks)] = i
                     json_blocks.append(jsonDict)
                 i += 1
 
@@ -99,7 +99,7 @@ def read_datafiles(
                 lacunae.append(case["alternatives"][0])
         reconstructions.append(lacunae)
 
-    logger.info("greek_char_data.read_datafiles has partitioned data")
+    logger.info("greek_char_data.read_datafiles has processed partitioned data")
     logger.info(f"train_data has {len(train_data)} entries")
     logger.info(f"dev_data has {len(dev_data)} entries")
     logger.info(f"test_data has {len(test_data)} entries")

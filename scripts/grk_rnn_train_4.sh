@@ -16,7 +16,7 @@ mkdir -p log/strat_experiments
 python rnn_code/main.py -tr --masking smart --masking-strategy dynamic -ev
 
 if [ $? -ne 0 ]; then
-  echo "main.py failed with code $?"
+  echo -e "\nmain.py failed with code $?\n"
   exit $?
 fi
 

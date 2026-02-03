@@ -96,7 +96,7 @@ if __name__ == "__main__":
     spaces_are_tokens = True
     newlines_are_tokens = True
 
-    # step 1 - set data files, partition the in data if needed (train/dev/test split)
+    # step 1 - set data files, partition the data if needed (train/dev/test split)
     train_json = "train.json"
     dev_json = "dev.json"
     test_json = "test.json"

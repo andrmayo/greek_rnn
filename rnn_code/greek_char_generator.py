@@ -70,7 +70,7 @@ def check_accuracy(target: list[int], orig_data_item: DataItem) -> tuple[int, in
 
 
 def train_batch(
-    model: nn.Module,
+    model: RNN,
     optimizer: Optimizer,
     criterion: nn.Module,
     data: list[DataItem],
