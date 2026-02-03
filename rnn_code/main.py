@@ -103,7 +103,7 @@ if __name__ == "__main__":
     full_json = "full_data.json"
     reconstruction_json = "reconstructions.json"
 
-    file_dir_path = cur_path / "corpus"
+    file_dir_path = cur_path.parent / "corpus"
     # read in json file
     json_list: list[str | os.PathLike] = [
         str(json_file) for json_file in file_dir_path.glob("*.json")
