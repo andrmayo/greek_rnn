@@ -2,9 +2,10 @@
 Pytest configuration and fixtures for the lacuna_rnn test suite.
 """
 
-import pytest
-import tempfile
 import shutil
+import tempfile
+
+import pytest
 
 # No need to modify Python path - pytest handles package imports from project root
 

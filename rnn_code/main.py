@@ -1,6 +1,7 @@
 import argparse
 import json
 import logging
+import os
 import re
 from datetime import datetime
 from pathlib import Path
@@ -104,7 +105,9 @@ if __name__ == "__main__":
 
     file_dir_path = cur_path.parent.parent / "Corpora/Lacuna"
     # read in json file
-    json_list = [str(json_file) for json_file in file_dir_path.glob("*.json")]
+    json_list: list[str | os.PathLike] = [
+        str(json_file) for json_file in file_dir_path.glob("*.json")
+    ]
 
     if args.partition:
         # Do full data partition
@@ -257,7 +260,7 @@ if __name__ == "__main__":
         raise ValueError("Invalid model loaded")
     model = cast(greek_rnn.RNN, model)
     logger.info(model)
-    utils.count_parameters(model)
+    greek_rnn.count_parameters(model)
 
     # Masking functions: greek_utils.mask_input, greek_rnn.RNN.mask_and_label_characters, greek_rnn.RNN.actual_lacuna_mask_and_label.
     # mask_input is a gate that runs mask_and_label_characters if masking of training data happens once,
@@ -279,9 +282,7 @@ if __name__ == "__main__":
         # if masking_strategy is "once", utils.mask_input adds masking to data by calling model.mask_and_label_characters(),
         # and returns newly masked ata and mask = False.
         logger.info("Now training LSTM")
-        training_data, mask = utils.mask_input(
-            model, train_data, mask_type, masking_strategy
-        )
+        training_data, mask = model.mask_input(train_data, mask_type, masking_strategy)
         # mask ultimately gets passed to greek_char_generator.train_batch(), to tell it whether to remask, which it should do if strategy is "dynamic"
 
         # train_model is in greek_char_generator module

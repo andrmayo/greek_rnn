@@ -1,18 +1,15 @@
 import json
 import os
 import tempfile
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
-import torch
 from rnn_code.greek_utils import (
     DataItem,
     construct_trigram_lookup,
-    count_parameters,
     filter_brackets,
     filter_diacritics,
     get_home_path,
     has_more_than_one_latin_character,
-    mask_input,
     read_datafile,
     skip_sentence,
 )
@@ -35,7 +32,7 @@ class TestDataItem:
             indexes=[1, 2, 3],
             mask=[True, False, True],
             labels=[10, -100, 20],
-            position_in_original=5
+            position_in_original=5,
         )
         assert item.text == "test text"
         assert item.text_number == 123
@@ -65,27 +62,12 @@ class TestFilterDiacritics:
         assert result == "αβγδ"
 
 
-class TestCountParameters:
-    def test_count_parameters(self, caplog):
-        # Create a simple model
-        model = torch.nn.Sequential(
-            torch.nn.Linear(10, 5),
-            torch.nn.Linear(5, 1)
-        )
-
-        count_parameters(model)
-
-        # Check that logging occurred
-        assert "total parameter count" in caplog.text
-
-
 class TestReadDatafile:
     def test_read_valid_json(self):
         # Create temporary JSON file
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json',
-                                         delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             json.dump({"text": "sample text"}, f)
-            f.write('\n')
+            f.write("\n")
             json.dump({"text": "another text"}, f)
             temp_path = f.name
 
@@ -98,10 +80,9 @@ class TestReadDatafile:
             os.unlink(temp_path)
 
     def test_read_empty_text_skipped(self):
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json',
-                                         delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             json.dump({"text": ""}, f)
-            f.write('\n')
+            f.write("\n")
             json.dump({"text": "valid text"}, f)
             temp_path = f.name
 
@@ -117,7 +98,9 @@ class TestFilterBrackets:
     def test_remove_various_brackets(self):
         text = "{test}|pipe|(content)[square]"
         result = filter_brackets(text)
-        assert result == "testpipesquare"  # Square brackets preserve content (for lacuna processing)
+        assert (
+            result == "testpipesquare"
+        )  # Square brackets preserve content (for lacuna processing)
 
     def test_empty_string(self):
         result = filter_brackets("")
@@ -160,32 +143,6 @@ class TestHasMoreThanOneLatinCharacter:
         assert has_more_than_one_latin_character("ab") is True
 
 
-class TestMaskInput:
-    def test_once_strategy(self, caplog):
-        mock_model = MagicMock()
-        mock_model.mask_and_label_characters.return_value = ("masked", 5)
-
-        data = [DataItem(text="test1"), DataItem(text="test2")]
-
-        result_data, mask = mask_input(mock_model, data, "random", "once")
-
-        assert mask is False
-        assert len(result_data) == 2
-        assert "Masking strategy is once" in caplog.text
-        assert mock_model.mask_and_label_characters.call_count == 2
-
-    def test_dynamic_strategy(self, caplog):
-        mock_model = MagicMock()
-        data = [DataItem(text="test1"), DataItem(text="test2")]
-
-        result_data, mask = mask_input(mock_model, data, "smart", "dynamic")
-
-        assert mask is True
-        assert result_data is data
-        assert "dynamic" in caplog.text
-        assert mock_model.mask_and_label_characters.call_count == 0
-
-
 class TestGetHomePath:
     def test_returns_string(self):
         result = get_home_path()
@@ -194,22 +151,18 @@ class TestGetHomePath:
 
 
 class TestConstructTrigramLookup:
-    @patch('builtins.open', create=True)
-    @patch('json.dump')
-    @patch('rnn_code.greek_utils.tokenizer')
-    def test_construct_trigram_lookup(self, mock_tokenizer, mock_json_dump,
-                                      mock_open):
+    @patch("builtins.open", create=True)
+    @patch("json.dump")
+    @patch("rnn_code.greek_utils.tokenizer")
+    def test_construct_trigram_lookup(self, mock_tokenizer, mock_json_dump, mock_open):
         # Mock file reading
         mock_open.return_value.__enter__.return_value.__iter__.return_value = [
             '{"text": "αβγ"}',
-            '{"text": "δεζ"}'
+            '{"text": "δεζ"}',
         ]
 
         # Mock tokenizer
-        mock_tokenizer.tokenize.side_effect = [
-            ['α', 'β', 'γ'],
-            ['δ', 'ε', 'ζ']
-        ]
+        mock_tokenizer.tokenize.side_effect = [["α", "β", "γ"], ["δ", "ε", "ζ"]]
 
         result = construct_trigram_lookup()
 

@@ -9,11 +9,10 @@ from rnn_code.greek_char_data import read_datafiles, write_to_json
 class TestReadDatafiles:
     def create_mock_json_file(self, content_list):
         """Helper to create a temporary JSON file with given content"""
-        temp_file = tempfile.NamedTemporaryFile(mode='w', delete=False,
-                                                suffix='.json')
+        temp_file = tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".json")
         for content in content_list:
             json.dump(content, temp_file, ensure_ascii=False)
-            temp_file.write('\n')
+            temp_file.write("\n")
         temp_file.close()
         return temp_file.name
 
@@ -23,20 +22,22 @@ class TestReadDatafiles:
             {
                 "language": "grc",
                 "training_text": "αβγ[δε]ζη",
-                "test_cases": [{"alternatives": ["δε"]}]
+                "test_cases": [{"alternatives": ["δε"]}],
             },
             {
                 "language": "grc",
                 "training_text": "ικλ<gap/>μνξ",
-                "test_cases": [{"alternatives": ["οπ"]}]
-            }
+                "test_cases": [{"alternatives": ["οπ"]}],
+            },
         ]
 
         temp_file = self.create_mock_json_file(json_data)
 
         try:
             result = read_datafiles([temp_file])
-            train_data, dev_data, test_data, random_index, reconstructions, mapping = result
+            train_data, dev_data, test_data, random_index, reconstructions, mapping = (
+                result
+            )
 
             # Check basic structure
             assert isinstance(train_data, list)
@@ -59,20 +60,23 @@ class TestReadDatafiles:
             {
                 "language": "lat",  # Latin, should be filtered out
                 "training_text": "lorem ipsum",
-                "test_cases": []
+                "test_cases": [],
             },
             {
                 "language": "grc",  # Greek, should be included
                 "training_text": "αβγδε",
-                "test_cases": []
-            }
+                "test_cases": [],
+            },
         ]
 
         temp_file = self.create_mock_json_file(json_data)
 
         try:
             result = read_datafiles([temp_file])
-            train_data, dev_data, test_data, random_index, reconstructions, mapping = result
+            train_data, dev_data, test_data, random_index, reconstructions, mapping = (
+                result
+            )
+            _, _, _ = random_index, reconstructions, mapping
 
             # Should only have 1 text (the Greek one)
             total_texts = len(train_data) + len(dev_data) + len(test_data)
@@ -85,25 +89,30 @@ class TestReadDatafiles:
         # Use multiple texts so some go to train_data (need at least 10 for 80% to give 8+ for train)
         json_data = []
         for i in range(10):
-            json_data.append({
-                "language": "grc",
-                "training_text": f"α{i}[βγ]δ<gap/>ε",
-                "test_cases": [{"alternatives": ["βγ"]}, {"alternatives": ["ζ"]}]
-            })
+            json_data.append(
+                {
+                    "language": "grc",
+                    "training_text": f"α{i}[βγ]δ<gap/>ε",
+                    "test_cases": [{"alternatives": ["βγ"]}, {"alternatives": ["ζ"]}],
+                }
+            )
 
         temp_file = self.create_mock_json_file(json_data)
 
         try:
             result = read_datafiles([temp_file])
-            train_data, dev_data, test_data, random_index, reconstructions, mapping = result
+            train_data, dev_data, test_data, random_index, reconstructions, mapping = (
+                result
+            )
+            _, _, _, _, _ = dev_data, test_data, random_index, reconstructions, mapping
 
             # Training data should have brackets removed and gap replaced
             assert len(train_data) > 0, "Should have training data with 10 texts"
             train_text = train_data[0]
-            assert '[' not in train_text
-            assert ']' not in train_text
-            assert '<gap/>' not in train_text
-            assert '!' in train_text  # <gap/> should become !
+            assert "[" not in train_text
+            assert "]" not in train_text
+            assert "<gap/>" not in train_text
+            assert "!" in train_text  # <gap/> should become !
 
         finally:
             os.unlink(temp_file)
@@ -113,7 +122,7 @@ class TestReadDatafiles:
             {
                 "language": "grc",
                 "training_text": "α[β γ]δ<gap/>ε",  # Space in lacuna
-                "test_cases": [{"alternatives": ["βγ"]}, {"alternatives": ["ζ"]}]
+                "test_cases": [{"alternatives": ["βγ"]}, {"alternatives": ["ζ"]}],
             }
         ]
 
@@ -121,7 +130,11 @@ class TestReadDatafiles:
 
         try:
             result = read_datafiles([temp_file])
-            train_data, dev_data, test_data, random_index, reconstructions, mapping = result
+            train_data, dev_data, test_data, random_index, reconstructions, mapping = (
+                result
+            )
+
+            _, _, _, _ = train_data, random_index, reconstructions, mapping
 
             # Find a text in dev or test data (lacuna texts)
             lacuna_text = None
@@ -133,8 +146,8 @@ class TestReadDatafiles:
             if lacuna_text:
                 # Spaces within brackets should be removed
                 assert "[ " not in lacuna_text and " ]" not in lacuna_text
-                assert '<gap/>' not in lacuna_text
-                assert '!' in lacuna_text
+                assert "<gap/>" not in lacuna_text
+                assert "!" in lacuna_text
 
         finally:
             os.unlink(temp_file)
@@ -144,24 +157,28 @@ class TestReadDatafiles:
             {
                 "language": "grc",
                 "training_text": "αβγ[δε]ζη",
-                "test_cases": [{"alternatives": ["δε"]}]
+                "test_cases": [{"alternatives": ["δε"]}],
             },
             {
                 "language": "grc",
                 "training_text": "ικλμνξ",  # No lacunae
-                "test_cases": []
-            }
+                "test_cases": [],
+            },
         ]
 
         temp_file = self.create_mock_json_file(json_data)
 
         try:
             result = read_datafiles([temp_file])
-            train_data, dev_data, test_data, random_index, reconstructions, mapping = result
+            train_data, dev_data, test_data, random_index, reconstructions, mapping = (
+                result
+            )
+
+            _, _, _, _, _ = train_data, dev_data, test_data, random_index, mapping
 
             assert len(reconstructions) == 2
             assert reconstructions[0] == ["δε"]  # First text has reconstruction
-            assert reconstructions[1] == []      # Second text has no lacunae
+            assert reconstructions[1] == []  # Second text has no lacunae
 
         finally:
             os.unlink(temp_file)
@@ -171,7 +188,7 @@ class TestReadDatafiles:
             {
                 "language": "grc",
                 "training_text": "αβγ[_]δε",
-                "test_cases": [{"alternatives": [" "]}]  # Space alternative
+                "test_cases": [{"alternatives": [" "]}],  # Space alternative
             }
         ]
 
@@ -179,7 +196,10 @@ class TestReadDatafiles:
 
         try:
             result = read_datafiles([temp_file])
-            train_data, dev_data, test_data, random_index, reconstructions, mapping = result
+            train_data, dev_data, test_data, random_index, reconstructions, mapping = (
+                result
+            )
+            _, _, _, _, _ = train_data, dev_data, test_data, random_index, mapping
 
             assert reconstructions[0] == ["_"]  # Space becomes underscore
 
@@ -190,17 +210,19 @@ class TestReadDatafiles:
         # Create enough data to test partitioning
         json_data = []
         for i in range(100):  # 100 texts
-            json_data.append({
-                "language": "grc",
-                "training_text": f"text{i}",
-                "test_cases": []
-            })
+            json_data.append(
+                {"language": "grc", "training_text": f"text{i}", "test_cases": []}
+            )
 
         temp_file = self.create_mock_json_file(json_data)
 
         try:
             result = read_datafiles([temp_file])
-            train_data, dev_data, test_data, random_index, reconstructions, mapping = result
+            train_data, dev_data, test_data, random_index, reconstructions, mapping = (
+                result
+            )
+
+            _, _, _ = random_index, reconstructions, mapping
 
             # Check approximate ratios (80:10:10)
             total = len(train_data) + len(dev_data) + len(test_data)
@@ -221,10 +243,10 @@ class TestWriteToJson:
             file_name = "test.json"
             text_list = ["text1", "text2"]
             text_index = [0, 1]
-            mapping = {0: [0], 1: [1]}
+            mapping = {0: 0, 1: 1}
 
             # Mock the Path to use temp directory
-            with patch('rnn_code.greek_char_data.Path') as mock_path:
+            with patch("rnn_code.greek_char_data.Path") as mock_path:
                 mock_path.return_value.absolute.return_value.parent = temp_dir
 
                 write_to_json(file_name, text_list, text_index, mapping)
@@ -234,7 +256,7 @@ class TestWriteToJson:
                 assert os.path.exists(file_path)
 
                 # Check file contents
-                with open(file_path, 'r') as f:
+                with open(file_path, "r") as f:
                     lines = f.readlines()
                     assert len(lines) == 2
 
@@ -242,16 +264,16 @@ class TestWriteToJson:
                     first_entry = json.loads(lines[0])
                     assert first_entry["text_index"] == 0
                     assert first_entry["text"] == "text1"
-                    assert first_entry["position_in_original"] == [0]
+                    assert first_entry["position_in_original"] == 0
 
     def test_write_to_json_creates_directory(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             file_name = "test.json"
             text_list = ["text1"]
             text_index = [0]
-            mapping = {0: [0]}
+            mapping = {0: 0}
 
-            with patch('rnn_code.greek_char_data.Path') as mock_path:
+            with patch("rnn_code.greek_char_data.Path") as mock_path:
                 mock_path.return_value.absolute.return_value.parent = temp_dir
 
                 write_to_json(file_name, text_list, text_index, mapping)
@@ -266,9 +288,9 @@ class TestWriteToJson:
             file_name = "test_unicode.json"
             text_list = ["αβγδε", "ζηθικ"]  # Greek text
             text_index = [0, 1]
-            mapping = {0: [0], 1: [1]}
+            mapping = {0: 0, 1: 1}
 
-            with patch('rnn_code.greek_char_data.Path') as mock_path:
+            with patch("rnn_code.greek_char_data.Path") as mock_path:
                 mock_path.return_value.absolute.return_value.parent = temp_dir
 
                 write_to_json(file_name, text_list, text_index, mapping)
@@ -276,7 +298,7 @@ class TestWriteToJson:
                 file_path = os.path.join(temp_dir, "data", file_name)
 
                 # Read back and verify Unicode is preserved
-                with open(file_path, 'r', encoding='utf-8') as f:
+                with open(file_path, "r", encoding="utf-8") as f:
                     lines = f.readlines()
                     first_entry = json.loads(lines[0])
                     assert first_entry["text"] == "αβγδε"

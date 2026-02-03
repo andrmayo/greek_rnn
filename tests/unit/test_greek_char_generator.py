@@ -4,6 +4,7 @@ from unittest.mock import patch
 
 import pytest
 import torch
+
 from rnn_code.greek_char_generator import predict, predict_top_k, train_model
 from rnn_code.greek_rnn import RNN
 from rnn_code.greek_utils import DataItem
@@ -308,11 +309,11 @@ class TestTrainModel:
         with tempfile.TemporaryDirectory() as temp_dir:
             # Mock all the dependencies
             with (
-                patch("rnn_code.greek_char_generator.wandb") as mock_wandb,
                 patch("rnn_code.greek_char_generator.model_path", temp_dir),
                 patch("rnn_code.greek_char_generator.nEpochs", 10),
                 patch("rnn_code.greek_char_generator.patience", 3),
                 patch("rnn_code.greek_char_generator.train_batch") as mock_train_batch,
+                patch("rnn_code.greek_char_generator.wandb"),
             ):
                 # Mock train_batch to return predictable loss values
                 # Simulate dev loss: improves for 2 epochs, then gets worse for 3 epochs (triggers early stop)
@@ -320,6 +321,7 @@ class TestTrainModel:
                 train_losses = [1.0, 0.9, 0.85, 0.8, 0.75]
 
                 def mock_train_batch_side_effect(*args, **kwargs):
+                    _ = [*args]
                     update = kwargs.get("update", True)
                     epoch_idx = (
                         len(mock_train_batch.call_args_list) // 2
@@ -339,6 +341,7 @@ class TestTrainModel:
                     rnn_model,
                     sample_train_data,
                     sample_dev_data,
+                    mask_type="smart",
                     output_name="test_early_stop",
                 )
 
@@ -357,21 +360,19 @@ class TestTrainModel:
         """Test that best model is properly selected and restored"""
         with tempfile.TemporaryDirectory() as temp_dir:
             with (
-                patch("rnn_code.greek_char_generator.wandb") as mock_wandb,
                 patch("rnn_code.greek_char_generator.model_path", temp_dir),
                 patch("rnn_code.greek_char_generator.nEpochs", 5),
                 patch("rnn_code.greek_char_generator.patience", 10),
                 patch("rnn_code.greek_char_generator.train_batch") as mock_train_batch,
+                patch("rnn_code.greek_char_generator.wandb"),
             ):
                 # Simulate scenario where best model is NOT the final epoch
                 # Dev losses: 1.0 -> 0.5 (best) -> 0.8 -> 0.7 -> 0.9
                 dev_losses = [1.0, 0.5, 0.8, 0.7, 0.9]  # Best at epoch 1 (0.5)
                 train_losses = [1.0, 0.8, 0.7, 0.6, 0.5]
 
-                # Store original model state to verify it gets restored
-                original_state = rnn_model.state_dict().copy()
-
                 def mock_train_batch_side_effect(*args, **kwargs):
+                    _ = [*args]
                     update = kwargs.get("update", True)
                     epoch_idx = min(
                         len(mock_train_batch.call_args_list) // 2, len(dev_losses) - 1
@@ -389,6 +390,7 @@ class TestTrainModel:
                     rnn_model,
                     sample_train_data,
                     sample_dev_data,
+                    mask_type="random",
                     output_name="test_best_model",
                 )
 
@@ -415,17 +417,18 @@ class TestTrainModel:
         """Test behavior when dev loss never improves (edge case)"""
         with tempfile.TemporaryDirectory() as temp_dir:
             with (
-                patch("rnn_code.greek_char_generator.wandb") as mock_wandb,
                 patch("rnn_code.greek_char_generator.model_path", temp_dir),
                 patch("rnn_code.greek_char_generator.nEpochs", 5),
                 patch("rnn_code.greek_char_generator.patience", 2),
                 patch("rnn_code.greek_char_generator.train_batch") as mock_train_batch,
+                patch("rnn_code.greek_char_generator.wandb"),
             ):
                 # Simulate dev loss getting worse each epoch
                 dev_losses = [1.0, 1.5, 2.0, 2.5, 3.0]  # Always getting worse
                 train_losses = [1.0, 0.9, 0.8, 0.7, 0.6]  # Training improves
 
                 def mock_train_batch_side_effect(*args, **kwargs):
+                    _ = [*args]
                     update = kwargs.get("update", True)
                     epoch_idx = min(
                         len(mock_train_batch.call_args_list) // 2, len(dev_losses) - 1
@@ -443,6 +446,7 @@ class TestTrainModel:
                     rnn_model,
                     sample_train_data,
                     sample_dev_data,
+                    mask_type="smart",
                     output_name="test_no_improvement",
                 )
 
@@ -461,13 +465,13 @@ class TestTrainModel:
 
             try:
                 with (
-                    patch("rnn_code.greek_char_generator.wandb") as mock_wandb,
                     patch("rnn_code.greek_char_generator.model_path", readonly_dir),
                     patch("rnn_code.greek_char_generator.nEpochs", 2),
                     patch("rnn_code.greek_char_generator.patience", 5),
                     patch(
                         "rnn_code.greek_char_generator.train_batch"
                     ) as mock_train_batch,
+                    patch("rnn_code.greek_char_generator.wandb"),
                 ):
                     mock_train_batch.return_value = (1.0, 100, 500, 50, 25, 20)
 
@@ -477,12 +481,12 @@ class TestTrainModel:
                             rnn_model,
                             sample_train_data,
                             sample_dev_data,
+                            mask_type="random",
                             output_name="test_file_error",
                         )
             finally:
                 # Cleanup - restore permissions so directory can be deleted
                 try:
                     os.chmod(readonly_dir, 0o755)
-                except:
-                    pass
-
+                except Exception:
+                    raise Exception

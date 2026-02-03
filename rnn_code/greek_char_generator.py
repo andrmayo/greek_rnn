@@ -9,15 +9,22 @@ import time
 from math import log
 from pathlib import Path
 from random import shuffle
-from typing import List, Tuple, cast
+from typing import TYPE_CHECKING, List, Tuple, cast
 
 import numpy
 import torch
 import torch.nn.functional as nnf
+import wandb
 from torch import nn
 
+if TYPE_CHECKING:
+    from torch.optim.adamw import AdamW
+    from torch.optim.optimizer import Optimizer
+else:
+    from torch.optim import Optimizer
+    from torch.optim import AdamW
+
 import rnn_code.greek_utils as utils
-import wandb
 from rnn_code.greek_rnn import RNN
 from rnn_code.greek_utils import (
     DataItem,
@@ -64,7 +71,7 @@ def check_accuracy(target: list[int], orig_data_item: DataItem) -> tuple[int, in
 
 def train_batch(
     model: nn.Module,
-    optimizer: torch.optim.optimizer.Optimizer,
+    optimizer: Optimizer,
     criterion: nn.Module,
     data: list[DataItem],
     data_indexes: list[int],
@@ -229,9 +236,7 @@ def train_model(
     dev_list = [i for i in range(len(dev_data))]
 
     criterion = nn.CrossEntropyLoss(reduction="sum")
-    optimizer = torch.optim.adamw.AdamW(
-        model.parameters(), lr=learning_rate, weight_decay=L2_lambda
-    )
+    optimizer = AdamW(model.parameters(), lr=learning_rate, weight_decay=L2_lambda)
     # optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=L2_lambda)
     # optimizer = torch.optim.RMSprop(model.parameters(), lr=learning_rate, weight_decay=L2_lambda)
     # optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, weight_decay=L2_lambda)

@@ -13,9 +13,3 @@ rnn_code/greek_rnn.py
 rnn_code/greek_utils.py
 rnn_code/letter_tokenizer.py
 rnn_code/main.py
-tests/test_data_stats.py
-tests/test_greek_char_data.py
-tests/test_greek_char_generator.py
-tests/test_greek_rnn.py
-tests/test_greek_utils.py
-tests/test_letter_tokenizer.py

@@ -1,3 +1,4 @@
+import logging
 import random
 from typing import cast
 
@@ -6,6 +7,8 @@ import torch.nn as nn
 
 import rnn_code.letter_tokenizer as letter_tokenizer
 from rnn_code.greek_utils import DataItem
+
+logger = logging.getLogger(__name__)
 
 MASK = "_"
 USER_MASK = "#"
@@ -49,7 +52,14 @@ class RNN(nn.Module):
             masking_proportion,
         ) = specs
 
-        embed_size, hidden_size = cast(int, embed_size), cast(int, hidden_size)
+        embed_size, hidden_size, proj_size = (
+            cast(int, embed_size),
+            cast(int, hidden_size),
+            cast(int, proj_size),
+        )
+
+        if hidden_size % 2 == 1 or proj_size % 2 == 1:
+            raise ValueError("hidden_size and proj_size must be even numbers")
 
         self.token_to_index = {}
         self.index_to_token = {}
@@ -60,22 +70,24 @@ class RNN(nn.Module):
         self.embed = nn.Embedding(self.num_tokens, embed_size)
         self.masking_proportion = masking_proportion
 
-        self.scale_up = nn.Linear(embed_size, hidden_size)
+        # currently, the hidden_size is the same as the embedding size, so
+        # this layer is unnecessary
+        # self.scale_up = nn.Linear(embed_size, hidden_size)
 
         self.rnn = nn.LSTM(
-            hidden_size,
-            int(hidden_size / 2),
+            embed_size,
+            hidden_size // 2,
             num_layers=rnn_nLayers,
             bidirectional=True,
             dropout=dropout,
             batch_first=True,
-            proj_size=proj_size,
+            proj_size=proj_size // 2,
         )
 
         if not self.share:
-            self.out = nn.Linear(hidden_size, embed_size)
+            self.out = nn.Linear(proj_size, embed_size)
         else:
-            self.scale_down = nn.Linear(hidden_size, embed_size)
+            self.scale_down = nn.Linear(proj_size, embed_size)
 
         self.dropout = nn.Dropout(dropout)
 
@@ -93,7 +105,7 @@ class RNN(nn.Module):
 
         embed = self.embed(seqs)
         embed = self.dropout(embed)
-        embed = self.scale_up(embed)
+        # embed = self.scale_up(embed)
 
         output, _ = self.rnn(embed)
         output = self.dropout(output)
@@ -295,3 +307,38 @@ class RNN(nn.Module):
         # self.mask marking where there's masking,
         # self.labels with -100 for unmasked tokens and >= 0 with the embedding index for masked tokens.
         return data_item
+
+    # TODO: Fix imports of this
+    # this was moved from greek_utils
+    def mask_input(
+        self, data: list[DataItem], mask_type: str, masking_strategy: str
+    ) -> tuple[list[DataItem], bool]:
+        logger.info(f"Mask type: {mask_type} - {masking_strategy}")
+        logger.info(f"Training data read in with {len(data)} lines")
+
+        data_for_model = []
+        mask = False
+
+        if masking_strategy == "once":
+            logger.info(f"Masking strategy is {masking_strategy}, masking sentences...")
+            for data_item in data:
+                masked_data_item, _ = self.mask_and_label_characters(
+                    data_item, mask_type=mask_type
+                )
+                data_for_model.append(masked_data_item)
+            logger.info("Masking complete")
+        elif masking_strategy == "dynamic":
+            data_for_model = data
+            mask = True
+
+        return data_for_model, mask
+
+
+def count_parameters(model: nn.Module):
+    total = 0
+    for name, p in model.named_parameters():
+        if p.dim() > 1:
+            logger.debug(f"{p.numel():,}\t{name}")
+            total += p.numel()
+
+    logger.info(f"total parameter count = {total:,}")

@@ -11,7 +11,6 @@ import torch
 from nltk.util import ngrams
 
 from rnn_code.letter_tokenizer import LetterTokenizer
-from rnn_code.greek_rnn import RNN
 
 seed = 1234
 
@@ -43,6 +42,11 @@ else:
     # proj_size = 200
     # proj_size = 250
     # proj_size = 350
+
+
+# NOTE: torch expects hidden_size // 2 > proj_size
+# (hidden_size gets halved because forward and backward outputs
+# get concatenated in BiLSTM)
 
 # hidden_size = 100
 # hidden_size = 150
@@ -155,16 +159,6 @@ def filter_diacritics(string: str) -> str:
     return new_string.lower()
 
 
-def count_parameters(model: RNN):
-    total = 0
-    for name, p in model.named_parameters():
-        if p.dim() > 1:
-            logger.debug(f"{p.numel():,}\t{name}")
-            total += p.numel()
-
-    logger.info(f"total parameter count = {total:,}")
-
-
 def read_datafile(json_file: str, data_list=None) -> list[DataItem]:
     if data_list is None:
         data_list = []
@@ -206,30 +200,6 @@ def skip_sentence(input_string: str) -> bool:
 def has_more_than_one_latin_character(input_string: str) -> bool:
     latin_count = sum(1 for char in input_string if char in string.ascii_letters)
     return latin_count > 1
-
-
-def mask_input(
-    model: RNN, data: list[DataItem], mask_type: str, masking_strategy: str
-) -> tuple[list[DataItem], bool]:
-    logger.info(f"Mask type: {mask_type} - {masking_strategy}")
-    logger.info(f"Training data read in with {len(data)} lines")
-
-    data_for_model = []
-    mask = False
-
-    if masking_strategy == "once":
-        logger.info(f"Masking strategy is {masking_strategy}, masking sentences...")
-        for data_item in data:
-            masked_data_item, _ = model.mask_and_label_characters(
-                data_item, mask_type=mask_type
-            )
-            data_for_model.append(masked_data_item)
-        logger.info("Masking complete")
-    elif masking_strategy == "dynamic":
-        data_for_model = data
-        mask = True
-
-    return data_for_model, mask
 
 
 def construct_trigram_lookup() -> dict[str, dict[str, int]]:

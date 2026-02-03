@@ -2,8 +2,9 @@
 # each token should a letter
 import logging
 import unicodedata
-import regex as re
 from typing import Iterator
+
+import regex as re
 
 logger = logging.getLogger(__name__)
 

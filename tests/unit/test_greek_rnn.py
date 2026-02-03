@@ -1,6 +1,10 @@
+from typing import cast
+from unittest.mock import MagicMock
+
 import pytest
 import torch
-from rnn_code.greek_rnn import RNN
+
+from rnn_code.greek_rnn import RNN, count_parameters
 from rnn_code.greek_utils import DataItem
 
 
@@ -15,13 +19,13 @@ class TestRNN:
 
     def test_init(self, sample_specs):
         model = RNN(sample_specs)
-        assert model.specs == sample_specs + [35]  # 35 is num_tokens
-        assert model.num_tokens == 35
-        assert model.mask_char == '_'
-        assert model.user_mask_char == '#'
+        assert model.specs == sample_specs + [34]  # 34 is num_tokens
+        assert model.num_tokens == 34
+        assert model.mask_char == "_"
+        assert model.user_mask_char == "#"
         assert model.bot_char == "<"
         assert model.eot_char == ">"
-        assert model.unk_char == '?'
+        assert model.unk_char == "?"
 
     def test_token_mappings(self, rnn_model):
         # Test that token mappings are bidirectional
@@ -29,11 +33,11 @@ class TestRNN:
             assert rnn_model.index_to_token[index] == token
 
         # Test specific tokens
-        assert rnn_model.token_to_index['_'] is not None
-        assert rnn_model.token_to_index['#'] is not None
-        assert rnn_model.token_to_index['<'] is not None
-        assert rnn_model.token_to_index['>'] is not None
-        assert rnn_model.token_to_index['α'] is not None
+        assert rnn_model.token_to_index["_"] is not None
+        assert rnn_model.token_to_index["#"] is not None
+        assert rnn_model.token_to_index["<"] is not None
+        assert rnn_model.token_to_index[">"] is not None
+        assert rnn_model.token_to_index["α"] is not None
 
     def test_lookup_indexes_basic(self, rnn_model):
         text = "αβγ"
@@ -41,8 +45,8 @@ class TestRNN:
 
         # Should include BOT and EOT tokens by default
         assert len(indexes) == len(text) + 2
-        assert indexes[0] == rnn_model.token_to_index['<']
-        assert indexes[-1] == rnn_model.token_to_index['>']
+        assert indexes[0] == rnn_model.token_to_index["<"]
+        assert indexes[-1] == rnn_model.token_to_index[">"]
 
     def test_lookup_indexes_no_control(self, rnn_model):
         text = "αβγ"
@@ -59,8 +63,8 @@ class TestRNN:
 
     def test_decode_list(self, rnn_model):
         # Test with list input
-        alpha_idx = rnn_model.token_to_index['α']
-        beta_idx = rnn_model.token_to_index['β']
+        alpha_idx = rnn_model.token_to_index["α"]
+        beta_idx = rnn_model.token_to_index["β"]
         indexes = [alpha_idx, beta_idx]
         result = rnn_model.decode(indexes)
         assert result == "αβ"
@@ -85,9 +89,9 @@ class TestRNN:
             data_item, mask_type="random"
         )
 
-        assert hasattr(masked_item, 'indexes')
-        assert hasattr(masked_item, 'mask')
-        assert hasattr(masked_item, 'labels')
+        assert hasattr(masked_item, "indexes")
+        assert hasattr(masked_item, "mask")
+        assert hasattr(masked_item, "labels")
         assert len(masked_item.mask) == len(masked_item.indexes)
         assert len(masked_item.labels) == len(masked_item.indexes)
         assert isinstance(total_mask, int)
@@ -99,9 +103,9 @@ class TestRNN:
             data_item, mask_type="smart"
         )
 
-        assert hasattr(masked_item, 'indexes')
-        assert hasattr(masked_item, 'mask')
-        assert hasattr(masked_item, 'labels')
+        assert hasattr(masked_item, "indexes")
+        assert hasattr(masked_item, "mask")
+        assert hasattr(masked_item, "labels")
         assert len(masked_item.mask) == len(masked_item.indexes)
         assert len(masked_item.labels) == len(masked_item.indexes)
         assert isinstance(total_mask, int)
@@ -112,16 +116,16 @@ class TestRNN:
 
         result = rnn_model.actual_lacuna_mask_and_label(data_item)
 
-        assert hasattr(result, 'indexes')
-        assert hasattr(result, 'mask')
-        assert hasattr(result, 'labels')
+        assert hasattr(result, "indexes")
+        assert hasattr(result, "mask")
+        assert hasattr(result, "labels")
         assert len(result.mask) == len(result.indexes)
         assert len(result.labels) == len(result.indexes)
 
         # Text should have brackets removed and lacuna replaced with mask chars
-        assert '[' not in result.text
-        assert ']' not in result.text
-        assert '_' in result.text
+        assert "[" not in result.text
+        assert "]" not in result.text
+        assert "_" in result.text
 
     def test_actual_lacuna_mask_and_label_no_lacuna(self, rnn_model):
         # Test with no lacuna
@@ -135,18 +139,19 @@ class TestRNN:
         lacuna_positions = [i for i, mask in enumerate(result.mask) if mask]
         # In this case, no lacunae, so no True masks except possibly from tokenization
         assert isinstance(result.mask, list)
+        assert len(lacuna_positions) == 0
 
     def test_weight_sharing_false(self, sample_specs):
         sample_specs[4] = False  # share = False
         model = RNN(sample_specs)
-        assert hasattr(model, 'out')
-        assert not hasattr(model, 'scale_down')
+        assert hasattr(model, "out")
+        assert not hasattr(model, "scale_down")
 
     def test_weight_sharing_true(self, sample_specs):
         sample_specs[4] = True  # share = True
         model = RNN(sample_specs)
-        assert not hasattr(model, 'out')
-        assert hasattr(model, 'scale_down')
+        assert not hasattr(model, "out")
+        assert hasattr(model, "scale_down")
 
     def test_dropout_initialization(self):
         # Test with dropout
@@ -163,9 +168,15 @@ class TestRNN:
         # Test that all expected parameters exist
         param_names = [name for name, _ in rnn_model.named_parameters()]
 
-        expected_params = ['embed.weight', 'scale_up.weight', 'scale_up.bias',
-                          'rnn.weight_ih_l0', 'rnn.weight_hh_l0', 'rnn.bias_ih_l0',
-                          'rnn.bias_hh_l0', 'out.weight', 'out.bias']
+        expected_params = [
+            "embed.weight",
+            "rnn.weight_ih_l0",
+            "rnn.weight_hh_l0",
+            "rnn.bias_ih_l0",
+            "rnn.bias_hh_l0",
+            "out.weight",
+            "out.bias",
+        ]
 
         for expected in expected_params:
             assert any(expected in param for param in param_names)
@@ -177,7 +188,7 @@ class TestRNN:
         # Effective hidden size should be 300 (150 * 2 for bidirectional)
 
     def test_embedding_dimensions(self, rnn_model):
-        assert rnn_model.embed.num_embeddings == 35  # num_tokens
+        assert rnn_model.embed.num_embeddings == 34  # num_tokens
         assert rnn_model.embed.embedding_dim == 300  # embed_size
 
     @pytest.mark.parametrize("mask_type", ["random", "smart"])
@@ -196,7 +207,6 @@ class TestRNN:
         """Test that '.' (single missing char marker) is never masked."""
         # Use text with '.' characters representing unknown single characters
         text = "αβγ.δε.ζηθ"
-        data_item = DataItem(text=text)
 
         # Run masking multiple times to account for randomness
         for _ in range(10):
@@ -206,21 +216,23 @@ class TestRNN:
             )
 
             # Find positions of '.' in the token sequence (accounting for BOT token)
-            dot_index = rnn_model.token_to_index['.']
+            dot_index = rnn_model.token_to_index["."]
             for i, idx in enumerate(masked_item.indexes):
                 if idx == dot_index:
                     # '.' should never be masked
-                    assert masked_item.mask[i] is False, \
+                    assert masked_item.mask[i] is False, (
                         f"'.' at position {i} was masked in {mask_type} mode"
-                    assert masked_item.labels[i] == -100, \
+                    )
+                    assert masked_item.labels[i] == -100, (
                         f"'.' at position {i} has label in {mask_type} mode"
+                    )
 
     @pytest.mark.parametrize("mask_type", ["random", "smart"])
     def test_gap_marker_not_masked(self, rnn_model, mask_type):
         """Test that '!' (variable-length gap marker) is never masked."""
         # Use text with '!' characters representing gaps of unknown length
         text = "αβγ!δεζ!ηθι"
-        data_item = DataItem(text=text)
+        positions = [i + 1 for i, c in enumerate(text) if c == "!"]
 
         # Run masking multiple times to account for randomness
         for _ in range(10):
@@ -230,20 +242,20 @@ class TestRNN:
             )
 
             # Find positions of '!' in the token sequence
-            gap_index = rnn_model.token_to_index['!']
-            for i, idx in enumerate(masked_item.indexes):
-                if idx == gap_index:
-                    # '!' should never be masked
-                    assert masked_item.mask[i] is False, \
-                        f"'!' at position {i} was masked in {mask_type} mode"
-                    assert masked_item.labels[i] == -100, \
-                        f"'!' at position {i} has label in {mask_type} mode"
+            for pos in positions:
+                # '!' should never be masked
+                assert masked_item.mask[pos] is False, (
+                    f"'!' at position {pos} was masked in {mask_type} mode"
+                )
+                assert masked_item.labels[pos] == -100, (
+                    f"'!' at position {pos} has label in {mask_type} mode"
+                )
 
     @pytest.mark.parametrize("mask_type", ["random", "smart"])
-    def test_mixed_lacuna_markers_not_masked(self, rnn_model, mask_type):
+    def test_mixed_lacuna_markers_not_masked(self, rnn_model: RNN, mask_type: str):
         """Test that both '.' and '!' markers are skipped when mixed in text."""
         text = "αβ.γδ!εζ.ηθ!ικλμνξοπ"
-        data_item = DataItem(text=text)
+        positions = [i + 1 for i, c in enumerate(text) if c in ("!", ".")]
 
         for _ in range(10):
             data_item_copy = DataItem(text=text)
@@ -251,12 +263,47 @@ class TestRNN:
                 data_item_copy, mask_type=mask_type
             )
 
-            dot_index = rnn_model.token_to_index['.']
-            gap_index = rnn_model.token_to_index['!']
+            for pos in positions:
+                assert cast(list[bool], masked_item.mask)[pos] is False, (
+                    f"Lacuna marker at position {pos} was masked in {mask_type} mode"
+                )
+                assert cast(list[int], masked_item.labels)[pos] == -100, (
+                    f"Lacuna marker at position {pos} has label in {mask_type} mode"
+                )
 
-            for i, idx in enumerate(masked_item.indexes):
-                if idx in (dot_index, gap_index):
-                    assert masked_item.mask[i] is False, \
-                        f"Lacuna marker at position {i} was masked in {mask_type} mode"
-                    assert masked_item.labels[i] == -100, \
-                        f"Lacuna marker at position {i} has label in {mask_type} mode"
+
+class TestCountParameters:
+    def test_count_parameters(self, caplog):
+        # Create a simple model
+        model = torch.nn.Sequential(torch.nn.Linear(10, 5), torch.nn.Linear(5, 1))
+
+        count_parameters(model)
+
+        # Check that logging occurred
+        assert "total parameter count" in caplog.text
+
+
+class TestMaskInput:
+    def test_once_strategy(self, caplog):
+        mock_model = MagicMock()
+        mock_model.mask_and_label_characters.return_value = ("masked", 5)
+
+        data = [DataItem(text="test1"), DataItem(text="test2")]
+
+        result_data, mask = RNN.mask_input(mock_model, data, "random", "once")
+
+        assert mask is False
+        assert len(result_data) == 2
+        assert "Masking strategy is once" in caplog.text
+        assert mock_model.mask_and_label_characters.call_count == 2
+
+    def test_dynamic_strategy(self, caplog):
+        mock_model = MagicMock()
+        data = [DataItem(text="test1"), DataItem(text="test2")]
+
+        result_data, mask = RNN.mask_input(mock_model, data, "smart", "dynamic")
+
+        assert mask is True
+        assert result_data is data
+        assert "dynamic" in caplog.text
+        assert mock_model.mask_and_label_characters.call_count == 0
