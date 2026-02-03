@@ -16,7 +16,7 @@ SCRIPTS=(
 
 for i in "${!SCRIPTS[@]}"; do
   script="${SCRIPTS[$i]}"
-  log_file="$SCRIPT_DIR/grk_rnn_train_$((i + 1)).log"
+  log_file="$SCRIPT_DIR/logs/grk_rnn_train_$((i + 1)).log"
   err_file="$SCRIPT_DIR/grk_rnn_train_$((i + 1))_err.log"
   echo "=== Stdout for $script ===" >"$log_file"
   echo "=== Stderr for $script ===" >"$err_file"
