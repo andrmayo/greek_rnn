@@ -1,5 +1,6 @@
 import logging
 import random
+import warnings
 from typing import cast
 
 import torch
@@ -74,15 +75,24 @@ class RNN(nn.Module):
         # this layer is unnecessary
         # self.scale_up = nn.Linear(embed_size, hidden_size)
 
-        self.rnn = nn.LSTM(
-            embed_size,
-            hidden_size // 2,
-            num_layers=rnn_nLayers,
-            bidirectional=True,
-            dropout=dropout,
-            batch_first=True,
-            proj_size=proj_size // 2,
-        )
+        with warnings.catch_warnings(record=True) as caught_warnings:
+            warnings.filterwarnings(
+                "ignore", "LSTM with projections is not supported with oneDNN"
+            )
+            self.rnn = nn.LSTM(
+                embed_size,
+                hidden_size // 2,
+                num_layers=rnn_nLayers,
+                bidirectional=True,
+                dropout=dropout,
+                batch_first=True,
+                proj_size=proj_size // 2,
+            )
+
+        if caught_warnings:
+            logger.info(
+                "LSTM projection layer not using oneDNN optimization in __init__, which shouldn't matter as long as a GPU is used for training/inference."
+            )
 
         if not self.share:
             self.out = nn.Linear(proj_size, embed_size)
