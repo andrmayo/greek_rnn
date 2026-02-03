@@ -17,6 +17,11 @@ mkdir -p log/strat_experiments
 
 python rnn_code/main.py -tr --masking random --masking-strategy once -p -ev
 
+if [ $? -ne 0 ]; then
+  echo "main.py failed with code $?"
+  exit $?
+fi
+
 mkdir -p rnn_code/log
 mkdir -p rnn_code/models
 mv rnn_code/log/"$(ls -t rnn_code/log | head -n 1)" log/strat_experiments/rand_once_"$(ls -t rnn_code/log | head -n 1)"

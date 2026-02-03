@@ -15,6 +15,11 @@ mkdir -p log/strat_experiments
 
 python rnn_code/main.py -tr --masking smart --masking-strategy once -ev
 
+if [ $? -ne 0 ]; then
+  echo "main.py failed with code $?"
+  exit $?
+fi
+
 mkdir -p rnn_code/log
 mv rnn_code/log/"$(ls -t rnn_code/log | head -n 1)" log/strat_experiments/smart_once_"$(ls -t rnn_code/log | head -n 1)"
 mv rnn_code/models/"$(ls -t rnn_code/models | head -n 1)" rnn_code/models/smart_once_"$(ls -t rnn_code/models | head -n 1)"
