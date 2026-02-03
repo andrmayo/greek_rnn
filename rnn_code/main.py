@@ -103,7 +103,7 @@ if __name__ == "__main__":
     full_json = "full_data.json"
     reconstruction_json = "reconstructions.json"
 
-    file_dir_path = cur_path.parent.parent / "Corpora/Lacuna"
+    file_dir_path = cur_path / "corpus"
     # read in json file
     json_list: list[str | os.PathLike] = [
         str(json_file) for json_file in file_dir_path.glob("*.json")
@@ -112,7 +112,9 @@ if __name__ == "__main__":
     if args.partition:
         # Do full data partition
         logger.info("Now partitioning data")
-        logger.info(f"{len(json_list)} json file(s) found: ")
+        logger.info(f"{len(json_list)} json file(s) found")
+        if not json_list:
+            raise FileNotFoundError("No json files were found")
         for json_file in json_list:
             logger.info(f"{json_file}")
         (
