@@ -163,16 +163,17 @@ class RNN(nn.Module):
         )  # labels mark where actual masking is with a value > 0, and this value is the index of the masked token
 
         # guard against short texts
-        short_text_n = 0
+        short_text = False
         if text_length < 3:
-            short_text_n += 1
+            short_text = True
             data_item.mask = [False] * text_length
             total_mask = 0
             return data_item, total_mask
 
-        logger.info(
-            f"Encountered {short_text_n} texts with less than 3 characters, which have not been masked"
-        )
+        if short_text:
+            logger.info(
+                f"Encountered texts with less than 3 characters (original position: {data_item.position_in_original}, which have not been masked"
+            )
         data_item.mask = [True] * text_length
 
         mask_count = 0  # This counts only tokens actually masked, not those swapped for random character or retained
@@ -317,8 +318,6 @@ class RNN(nn.Module):
         # self.labels with -100 for unmasked tokens and >= 0 with the embedding index for masked tokens.
         return data_item
 
-    # TODO: Fix imports of this
-    # this was moved from greek_utils
     def mask_input(
         self, data: list[DataItem], mask_type: str, masking_strategy: str
     ) -> tuple[list[DataItem], bool]:
