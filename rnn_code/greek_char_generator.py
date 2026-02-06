@@ -9,7 +9,7 @@ import time
 from math import log
 from pathlib import Path
 from random import shuffle
-from typing import TYPE_CHECKING, List, Tuple, cast
+from typing import TYPE_CHECKING, List, Literal, Tuple, cast
 
 import numpy
 import torch
@@ -75,9 +75,9 @@ def train_batch(
     criterion: nn.Module,
     data: list[DataItem],
     data_indexes: list[int],
-    mask_type: str,
+    masking_strategy: Literal["random", "smart"],
+    dynamic_remask: bool,
     update: bool = True,  # update=False is used for dev set
-    mask: bool = True,
 ) -> tuple[float, int, int, int, int, int]:
     model.zero_grad()
     total_loss, total_tokens, total_chars = 0, 0, 0
@@ -90,9 +90,9 @@ def train_batch(
     for i in data_indexes:
         data_item = data[i]
 
-        if mask:
+        if dynamic_remask:
             data_item, _ = model.mask_and_label_characters(
-                data_item, mask_type=mask_type
+                data_item, masking_strategy=masking_strategy
             )
 
         # Ensure indexes are populated even if not masking dynamically
@@ -152,16 +152,12 @@ def train_batch(
 def train_model(
     model: RNN,
     train_data: list[DataItem],
+    masking_strategy: Literal["random", "smart"],
+    dynamic_remask: bool,
     dev_data=None,
     output_name: str = "greek_lacuna",
-    mask: bool = True,
-    mask_type: str | None = None,
     seed=None,
 ):
-    if mask_type is None:
-        raise ValueError(
-            "mask_type from [random, smart] must be specified for training from"
-        )
     if seed is not None:
         random.seed(seed)
     # start a new wandb run to track this script
@@ -174,7 +170,8 @@ def train_model(
             "epochs": nEpochs,
             "batch_size": batch_size,
             "patience": patience,
-            "mask_type": mask_type,
+            "masking_strategy": masking_strategy,
+            "dynamic_remask": dynamic_remask,
             "embed_size": model.specs[0],
             "hidden_size": model.specs[1],
             "rnn_layers": model.specs[3],
@@ -265,9 +262,9 @@ def train_model(
                 criterion,
                 train_data,
                 train_list[i : i + incremental_batch_size],
-                mask_type,
+                masking_strategy,
                 update=True,
-                mask=mask,
+                dynamic_remask=dynamic_remask,
             )
 
             logger.debug(f"masked total: {train_mask_count}")
@@ -296,9 +293,9 @@ def train_model(
             criterion,
             dev_data,
             dev_list,
-            mask_type,
+            masking_strategy,
             update=False,
-            mask=False,  # Dev set is already masked, since lacunas are masked.
+            dynamic_remask=False,  # Dev set is already masked, since lacunas are masked.
         )
 
         if epoch == 0:
@@ -388,10 +385,14 @@ def train_model(
     return model
 
 
-def fill_masks(model: RNN, text: str, mask_type: str, temp=0):
+def fill_masks(
+    model: RNN, text: str, masking_strategy: Literal["random", "smart"], temp=0
+):
     logger.info(f"prompt: {text}")
     test_data_item = DataItem(text=text)
-    data_item, _ = model.mask_and_label_characters(test_data_item, mask_type=mask_type)
+    data_item, _ = model.mask_and_label_characters(
+        test_data_item, masking_strategy=masking_strategy
+    )
     index_tensor = torch.tensor(data_item.indexes, dtype=torch.int64).to(device)
     sample_out = model([index_tensor])
 
@@ -541,7 +542,7 @@ def baseline_accuracy(model: RNN, data: list[DataItem], data_indexes: list[int])
     )
 
 
-def predict(model: RNN, data_item: DataItem):
+def predict_chars(model: RNN, data_item: DataItem) -> str:
     if data_item.indexes is None:
         raise ValueError("data_item passed to predict has unitialized indexes")
     if data_item.mask is None:
@@ -669,7 +670,9 @@ def predict_top_k(
     return return_list
 
 
-def rank(model: RNN, sentence: str, options: List[str]) -> List[Tuple[str, float]]:
+def rank_reconstructions(
+    model: RNN, sentence: str, options: List[str]
+) -> List[Tuple[str, float]]:
     # filter diacritics
     sentence = utils.filter_diacritics(sentence)
     data_item = DataItem(sentence)

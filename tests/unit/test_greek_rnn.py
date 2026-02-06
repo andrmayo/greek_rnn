@@ -1,4 +1,4 @@
-from typing import cast
+from typing import Literal, cast
 from unittest.mock import MagicMock
 
 import pytest
@@ -86,7 +86,7 @@ class TestRNN:
         data_item = DataItem(text="αβγδε")
 
         masked_item, total_mask = rnn_model.mask_and_label_characters(
-            data_item, mask_type="random"
+            data_item, masking_strategy="random"
         )
 
         assert hasattr(masked_item, "indexes")
@@ -100,7 +100,7 @@ class TestRNN:
         data_item = DataItem(text="αβγδεζηθικλμνξοπ")
 
         masked_item, total_mask = rnn_model.mask_and_label_characters(
-            data_item, mask_type="smart"
+            data_item, masking_strategy="smart"
         )
 
         assert hasattr(masked_item, "indexes")
@@ -191,19 +191,21 @@ class TestRNN:
         assert rnn_model.embed.num_embeddings == 34  # num_tokens
         assert rnn_model.embed.embedding_dim == 300  # embed_size
 
-    @pytest.mark.parametrize("mask_type", ["random", "smart"])
-    def test_masking_preserves_sequence_length(self, rnn_model, mask_type):
+    @pytest.mark.parametrize("masking_strategy", ["random", "smart"])
+    def test_masking_preserves_sequence_length(self, rnn_model, masking_strategy):
         original_text = "αβγδεζηθικλμν"
         data_item = DataItem(text=original_text)
 
-        masked_item, _ = rnn_model.mask_and_label_characters(data_item, mask_type)
+        masked_item, _ = rnn_model.mask_and_label_characters(
+            data_item, masking_strategy
+        )
 
         # Sequence length should be preserved (plus BOT/EOT)
         expected_length = len(rnn_model.lookup_indexes(original_text))
         assert len(masked_item.indexes) == expected_length
 
-    @pytest.mark.parametrize("mask_type", ["random", "smart"])
-    def test_single_char_lacuna_marker_not_masked(self, rnn_model, mask_type):
+    @pytest.mark.parametrize("masking_strategy", ["random", "smart"])
+    def test_single_char_lacuna_marker_not_masked(self, rnn_model, masking_strategy):
         """Test that '.' (single missing char marker) is never masked."""
         # Use text with '.' characters representing unknown single characters
         text = "αβγ.δε.ζηθ"
@@ -212,7 +214,7 @@ class TestRNN:
         for _ in range(10):
             data_item_copy = DataItem(text=text)
             masked_item, _ = rnn_model.mask_and_label_characters(
-                data_item_copy, mask_type=mask_type
+                data_item_copy, masking_strategy=masking_strategy
             )
 
             # Find positions of '.' in the token sequence (accounting for BOT token)
@@ -221,14 +223,14 @@ class TestRNN:
                 if idx == dot_index:
                     # '.' should never be masked
                     assert masked_item.mask[i] is False, (
-                        f"'.' at position {i} was masked in {mask_type} mode"
+                        f"'.' at position {i} was masked in {masking_strategy} mode"
                     )
                     assert masked_item.labels[i] == -100, (
-                        f"'.' at position {i} has label in {mask_type} mode"
+                        f"'.' at position {i} has label in {masking_strategy} mode"
                     )
 
-    @pytest.mark.parametrize("mask_type", ["random", "smart"])
-    def test_gap_marker_not_masked(self, rnn_model, mask_type):
+    @pytest.mark.parametrize("masking_strategy", ["random", "smart"])
+    def test_gap_marker_not_masked(self, rnn_model, masking_strategy):
         """Test that '!' (variable-length gap marker) is never masked."""
         # Use text with '!' characters representing gaps of unknown length
         text = "αβγ!δεζ!ηθι"
@@ -238,21 +240,23 @@ class TestRNN:
         for _ in range(10):
             data_item_copy = DataItem(text=text)
             masked_item, _ = rnn_model.mask_and_label_characters(
-                data_item_copy, mask_type=mask_type
+                data_item_copy, masking_strategy=masking_strategy
             )
 
             # Find positions of '!' in the token sequence
             for pos in positions:
                 # '!' should never be masked
                 assert masked_item.mask[pos] is False, (
-                    f"'!' at position {pos} was masked in {mask_type} mode"
+                    f"'!' at position {pos} was masked in {masking_strategy} mode"
                 )
                 assert masked_item.labels[pos] == -100, (
-                    f"'!' at position {pos} has label in {mask_type} mode"
+                    f"'!' at position {pos} has label in {masking_strategy} mode"
                 )
 
-    @pytest.mark.parametrize("mask_type", ["random", "smart"])
-    def test_mixed_lacuna_markers_not_masked(self, rnn_model: RNN, mask_type: str):
+    @pytest.mark.parametrize("masking_strategy", ["random", "smart"])
+    def test_mixed_lacuna_markers_not_masked(
+        self, rnn_model: RNN, masking_strategy: Literal["random", "smart"]
+    ):
         """Test that both '.' and '!' markers are skipped when mixed in text."""
         text = "αβ.γδ!εζ.ηθ!ικλμνξοπ"
         positions = [i + 1 for i, c in enumerate(text) if c in ("!", ".")]
@@ -260,15 +264,15 @@ class TestRNN:
         for _ in range(10):
             data_item_copy = DataItem(text=text)
             masked_item, _ = rnn_model.mask_and_label_characters(
-                data_item_copy, mask_type=mask_type
+                data_item_copy, masking_strategy=masking_strategy
             )
 
             for pos in positions:
                 assert cast(list[bool], masked_item.mask)[pos] is False, (
-                    f"Lacuna marker at position {pos} was masked in {mask_type} mode"
+                    f"Lacuna marker at position {pos} was masked in {masking_strategy} mode"
                 )
                 assert cast(list[int], masked_item.labels)[pos] == -100, (
-                    f"Lacuna marker at position {pos} has label in {mask_type} mode"
+                    f"Lacuna marker at position {pos} has label in {masking_strategy} mode"
                 )
 
 
@@ -284,26 +288,13 @@ class TestCountParameters:
 
 
 class TestMaskInput:
-    def test_once_strategy(self, caplog):
+    def test_once_strategy(self):
         mock_model = MagicMock()
         mock_model.mask_and_label_characters.return_value = ("masked", 5)
 
         data = [DataItem(text="test1"), DataItem(text="test2")]
 
-        result_data, mask = RNN.mask_input(mock_model, data, "random", "once")
+        result_data = RNN.mask_input(mock_model, data, "random")
 
-        assert mask is False
         assert len(result_data) == 2
-        assert "Masking strategy is once" in caplog.text
         assert mock_model.mask_and_label_characters.call_count == 2
-
-    def test_dynamic_strategy(self, caplog):
-        mock_model = MagicMock()
-        data = [DataItem(text="test1"), DataItem(text="test2")]
-
-        result_data, mask = RNN.mask_input(mock_model, data, "smart", "dynamic")
-
-        assert mask is True
-        assert result_data is data
-        assert "dynamic" in caplog.text
-        assert mock_model.mask_and_label_characters.call_count == 0

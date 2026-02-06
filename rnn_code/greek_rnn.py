@@ -1,7 +1,7 @@
 import logging
 import random
 import warnings
-from typing import cast
+from typing import Literal, cast
 
 import torch
 import torch.nn as nn
@@ -150,9 +150,10 @@ class RNN(nn.Module):
         text = "".join([self.index_to_token[index] for index in indexes])
         return text
 
-    # Function is used in greek_utils
     def mask_and_label_characters(
-        self, data_item: DataItem, mask_type: str = "random"
+        self,
+        data_item: DataItem,
+        masking_strategy: Literal["random", "smart"] = "random",
     ) -> tuple[DataItem, int]:
         data_item.indexes = self.lookup_indexes(data_item.text)
 
@@ -180,7 +181,7 @@ class RNN(nn.Module):
         random_sub = 0
         orig_token = 0
 
-        if mask_type == "random":
+        if masking_strategy == "random":
             for i in range(text_length):
                 # we want to skip masking actual lacunae
                 current_token = data_item.indexes[i]
@@ -213,7 +214,7 @@ class RNN(nn.Module):
                 else:
                     data_item.mask[i] = False
 
-        elif mask_type == "smart":
+        elif masking_strategy == "smart":
             r_mask_quantity = random.randint(1, 5)
 
             should_mask = [False] * text_length
@@ -319,27 +320,24 @@ class RNN(nn.Module):
         return data_item
 
     def mask_input(
-        self, data: list[DataItem], mask_type: str, masking_strategy: str
-    ) -> tuple[list[DataItem], bool]:
-        logger.info(f"Mask type: {mask_type} - {masking_strategy}")
+        self,
+        data: list[DataItem],
+        masking_strategy: Literal["random", "smart"],
+    ) -> list[DataItem]:
+        """Masking function: this is only used if masking is one-and-done at start of training."""
         logger.info(f"Training data read in with {len(data)} lines")
 
         data_for_model = []
-        mask = False
 
-        if masking_strategy == "once":
-            logger.info(f"Masking strategy is {masking_strategy}, masking sentences...")
-            for data_item in data:
-                masked_data_item, _ = self.mask_and_label_characters(
-                    data_item, mask_type=mask_type
-                )
-                data_for_model.append(masked_data_item)
-            logger.info("Masking complete")
-        elif masking_strategy == "dynamic":
-            data_for_model = data
-            mask = True
+        logger.info(f"Masking strategy is {masking_strategy}, masking sentences...")
+        for data_item in data:
+            masked_data_item, _ = self.mask_and_label_characters(
+                data_item, masking_strategy=masking_strategy
+            )
+            data_for_model.append(masked_data_item)
+        logger.info("Masking complete")
 
-        return data_for_model, mask
+        return data_for_model
 
 
 def count_parameters(model: nn.Module):

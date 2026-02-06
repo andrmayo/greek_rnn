@@ -5,7 +5,7 @@ from unittest.mock import patch
 import pytest
 import torch
 
-from rnn_code.greek_char_generator import predict, predict_top_k, train_model
+from rnn_code.greek_char_generator import predict_chars, predict_top_k, train_model
 from rnn_code.greek_rnn import RNN
 from rnn_code.greek_utils import DataItem
 
@@ -19,8 +19,8 @@ class TestPredict:
     def rnn_model(self, sample_specs):
         return RNN(sample_specs)
 
-    def test_predict_basic(self, rnn_model):
-        """Test predict function with a simple masked input"""
+    def test_predict_chars_basic(self, rnn_model):
+        """Test predict_chars function with a simple masked input"""
         # Create a data item with some masked positions
         # Using actual_lacuna_mask_and_label to get proper mask/labels setup
         original_data = DataItem(text="αβ[γδ]εζ")
@@ -43,7 +43,7 @@ class TestPredict:
             mock_forward.return_value = mock_output
 
             # Call predict
-            result = predict(rnn_model, data_item)
+            result = predict_chars(rnn_model, data_item)
 
             # Verify the result is a string
             assert isinstance(result, str)
@@ -66,7 +66,7 @@ class TestPredict:
             mock_output = torch.randn(1, seq_len, vocab_size)
             mock_forward.return_value = mock_output
 
-            result = predict(rnn_model, data_item)
+            result = predict_chars(rnn_model, data_item)
 
             # Should return the original text (minus control chars)
             assert isinstance(result, str)
@@ -92,7 +92,7 @@ class TestPredict:
 
             mock_forward.return_value = mock_output
 
-            result = predict(rnn_model, data_item)
+            result = predict_chars(rnn_model, data_item)
 
             assert isinstance(result, str)
             # Result should contain predicted characters
@@ -118,7 +118,7 @@ class TestPredict:
 
             mock_forward.return_value = mock_output
 
-            result = predict(rnn_model, data_item)
+            result = predict_chars(rnn_model, data_item)
 
             assert isinstance(result, str)
             # Should contain original punctuation
@@ -339,9 +339,10 @@ class TestTrainModel:
                 # Run training
                 result_model = train_model(
                     rnn_model,
-                    sample_train_data,
-                    sample_dev_data,
-                    mask_type="smart",
+                    masking_strategy="smart",
+                    train_data=sample_train_data,
+                    dev_data=sample_dev_data,
+                    dynamic_remask=False,
                     output_name="test_early_stop",
                 )
 
@@ -389,8 +390,9 @@ class TestTrainModel:
                 result_model = train_model(
                     rnn_model,
                     sample_train_data,
-                    sample_dev_data,
-                    mask_type="random",
+                    masking_strategy="random",
+                    dev_data=sample_dev_data,
+                    dynamic_remask=True,
                     output_name="test_best_model",
                 )
 
@@ -445,8 +447,9 @@ class TestTrainModel:
                 result_model = train_model(
                     rnn_model,
                     sample_train_data,
-                    sample_dev_data,
-                    mask_type="smart",
+                    "smart",
+                    dev_data=sample_dev_data,
+                    dynamic_remask=False,
                     output_name="test_no_improvement",
                 )
 
@@ -480,8 +483,9 @@ class TestTrainModel:
                         train_model(
                             rnn_model,
                             sample_train_data,
-                            sample_dev_data,
-                            mask_type="random",
+                            masking_strategy="random",
+                            dev_data=sample_dev_data,
+                            dynamic_remask=False,
                             output_name="test_file_error",
                         )
             finally:
