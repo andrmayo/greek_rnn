@@ -42,7 +42,7 @@ The corpus contains texts with three types of lacunae markers:
 - `.`: Single missing characters without reconstruction
 - `<gap/>`: Variable-length lacunae without reconstruction
 
-During data partitioning (`--partition` flag), all texts are randomly split into
+During data partitioning (`--force-partition` flag), all texts are randomly split into
 train (80%), dev (10%), and test (10%) sets. Importantly, **all texts are
 included regardless of whether they contain lacunae or reconstructions** - there
 is no filtering by lacuna density.
@@ -145,9 +145,9 @@ and be rewarded for reproducing them.
 
 ### `rnn_code/` Directory
 
-- **`main.py`**: Entry point script with argument parsing for training,
-  evaluation, prediction, and ranking tasks. Handles data partitioning, model
-  initialization, and coordinates the overall workflow.
+- **`main.py`**: Entry point script using Typer for the CLI, with subcommands
+  for training, evaluation, prediction, and ranking. Handles data partitioning,
+  model initialization, and coordinates the overall workflow.
 
 - **`greek_rnn.py`**: Core RNN model implementation. Contains the bidirectional
   LSTM architecture with embedding layers, masking functions for training data
@@ -185,35 +185,60 @@ this file needs to be moved to `rnn_code/models/best/`.
 
 ### Loading pretrained model
 
-If the `-t` / `--train` option isn't passed to `main.py` in the CLI, the program
-will search for an existing model as a `.pth` file in `rnn_code/models/best`,
-and will select the most recently modified file. To set this up based on the
-compressed `.pth` file in `rnn_code/models/compressed-weights`, run
-`source setup.sh` in the project root directory.
+The `predict`, `predict-k`, `rank`, and `eval` subcommands search for an
+existing model as a `.pth` file in `rnn_code/models/best`, and select the most
+recently modified file. To set this up based on the compressed `.pth` file in
+`rnn_code/models/compressed-weights`, run `source setup.sh` in the project root
+directory.
+
+### Training
+
+```
+python -m rnn_code.main train <masking_strategy> [OPTIONS]
+```
+
+Where `masking_strategy` is `random` (randomly mask single characters) or
+`smart` (mask randomly sized sequences).
+
+Options:
+- `--dynamic-remask` / `-d`: Remask texts each epoch (default: mask once)
+- `--force-partition` / `-f`: Force repartitioning of data
+- `--use-existing`: Use existing data partitions without checking for changes
+
+By default, data is automatically repartitioned if source data changes are
+detected.
 
 ### Inference
 
-The three inference options to pass to the `main.py` CLI are `-pr`
-(`--predict`), `-prk` (`--predict_top_k`), and `-r` (`--rank`). Each takes a
-Greek sentence as a positional argument, with lacunae to be filled indicated
-either with `_` for known-length lacunae or `<gap>` for unkown length. For
-instance,
+The three inference subcommands are `predict`, `predict-k`, and `rank`. Each
+takes a Greek sentence as a positional argument, with lacunae to be filled
+indicated with `[...]` using one `.` per missing character for known-length
+lacunae, or `<gap/>` for unknown length. For instance,
 
-- `python main.py -pr 'ἀγαθὸς [___] ἐστιν'`
+- `python -m rnn_code.main predict 'ἀγαθὸς [___] ἐστιν'`
 
 This fills in a lacuna of three characters.
 
-- `python main.py -pr 'ἀγαθὸς <gap/> ἐστιν'`
+- `python -m rnn_code.main predict 'ἀγαθὸς <gap/> ἐστιν'`
 
 This will also try to predict the length of the lacuna.
 
-If `-prk` is used instead of `-pr`, the top 1000 most likely predictions will be
-saved to a CSV file in `rnn_code/results` with a filename in the format
-`top_k_{timestamp}.csv`.
+`predict-k` returns the top k most likely predictions. If `-k` is not passed,
+the program will prompt for it:
 
-Passing `-r` followed by a sentence with a lacuna and options of the same length
-as the lacuna will rank the proposed reconstructions from most to least likely.
-White space and punctuation don't count towards matching the lacuna length, and
-currently this doesn't work with lacunae of unspecified length.
+- `python -m rnn_code.main predict-k 'ἀγαθὸς [___] ἐστιν' -k 1000`
 
-- `python main.py -r 'ἄνδρες [___] γυναῖκες' και 'τα δ' γαρ τον`
+`rank` takes a sentence with a lacuna followed by space-separated options of the
+same length as the lacuna, and ranks them from most to least likely. Currently
+this doesn't work with lacunae of unspecified length.
+
+- `python -m rnn_code.main rank 'ἄνδρες [___] γυναῖκες' και τον γαρ`
+
+### Evaluation
+
+```
+python -m rnn_code.main eval
+```
+
+Evaluates a previously trained model from `rnn_code/models/best/` against
+the test partition.

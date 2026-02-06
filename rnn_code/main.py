@@ -424,7 +424,7 @@ def bind_data(
     list[DataItem],
     list[DataItem],
     list[DataItem],
-    list[str],
+    list[list[str]],
     list[int],
     list[int],
 ]:
@@ -523,7 +523,7 @@ def bind_data(
         cast(list[DataItem], dev_data),
         cast(list[DataItem], test_data),
         cast(list[DataItem], full_data),
-        cast(list[str], reconstructions),
+        cast(list[list[str]], reconstructions),
         cast(list[int], random_index),
         cast(list[int], position_in_original),
     )
