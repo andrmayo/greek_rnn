@@ -1,13 +1,13 @@
 import logging
 import random
 import warnings
-from typing import Literal, cast
+from typing import Any, Iterator, Literal, cast
 
 import torch
 import torch.nn as nn
 
 import rnn_code.letter_tokenizer as letter_tokenizer
-from rnn_code.greek_utils import DataItem
+from rnn_code.greek_utils import DataItem, decoder_specs
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +21,7 @@ class RNN(nn.Module):
         specs: list[int | float],
         spaces_are_tokens: bool = False,
         newlines_are_tokens: bool = True,
+        decoder_type: str | None = None,
     ):
         super().__init__()
         # ensure that character dictionary doesn't change
@@ -48,7 +49,7 @@ class RNN(nn.Module):
             hidden_size,
             proj_size,
             rnn_nLayers,
-            self.share,
+            share,
             dropout,
             masking_proportion,
         ) = specs
@@ -58,6 +59,11 @@ class RNN(nn.Module):
             cast(int, hidden_size),
             cast(int, proj_size),
         )
+
+        self.embed_size = int(embed_size)
+        self.hidden_size = hidden_size
+        self.proj_size = proj_size
+        self.share = share
 
         if hidden_size % 2 == 1 or proj_size % 2 == 1:
             raise ValueError("hidden_size and proj_size must be even numbers")
@@ -94,12 +100,33 @@ class RNN(nn.Module):
                 "LSTM projection layer not using oneDNN optimization in __init__, which shouldn't matter as long as a GPU is used for training/inference."
             )
 
-        if not self.share:
-            self.out = nn.Linear(proj_size, embed_size)
+        if self.share:
+            if proj_size > 0 and proj_size != embed_size:
+                raise ValueError(
+                    "if weight tying is enabled with share and projection layer, proj_size must equal embed_size"
+                )
+            elif hidden_size != embed_size:
+                raise ValueError(
+                    "if weight tying is enabled with share and without projection layer, hidden_size must equal embed_size"
+                )
+            self.out = None
         else:
-            self.scale_down = nn.Linear(proj_size, embed_size)
+            self.out = nn.Linear(
+                proj_size if proj_size > 0 else hidden_size, self.num_tokens
+            )
 
         self.dropout = nn.Dropout(dropout)
+
+        self.decoder_type = decoder_type
+        match self.decoder_type:
+            case None:
+                self.decoder = None
+            case "gru":
+                self.decoder = GRUDecoder(decoder_specs[cast(str, decoder_type)], self)
+            case "lstm":
+                raise NotImplementedError(
+                    "unidirectional LSTM decoder not implemented yet"
+                )
 
         for p in self.parameters():
             if p.dim() > 1:
@@ -108,29 +135,49 @@ class RNN(nn.Module):
                 # nn.init.kaiming_uniform_(p)
                 nn.init.kaiming_normal_(p)
 
-    def forward(self, seqs):
-        num_batches = len(seqs)
-        num_tokens = len(seqs[0])
-        seqs = torch.cat(seqs).view(num_batches, num_tokens)
+    def forward(
+        self,
+        input_seqs: list[torch.Tensor] | tuple[torch.Tensor],
+        masks: list[torch.Tensor] | None = None,
+        labels: list[torch.Tensor] | None = None,
+    ):
+        if self.decoder and not masks:
+            raise ValueError(
+                "Calling RNN object requires 'masks' argument if using a decoder"
+            )
+        batch_size = len(input_seqs)
+        num_tokens = len(input_seqs[0])
+        seqs = torch.cat(input_seqs).view(batch_size, num_tokens)
 
         embed = self.embed(seqs)
         embed = self.dropout(embed)
         # embed = self.scale_up(embed)
 
-        output, _ = self.rnn(embed)
-        output = self.dropout(output)
+        encoder_output, (hidden_state, cell_state) = self.rnn(embed)
+        encoder_output = self.dropout(encoder_output)
 
-        if not self.share:
-            output = self.out(output)
-            output = torch.matmul(
-                output, torch.t(self.embed.weight)
-            )  # this was added as a fix
-        else:
+        if self.share:
             # use embedding table as output layer
-            output = self.scale_down(output)
-            output = torch.matmul(output, torch.t(self.embed.weight))
-
-        return output
+            logits = torch.matmul(encoder_output, torch.t(self.embed.weight))
+        else:
+            assert self.out
+            logits = self.out(encoder_output)
+        match self.decoder_type:
+            case None:
+                return logits
+            case "gru":
+                assert isinstance(self.decoder, nn.Module)
+                assert masks is not None
+                # multi-character lacunae get overriden here
+                return self.decode_lacuna_regions(encoder_output, logits, masks, labels)
+            case "lstm":
+                raise NotImplementedError(
+                    "unidirectional LSTM decoder not implemented yet"
+                )
+            case _:
+                raise ValueError(
+                    f"invalid decoder requested; decoder should be None or one of {list(decoder_specs.keys())}"
+                )
 
     # Better for this to return list than tensor
     def lookup_indexes(self, text, add_control=True) -> list:
@@ -149,6 +196,43 @@ class RNN(nn.Module):
             indexes = indexes.type(torch.int64).tolist()
         text = "".join([self.index_to_token[index] for index in indexes])
         return text
+
+    @staticmethod
+    def find_contiguous_masked_regions(mask) -> Iterator[tuple[int, int]]:
+        i = 0
+        n = len(mask)
+        while i < n:
+            if not mask[i]:
+                i += 1
+                continue
+            start = i
+            while i < n and mask[i]:
+                i += 1
+            yield (start, i)
+
+    def decode_lacuna_regions(
+        self,
+        encoder_output: torch.Tensor,
+        logits: torch.Tensor,
+        mask,
+        teacher_labels=None,
+    ) -> torch.Tensor:
+        assert self.decoder
+
+        for batch_i in range(encoder_output.size(0)):
+            regions = RNN.find_contiguous_masked_regions(mask[batch_i])
+            for start, end in regions:
+                if end - start < 2:
+                    continue
+                region_labels = (
+                    teacher_labels[batch_i][start:end]
+                    if teacher_labels is not None
+                    else None
+                )
+                logits[batch_i, start:end] = self.decoder.forward_region(
+                    encoder_output[batch_i], start, end, teacher_labels=region_labels
+                )
+        return logits
 
     def mask_and_label_characters(
         self,
@@ -338,6 +422,136 @@ class RNN(nn.Module):
         logger.info("Masking complete")
 
         return data_for_model
+
+
+class GRUDecoder(nn.Module):
+    """
+    GRU decoder for use with LSTM encoder.
+    Note that forward() is not implemented: this class is
+    embedded in RNN above, which calls forward_region() below
+    in the decode_lacuna_regions() method.
+    """
+
+    def __init__(
+        self,
+        decoder_specs: dict[str, Any],
+        encoder: RNN,
+    ):
+        super().__init__()
+        self.num_tokens = encoder.num_tokens
+        self.encoder_specs = encoder.specs
+        self.embed = encoder.embed
+        self.embed_size = encoder.embed_size
+        self.encoder_proj_size = encoder.proj_size
+        self.encoder_hidden_size = encoder.hidden_size
+
+        self.specs = decoder_specs
+
+        gru_params = {
+            "input_size",
+            "hidden_size",
+            "num_layers",
+            "bias",
+            "batch_first",
+            "dropout",
+            "bidirectional",
+            "device",
+        }
+
+        self.gru = torch.nn.GRU(
+            **{k: v for k, v in decoder_specs.items() if k in gru_params}
+        )
+
+        # marks beginning of masked region / lacuna
+        self.start_embedding = nn.Parameter(torch.randn(self.embed_size))
+
+        hidden_size = self.specs["hidden_size"]
+
+        # NOTE: we have a linear layer from encoder outputs to GRU inputs
+        # even where projection isn't necessary, because dimensions already match
+        if self.encoder_proj_size > 0:
+            self.encoder_projection = nn.Linear(self.encoder_proj_size, hidden_size)
+        else:
+            self.encoder_projection = nn.Linear(self.encoder_hidden_size, hidden_size)
+
+        # projection layer that projects concatenated [biLSTM_context, prev_token_embedding]
+        # to the decoder hidden_size
+        encoder_output_size = (
+            self.encoder_proj_size
+            if self.encoder_proj_size > 0
+            else self.encoder_hidden_size
+        )
+        self.input_projection = nn.Linear(
+            encoder_output_size + self.embed_size, hidden_size
+        )
+
+        # this is the projection layer before using embeddings to score all tokens
+        if self.specs["hidden_size"] != self.embed_size:
+            self.output_projection = torch.nn.Linear(
+                self.specs["hidden_size"], self.embed_size
+            )
+        else:
+            self.output_projection = None
+
+        # NOTE: parameters with > 1 dimensions will get initialized in encoder
+
+    def forward_region(
+        self,
+        encoder_output: torch.Tensor,
+        start: int,
+        end: int,
+        teacher_labels=None,
+    ):
+        h = self.compute_init_hidden(encoder_output, start, end)
+        prev_embed = self.start_embedding
+        all_logits = []
+        for t in range(end - start):
+            pos = start + t
+            context = encoder_output[pos]
+
+            decoder_input = self.input_projection(
+                torch.cat([context, prev_embed], dim=-1)
+            )
+            decoder_input = torch.relu(decoder_input)
+            gru_out, h = self.gru(decoder_input.unsqueeze(0).unsqueeze(0), h)
+
+            # Project to logits
+            out = gru_out.squeeze(0).squeeze(0)
+            if self.output_projection:
+                out = self.output_projection(out)
+            logits = torch.matmul(out, torch.t(self.embed.weight))
+            all_logits.append(logits)
+
+            if teacher_labels is not None:
+                prev_embed = self.embed(teacher_labels[t])
+            else:
+                prev_embed = self.embed(logits.argmax(dim=-1))
+
+        return torch.stack(all_logits, dim=0)  # (region_length, num_tokens)
+
+    def compute_init_hidden(self, encoder_output: torch.Tensor, start: int, end: int):
+        seq_len = encoder_output.size(0)
+        boundaries = []
+        if start > 0:
+            boundaries.append(encoder_output[start - 1])
+        if end < seq_len:
+            boundaries.append(encoder_output[end])
+
+        if not boundaries:
+            boundary_repr = torch.zeros(
+                self.encoder_proj_size
+                if self.encoder_proj_size > 0
+                else self.encoder_hidden_size,
+                device=encoder_output.device,
+            )
+        elif len(boundaries) == 1:
+            boundary_repr = boundaries[0]
+        else:
+            boundary_repr = (boundaries[0] + boundaries[1]) / 2.0
+
+        h0 = torch.tanh(self.encoder_projection(boundary_repr))
+
+        return h0.unsqueeze(0).unsqueeze(0)
 
 
 def count_parameters(model: nn.Module):

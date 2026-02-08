@@ -9,7 +9,7 @@ def test_rank_cli():
     options = ["και", "γαρ", "τον", "αιδ", "σομ", "πετ", "ιυδ"]
     main_path = Path(__file__).parent.parent.parent / "rnn_code" / "main.py"
     # sys.executable specifies Python interpreter
-    test_args = [sys.executable, str(main_path), "--rank", sentence] + options
+    test_args = [sys.executable, "-m", "rnn_code.main", "rank", sentence] + options
 
     result = subprocess.run(test_args, capture_output=True, text=True)
     print(

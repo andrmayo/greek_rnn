@@ -25,7 +25,10 @@ from rnn_code.greek_char_generator import (
 )
 from rnn_code.greek_utils import device, model_path, seed, specs
 
+default_model_path = Path(model_path) / "best"
 # Note to self: the model at present seems to veer towards just predicting the most common character in the corpus
+
+sequence_decoders = ("gru", "lstm")
 
 
 def setup_logging():
@@ -79,6 +82,9 @@ random_index: list[int] | None = None
 position_in_original: list[int] | None = None
 
 
+# NOTE: it might be worth doing curriculum learning with random -> smart masking,
+# in this case we might want learning rate to be configurable here for lower rate in phase 2,
+# perhaps to 0.001
 @app.command()
 def train(
     masking_strategy: Annotated[
@@ -105,6 +111,34 @@ def train(
         ),
     ] = False,
     use_existing_partition: Annotated[bool, typer.Option("--use-existing")] = False,
+    preload_model_path: Annotated[
+        Path | None,
+        typer.Option(
+            "--path",
+            exists=True,
+            file_okay=True,
+            dir_okay=True,
+            resolve_path=True,
+            help="Path to model, only supply if training pre-trained model.",
+        ),
+    ] = None,
+    learning_rate: Annotated[
+        float,
+        typer.Option(
+            "--learning-rate", "--lr", "-lr", help="Override default learning rate"
+        ),
+    ] = utils.learning_rate,
+    seq_decoder: Annotated[
+        str | None,
+        typer.Option(
+            "-seq",
+            "--seq",
+            "--sequence-decoder",
+            autocompletion=lambda x: [
+                s for s in sequence_decoders if s.startswith(x.lower())
+            ],
+        ),
+    ] = None,
 ):
     """Train LSTM for character filling; must pass masking strategy: [random, smart]."""
 
@@ -112,6 +146,14 @@ def train(
         raise typer.BadParameter(
             "Cannot use --force-partition and --use-existing together"
         )
+
+    if seq_decoder:
+        seq_decoder = seq_decoder.lower()
+        if seq_decoder not in sequence_decoders:
+            raise typer.BadParameter(
+                f"Invalid sequence decoder passed, available decoders: {sequence_decoders}"
+            )
+        cur_decoder_specs = utils.decoder_specs[seq_decoder]
 
     # NOTE: in prior version of code, masking_strategy was called masking, and instead of boolean dynamic remask was masking_strategy as ["once", "dynamic"]
 
@@ -141,8 +183,15 @@ def train(
         f"Train {model_name} model specs: embed_size: {specs[0]}, hidden_size: {specs[1]}, proj_size: {specs[2]}, rnn n layers: {specs[3]}, share: {specs[4]}, dropout: {specs[5]}"
     )
 
-    model = greek_rnn.RNN(specs)
-    model = model.to(utils.device)
+    if preload_model_path:
+        model = torch.load(
+            preload_model_path, map_location=utils.device, weights_only=False
+        )
+        if not isinstance(model, greek_rnn.RNN):
+            raise typer.BadParameter("Path to model has invalid model architecture")
+    else:
+        model = greek_rnn.RNN(specs)
+        model = model.to(utils.device)
     # train_model is in greek_char_generator module
     # if mask = True, train_model() will call model.mask_and_label_characters() to remask.
 
@@ -168,6 +217,7 @@ def train(
         output_name=model_name,
         dynamic_remask=dynamic_remask,  # true if masking_strategy is dynamic, false if masking_strategy is once
         masking_strategy=masking_strategy,
+        learning_rate=learning_rate,
         seed=seed,
     )
     run_eval(model, logger)
@@ -402,13 +452,17 @@ def partition(logger: logging.Logger) -> None:
             jsonfile.write(json_line + "\n")
 
 
-def load_model(logger: logging.Logger) -> greek_rnn.RNN:
-    preload_model = Path(model_path) / "best"
-    preload_model = [mod for mod in preload_model.glob("*.pth")]
-    if not preload_model:
-        raise FileNotFoundError(f"No pth file found in {cur_path}/models/best")
-    # get most recent model in models/best dir
-    preload_model = str(max(preload_model, key=lambda f: f.stat().st_mtime))
+def load_model(
+    logger: logging.Logger, spec_model_path: Path = default_model_path
+) -> greek_rnn.RNN:
+    if spec_model_path.suffix == ".pth":
+        preload_model = spec_model_path
+    else:
+        model_dir = [mod for mod in spec_model_path.glob("*.pth")]
+        if not model_dir:
+            raise FileNotFoundError(f"No pth file found in {spec_model_path}")
+        # get most recent model in models/best dir
+        preload_model = max(model_dir, key=lambda f: f.stat().st_mtime)
     logger.info(f"Loading model: {preload_model}")
     model = torch.load(preload_model, map_location=device, weights_only=False)
     logger.info(

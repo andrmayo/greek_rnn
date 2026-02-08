@@ -148,10 +148,16 @@ class TestRNN:
         assert not hasattr(model, "scale_down")
 
     def test_weight_sharing_true(self, sample_specs):
+        sample_specs[2] = 0  # proj_size = 0, so hidden_size must equal embed_size
         sample_specs[4] = True  # share = True
         model = RNN(sample_specs)
-        assert not hasattr(model, "out")
-        assert hasattr(model, "scale_down")
+        assert model.out is None
+
+    def test_weight_sharing_rejects_mismatched_proj(self, sample_specs):
+        sample_specs[4] = True  # share = True
+        # proj_size=150 != embed_size=300 → should reject
+        with pytest.raises(ValueError):
+            RNN(sample_specs)
 
     def test_dropout_initialization(self):
         # Test with dropout

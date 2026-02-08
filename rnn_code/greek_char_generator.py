@@ -9,7 +9,7 @@ import time
 from math import log
 from pathlib import Path
 from random import shuffle
-from typing import TYPE_CHECKING, List, Literal, Tuple, cast
+from typing import TYPE_CHECKING, Any, List, Literal, Tuple, cast
 
 import numpy
 import torch
@@ -155,7 +155,9 @@ def train_model(
     masking_strategy: Literal["random", "smart"],
     dynamic_remask: bool,
     dev_data=None,
+    learning_rate=learning_rate,
     output_name: str = "greek_lacuna",
+    seq_decoder_specs: dict[str, Any] | None = None,
     seed=None,
 ):
     if seed is not None:
@@ -177,6 +179,7 @@ def train_model(
             "rnn_layers": model.specs[3],
             "dropout": model.specs[5],
             "masking_proportion": model.specs[6],
+            "seq_decoder": seq_decoder_specs,
         },
     )
 

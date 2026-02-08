@@ -25,6 +25,9 @@ tokenizer = LetterTokenizer(
     spaces_are_tokens=SPACES_ARE_TOKENS, newlines_are_tokens=NEWLINES_ARE_TOKENS
 )
 
+device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+logger.info(f"torch version & device: {torch.__version__, device}")
+
 share = False
 # share = True  # share embedding table with output layer for weight tying, cf. Jurafsky and Martin 9.2.3
 
@@ -35,9 +38,11 @@ share = False
 # embed_size = 200 # previous tests done with 200
 embed_size = 300
 
+
 if share:
     proj_size = embed_size
 else:
+    # proj_size = 0 # disable projection layer
     proj_size = 150
     # proj_size = 200
     # proj_size = 250
@@ -74,6 +79,25 @@ specs = [
     dropout,
     masking_proportion,
 ]
+
+decoder_specs = {
+    "gru": {
+        "name": "gru",
+        "input_size": proj_size if proj_size > 0 else hidden_size,
+        "hidden_size": proj_size if proj_size > 0 else hidden_size,
+        "num_layers": 1,
+        "bias": True,
+        "batch_first": False,
+        "dropout": 0.0,
+        "bidirectional": False,
+        "device": device,
+    },
+    "lstm": {
+        "name": "lstm",
+        "hidden_size": proj_size if proj_size > 0 else hidden_size,
+        "num_layers": 1,
+    },
+}
 
 # learning_rate = 0.0001
 learning_rate = 0.0003
@@ -112,9 +136,6 @@ patience = 5
 # patience = 10
 
 model_path = str(Path(__file__).parent / "models")
-
-device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-print(f"torch version & device: {torch.__version__, device}")
 
 
 class DataItem:
