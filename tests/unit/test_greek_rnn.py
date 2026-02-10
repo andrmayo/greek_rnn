@@ -4,8 +4,8 @@ from unittest.mock import MagicMock
 import pytest
 import torch
 
-from rnn_code.greek_rnn import RNN, count_parameters
-from rnn_code.greek_utils import DataItem
+from greek_rnn.greek_rnn import RNN, count_parameters
+from greek_rnn.greek_utils import DataItem
 
 
 class TestRNN:

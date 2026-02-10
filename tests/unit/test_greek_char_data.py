@@ -3,7 +3,7 @@ import os
 import tempfile
 from unittest.mock import patch
 
-from rnn_code.greek_char_data import read_datafiles, write_to_json
+from greek_rnn.greek_char_data import read_datafiles, write_to_json
 
 
 class TestReadDatafiles:
@@ -246,7 +246,7 @@ class TestWriteToJson:
             mapping = {0: 0, 1: 1}
 
             # Mock the Path to use temp directory
-            with patch("rnn_code.greek_char_data.Path") as mock_path:
+            with patch("greek_rnn.greek_char_data.Path") as mock_path:
                 mock_path.return_value.absolute.return_value.parent = temp_dir
 
                 write_to_json(file_name, text_list, text_index, mapping)
@@ -273,7 +273,7 @@ class TestWriteToJson:
             text_index = [0]
             mapping = {0: 0}
 
-            with patch("rnn_code.greek_char_data.Path") as mock_path:
+            with patch("greek_rnn.greek_char_data.Path") as mock_path:
                 mock_path.return_value.absolute.return_value.parent = temp_dir
 
                 write_to_json(file_name, text_list, text_index, mapping)
@@ -290,7 +290,7 @@ class TestWriteToJson:
             text_index = [0, 1]
             mapping = {0: 0, 1: 1}
 
-            with patch("rnn_code.greek_char_data.Path") as mock_path:
+            with patch("greek_rnn.greek_char_data.Path") as mock_path:
                 mock_path.return_value.absolute.return_value.parent = temp_dir
 
                 write_to_json(file_name, text_list, text_index, mapping)

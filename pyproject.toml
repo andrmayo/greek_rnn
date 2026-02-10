@@ -54,13 +54,17 @@ dependencies = [
   "torch>=2.4.1",
   "typer>=0.21.1",
 ]
+
+[project.scripts]
+greek-rnn = "greek_rnn.main:app"
+  
 [build-system]
 requires = ["setuptools>=45", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["rnn_code*"]
+include = ["greek_rnn*"]
 exclude = [
   "tests*",
   "data*",

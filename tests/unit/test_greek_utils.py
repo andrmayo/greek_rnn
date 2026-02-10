@@ -3,7 +3,7 @@ import os
 import tempfile
 from unittest.mock import patch
 
-from rnn_code.greek_utils import (
+from greek_rnn.greek_utils import (
     DataItem,
     construct_trigram_lookup,
     filter_brackets,
@@ -153,7 +153,7 @@ class TestGetHomePath:
 class TestConstructTrigramLookup:
     @patch("builtins.open", create=True)
     @patch("json.dump")
-    @patch("rnn_code.greek_utils.tokenizer")
+    @patch("greek_rnn.greek_utils.tokenizer")
     def test_construct_trigram_lookup(self, mock_tokenizer, mock_json_dump, mock_open):
         # Mock file reading
         mock_open.return_value.__enter__.return_value.__iter__.return_value = [

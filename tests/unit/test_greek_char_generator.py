@@ -5,9 +5,9 @@ from unittest.mock import patch
 import pytest
 import torch
 
-from rnn_code.greek_char_generator import predict_chars, predict_top_k, train_model
-from rnn_code.greek_rnn import RNN
-from rnn_code.greek_utils import DataItem
+from greek_rnn.greek_char_generator import predict_chars, predict_top_k, train_model
+from greek_rnn.greek_rnn import RNN
+from greek_rnn.greek_utils import DataItem
 
 
 class TestPredict:
@@ -245,7 +245,7 @@ class TestPredictTopK:
 
                 expected_filename = (
                     Path(__file__).parent.parent.parent
-                    / "rnn_code"
+                    / "greek_rnn"
                     / "results"
                     / "top_k_20250924_123456.csv"
                 )
@@ -309,11 +309,11 @@ class TestTrainModel:
         with tempfile.TemporaryDirectory() as temp_dir:
             # Mock all the dependencies
             with (
-                patch("rnn_code.greek_char_generator.model_path", temp_dir),
-                patch("rnn_code.greek_char_generator.nEpochs", 10),
-                patch("rnn_code.greek_char_generator.patience", 3),
-                patch("rnn_code.greek_char_generator.train_batch") as mock_train_batch,
-                patch("rnn_code.greek_char_generator.wandb"),
+                patch("greek_rnn.greek_char_generator.model_path", temp_dir),
+                patch("greek_rnn.greek_char_generator.nEpochs", 10),
+                patch("greek_rnn.greek_char_generator.patience", 3),
+                patch("greek_rnn.greek_char_generator.train_batch") as mock_train_batch,
+                patch("greek_rnn.greek_char_generator.wandb"),
             ):
                 # Mock train_batch to return predictable loss values
                 # Simulate dev loss: improves for 2 epochs, then gets worse for 3 epochs (triggers early stop)
@@ -361,11 +361,11 @@ class TestTrainModel:
         """Test that best model is properly selected and restored"""
         with tempfile.TemporaryDirectory() as temp_dir:
             with (
-                patch("rnn_code.greek_char_generator.model_path", temp_dir),
-                patch("rnn_code.greek_char_generator.nEpochs", 5),
-                patch("rnn_code.greek_char_generator.patience", 10),
-                patch("rnn_code.greek_char_generator.train_batch") as mock_train_batch,
-                patch("rnn_code.greek_char_generator.wandb"),
+                patch("greek_rnn.greek_char_generator.model_path", temp_dir),
+                patch("greek_rnn.greek_char_generator.nEpochs", 5),
+                patch("greek_rnn.greek_char_generator.patience", 10),
+                patch("greek_rnn.greek_char_generator.train_batch") as mock_train_batch,
+                patch("greek_rnn.greek_char_generator.wandb"),
             ):
                 # Simulate scenario where best model is NOT the final epoch
                 # Dev losses: 1.0 -> 0.5 (best) -> 0.8 -> 0.7 -> 0.9
@@ -408,7 +408,7 @@ class TestTrainModel:
     def test_train_model_patience_import(self):
         """Test that patience parameter can be imported and used"""
         # This test ensures the import doesn't break
-        from rnn_code.greek_utils import patience
+        from greek_rnn.greek_utils import patience
 
         assert isinstance(patience, int)
         assert patience > 0
@@ -419,11 +419,11 @@ class TestTrainModel:
         """Test behavior when dev loss never improves (edge case)"""
         with tempfile.TemporaryDirectory() as temp_dir:
             with (
-                patch("rnn_code.greek_char_generator.model_path", temp_dir),
-                patch("rnn_code.greek_char_generator.nEpochs", 5),
-                patch("rnn_code.greek_char_generator.patience", 2),
-                patch("rnn_code.greek_char_generator.train_batch") as mock_train_batch,
-                patch("rnn_code.greek_char_generator.wandb"),
+                patch("greek_rnn.greek_char_generator.model_path", temp_dir),
+                patch("greek_rnn.greek_char_generator.nEpochs", 5),
+                patch("greek_rnn.greek_char_generator.patience", 2),
+                patch("greek_rnn.greek_char_generator.train_batch") as mock_train_batch,
+                patch("greek_rnn.greek_char_generator.wandb"),
             ):
                 # Simulate dev loss getting worse each epoch
                 dev_losses = [1.0, 1.5, 2.0, 2.5, 3.0]  # Always getting worse
@@ -468,13 +468,13 @@ class TestTrainModel:
 
             try:
                 with (
-                    patch("rnn_code.greek_char_generator.model_path", readonly_dir),
-                    patch("rnn_code.greek_char_generator.nEpochs", 2),
-                    patch("rnn_code.greek_char_generator.patience", 5),
+                    patch("greek_rnn.greek_char_generator.model_path", readonly_dir),
+                    patch("greek_rnn.greek_char_generator.nEpochs", 2),
+                    patch("greek_rnn.greek_char_generator.patience", 5),
                     patch(
-                        "rnn_code.greek_char_generator.train_batch"
+                        "greek_rnn.greek_char_generator.train_batch"
                     ) as mock_train_batch,
-                    patch("rnn_code.greek_char_generator.wandb"),
+                    patch("greek_rnn.greek_char_generator.wandb"),
                 ):
                     mock_train_batch.return_value = (1.0, 100, 500, 50, 25, 20)
 

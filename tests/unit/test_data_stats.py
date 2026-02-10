@@ -2,7 +2,7 @@ import os
 import tempfile
 from collections import Counter
 
-from rnn_code.data_stats import char_counts, char_histogram, gap_counts
+from greek_rnn.data_stats import char_counts, char_histogram, gap_counts
 
 
 class TestCharHistogram:

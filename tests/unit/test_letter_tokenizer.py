@@ -1,4 +1,4 @@
-from rnn_code.letter_tokenizer import LetterTokenizer
+from greek_rnn.letter_tokenizer import LetterTokenizer
 
 
 class TestLetterTokenizer:

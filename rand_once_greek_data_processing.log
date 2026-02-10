@@ -1,0 +1,58 @@
+start greek data processing -- 2026-02-03 20:50:15.325077
+Now partitioning data
+1 json file(s) found
+/home/andrew/Projects/lacuna_rnn/corpus/maat-1.0.0+beta.json
+Lines read in from json files by greek_char_data.read_datafiles: 177960
+n of training texts is 94375
+greek_char_data.read_datafiles has processed partitioned data
+train_data has 75500 entries
+dev_data has 9437 entries
+test_data has 9438 entries
+train: 75500 texts
+dev: 9437 texts
+test: 9438 texts
+full: 94375 texts
+Training model
+Train greek_rnn_no_dropout model specs: embed_size: 300, hidden_size: 300, proj_size: 150, rnn n layers: 4, share: False, dropout: 0.0
+RNN(
+  (embed): Embedding(34, 300)
+  (rnn): LSTM(300, 150, proj_size=75, num_layers=4, batch_first=True, bidirectional=True)
+  (out): Linear(in_features=150, out_features=300, bias=True)
+  (dropout): Dropout(p=0.0, inplace=False)
+)
+total parameter count = 1,405,200
+Now training LSTM
+Mask type: random - once
+Training data read in with 75500 lines
+Masking strategy is once, masking sentences...
+Masking complete
+train=75,500 23,085,826 27,415,739 1.2 dev=9,437 2,865,332 3,383,287 1.2 bs=1 lr=0.0003 [300, 300, 150, 4, False, 0.0, 0.15, 34]
+0 tr loss   0.1859   0.1566 -- dev loss   0.2932   0.2483 -- incremental_batch_size:    1 time elapsed: 7691.6
+New best dev loss: 0.293215 at epoch 0
+dev masked total: 296760, correct predictions: 58723, simple accuracy: 0.198
+1 tr loss   0.1426   0.1201 -- dev loss   1.8654   1.5798 -- incremental_batch_size:    1 time elapsed: 15384.5
+Dev loss did not improve. Patience: 1/5
+dev masked total: 296760, correct predictions: 57231, simple accuracy: 0.193
+2 tr loss   0.1252   0.1055 -- dev loss   0.3089   0.2616 -- incremental_batch_size:    2 time elapsed: 23048.3
+Dev loss did not improve. Patience: 2/5
+dev masked total: 296760, correct predictions: 71796, simple accuracy: 0.242
+3 tr loss   0.1156   0.0973 -- dev loss   0.3208   0.2717 -- incremental_batch_size:    3 time elapsed: 30703.2
+Dev loss did not improve. Patience: 3/5
+dev masked total: 296760, correct predictions: 71847, simple accuracy: 0.242
+4 tr loss   0.1091   0.0918 -- dev loss   0.3030   0.2566 -- incremental_batch_size:    4 time elapsed: 38352.3
+Dev loss did not improve. Patience: 4/5
+dev masked total: 296760, correct predictions: 71380, simple accuracy: 0.241
+5 tr loss   0.1040   0.0876 -- dev loss   0.3187   0.2699 -- incremental_batch_size:    5 time elapsed: 46000.3
+Dev loss did not improve. Patience: 5/5
+Early stopping at epoch 5. Best dev loss: 0.293215 at epoch 0
+Restored best model from epoch 0 with dev loss 0.293215
+masked total: 296760, correct predictions: 74283, simple accuracy: 0.25, mismatch: 0
+File test.json read in with 9344 texts
+65074 reconstructed lacunae read in accross 6133 texts
+Test Reconstructed:
+masked total: 293792, correct predictions: 73173, simple accuracy: 0.249, mismatch: 0
+Most Common Char Baseline; dev masked total: 293792, correct predictions: 36106, baseline accuracy: 0.123
+Random Baseline; dev masked total: 293792, correct predictions: 7203, baseline accuracy: 0.025
+Trigram Baseline; dev masked total: 293792, correct predictions: 28320, baseline accuracy: 0.096
+end generator -- 2026-02-04 09:52:40.442172
+

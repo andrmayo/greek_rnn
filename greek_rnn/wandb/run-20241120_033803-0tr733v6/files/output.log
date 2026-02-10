@@ -1,0 +1,14 @@
+2024-11-20 04:28:27,270 | INFO | train=75,500 23,047,458 27,464,101 1.2 dev=9,437 2,868,732 3,519,168 1.2 bs=1 lr=0.0003 [200, 300, 150, 4, False, 0.0, 0.15, 35]
+2024-11-20 04:28:27,270 | INFO | 0 tr loss   0.1861   0.1562 -- dev loss   0.2928   0.2387 -- incremental_batch_size:    1 time elapsed: 3022.5
+2024-11-20 04:28:27,270 | INFO | dev masked total: 293901, correct predictions: 59164, simple accuracy: 0.201
+2024-11-20 05:18:49,949 | INFO | 1 tr loss   0.1395   0.1171 -- dev loss   0.3120   0.2543 -- incremental_batch_size:    1 time elapsed: 6045.2
+2024-11-20 05:18:49,949 | INFO | early exit
+2024-11-20 05:22:36,651 | INFO | masked total: 293901, correct predictions: 53173, simple accuracy: 0.181, mismatch: 0
+2024-11-20 05:22:36,761 | INFO | File test.json read in with 9325 texts
+2024-11-20 05:22:37,743 | INFO | 64854 reconstructed lacunae read in accross 6108 texts
+2024-11-20 05:23:07,899 | INFO | Test Reconstructed:
+2024-11-20 05:26:53,607 | INFO | masked total: 293780, correct predictions: 51669, simple accuracy: 0.176, mismatch: 0
+2024-11-20 05:26:56,509 | INFO | Most Common Char Baseline; dev masked total: 293780, correct predictions: 36276, baseline accuracy: 0.123
+2024-11-20 05:26:56,509 | INFO | Random Baseline; dev masked total: 293780, correct predictions: 7002, baseline accuracy: 0.024
+2024-11-20 05:26:56,509 | INFO | Trigram Baseline; dev masked total: 293780, correct predictions: 27806, baseline accuracy: 0.095
+2024-11-20 05:26:56,509 | INFO | end generator -- 2024-11-20 05:26:56.509548

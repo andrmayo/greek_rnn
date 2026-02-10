@@ -6,4 +6,6 @@ rnn_code/wandb
 rnn_code/models/best/*
 rnn_code/models/old-weights/*
 __pycache__/
+.*cache
+*egg-info
 .venv

@@ -7,9 +7,9 @@ def test_rank_cli():
     """Test ranking options through CLI"""
     sentence = "ἄνδρες [___] γυναῖκες"
     options = ["και", "γαρ", "τον", "αιδ", "σομ", "πετ", "ιυδ"]
-    main_path = Path(__file__).parent.parent.parent / "rnn_code" / "main.py"
+    main_path = Path(__file__).parent.parent.parent / "greek_rnn" / "main.py"
     # sys.executable specifies Python interpreter
-    test_args = [sys.executable, "-m", "rnn_code.main", "rank", sentence] + options
+    test_args = [sys.executable, "-m", "greek_rnn.main", "rank", sentence] + options
 
     result = subprocess.run(test_args, capture_output=True, text=True)
     print(
