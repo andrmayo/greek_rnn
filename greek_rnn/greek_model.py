@@ -141,7 +141,7 @@ class RNN(nn.Module):
         masks: list[torch.Tensor] | None = None,
         labels: list[torch.Tensor] | None = None,
     ):
-        if self.decoder and not masks:
+        if self.decoder and masks is None:
             raise ValueError(
                 "Calling RNN object requires 'masks' argument if using a decoder"
             )
@@ -153,7 +153,7 @@ class RNN(nn.Module):
         embed = self.dropout(embed)
         # embed = self.scale_up(embed)
 
-        encoder_output, (hidden_state, cell_state) = self.rnn(embed)
+        encoder_output, _ = self.rnn(embed)
         encoder_output = self.dropout(encoder_output)
 
         if self.share:
@@ -198,7 +198,7 @@ class RNN(nn.Module):
         return text
 
     @staticmethod
-    def find_contiguous_masked_regions(mask) -> Iterator[tuple[int, int]]:
+    def find_contiguous_masked_regions(mask: torch.Tensor) -> Iterator[tuple[int, int]]:
         i = 0
         n = len(mask)
         while i < n:
@@ -219,18 +219,21 @@ class RNN(nn.Module):
     ) -> torch.Tensor:
         assert self.decoder
 
-        for batch_i in range(encoder_output.size(0)):
-            regions = RNN.find_contiguous_masked_regions(mask[batch_i])
+        for i_within_batch in range(encoder_output.size(0)):
+            regions = RNN.find_contiguous_masked_regions(mask[i_within_batch])
             for start, end in regions:
                 if end - start < 2:
                     continue
                 region_labels = (
-                    teacher_labels[batch_i][start:end]
+                    teacher_labels[i_within_batch][start:end]
                     if teacher_labels is not None
                     else None
                 )
-                logits[batch_i, start:end] = self.decoder.forward_region(
-                    encoder_output[batch_i], start, end, teacher_labels=region_labels
+                logits[i_within_batch, start:end] = self.decoder.forward_region(
+                    encoder_output[i_within_batch],
+                    start,
+                    end,
+                    teacher_labels=region_labels,
                 )
         return logits
 
@@ -446,6 +449,7 @@ class GRUDecoder(nn.Module):
         self.encoder_hidden_size = encoder.hidden_size
 
         self.specs = decoder_specs
+        self.use_teacher_labels: bool = decoder_specs["use_teacher_labels"]
 
         gru_params = {
             "input_size",

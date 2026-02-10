@@ -91,6 +91,7 @@ decoder_specs = {
         "dropout": 0.0,
         "bidirectional": False,
         "device": device,
+        "use_teacher_labels": True,
     },
     "lstm": {
         "name": "lstm",

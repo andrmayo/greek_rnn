@@ -102,10 +102,15 @@ def train_batch(
 
         index_tensor = torch.tensor(data_item.indexes, dtype=torch.int64).to(device)
         label_tensor = torch.tensor(data_item.labels, dtype=torch.int64).to(device)
-        out = model([index_tensor])  # [:-1]
-        # splice out just predicted indexes to go into loss
-        masked_idx = torch.BoolTensor(data_item.mask)
-        # loss = criterion(out[0], label_tensor.view(-1))  # [1:] old loss method
+        masked_idx = torch.BoolTensor(data_item.mask).to(device)
+
+        if model.decoder is None:
+            out = model([index_tensor])
+        else:
+            if model.decoder.use_teacher_labels:
+                out = model([index_tensor], [masked_idx], [label_tensor])
+            else:
+                out = model([index_tensor], [masked_idx])
 
         train_masked += torch.numel(masked_idx)  # to find the average loss
 
@@ -401,7 +406,11 @@ def fill_masks(
         test_data_item, masking_strategy=masking_strategy
     )
     index_tensor = torch.tensor(data_item.indexes, dtype=torch.int64).to(device)
-    sample_out = model([index_tensor])
+    if model.decoder is not None:
+        masked_idx = torch.BoolTensor(data_item.mask).to(device)
+        sample_out = model([index_tensor], [masked_idx])
+    else:
+        sample_out = model([index_tensor])
 
     target = []
     for emb in sample_out[0]:
@@ -447,7 +456,11 @@ def accuracy_evaluation(model: RNN, data: List[DataItem], data_indexes):
         data_item = data[i]
         #
         index_tensor = torch.tensor(data_item.indexes, dtype=torch.int64).to(device)
-        out = model([index_tensor])
+        if model.decoder is not None:
+            masked_idx = torch.BoolTensor(data_item.mask).to(device)
+            out = model([index_tensor], [masked_idx])
+        else:
+            out = model([index_tensor])
 
         # get target indexes
         target = []
@@ -558,7 +571,11 @@ def predict_chars(model: RNN, data_item: DataItem) -> str:
     logger.info(f"input text: {data_item.text}")
 
     index_tensor = torch.tensor(data_item.indexes, dtype=torch.int64).to(device)
-    out = model([index_tensor])
+    if model.decoder is not None:
+        masked_idx = torch.BoolTensor(data_item.mask).to(device)
+        out = model([index_tensor], [masked_idx])
+    else:
+        out = model([index_tensor])
 
     # get target indexes
     target = []
@@ -602,7 +619,11 @@ def predict_top_k(
     logger.info(f"input text: {data_item.text}")
 
     index_tensor = torch.tensor(data_item.indexes, dtype=torch.int64).to(device)
-    out = model([index_tensor])
+    if model.decoder is not None:
+        masked_idx = torch.BoolTensor(data_item.mask).to(device)
+        out = model([index_tensor], [masked_idx])
+    else:
+        out = model([index_tensor])
 
     # get target candidates
     target_candidates = []
@@ -700,7 +721,11 @@ def rank_reconstructions(
         option_probs.append([])
 
     index_tensor = torch.tensor(data_item.indexes, dtype=torch.int64).to(device)
-    out = model([index_tensor])
+    if model.decoder is not None:
+        masked_idx = torch.BoolTensor(data_item.mask).to(device)
+        out = model([index_tensor], [masked_idx])
+    else:
+        out = model([index_tensor])
 
     # get target indexes
     target = []
