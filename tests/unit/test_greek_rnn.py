@@ -223,17 +223,17 @@ class TestRNN:
                 data_item_copy, masking_strategy=masking_strategy
             )
 
-            # Find positions of '.' in the token sequence (accounting for BOT token)
+            # Find original positions of '.' before masking may have replaced other chars with '.'
             dot_index = rnn_model.token_to_index["."]
-            for i, idx in enumerate(masked_item.indexes):
-                if idx == dot_index:
-                    # '.' should never be masked
-                    assert masked_item.mask[i] is False, (
-                        f"'.' at position {i} was masked in {masking_strategy} mode"
-                    )
-                    assert masked_item.labels[i] == -100, (
-                        f"'.' at position {i} has label in {masking_strategy} mode"
-                    )
+            original_indexes = rnn_model.lookup_indexes(text)
+            dot_positions = [i for i, idx in enumerate(original_indexes) if idx == dot_index]
+            for pos in dot_positions:
+                assert masked_item.mask[pos] is False, (
+                    f"'.' at position {pos} was masked in {masking_strategy} mode"
+                )
+                assert masked_item.labels[pos] == -100, (
+                    f"'.' at position {pos} has label in {masking_strategy} mode"
+                )
 
     @pytest.mark.parametrize("masking_strategy", ["random", "smart"])
     def test_gap_marker_not_masked(self, rnn_model, masking_strategy):

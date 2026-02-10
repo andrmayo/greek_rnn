@@ -1,3 +1,4 @@
+from enum import StrEnum
 import hashlib
 import json
 import logging
@@ -28,7 +29,10 @@ from greek_rnn.greek_utils import device, model_path, seed, specs
 default_model_path = Path(model_path) / "best"
 # Note to self: the model at present seems to veer towards just predicting the most common character in the corpus
 
-sequence_decoders = ("gru", "lstm")
+
+class DecoderType(StrEnum):
+    GRU = "gru"
+    LSTM = "lstm"
 
 
 def setup_logging():
@@ -90,7 +94,6 @@ def train(
     masking_strategy: Annotated[
         Literal["random", "smart"],
         typer.Argument(
-            autocompletion=lambda x: [s for s in masking_strategies if s.startswith(x)],
             help="pass 'random' for randomly picking single characters to mask, and 'smart' for masking randomly sized sequences",
         ),
     ],
@@ -128,34 +131,27 @@ def train(
             "--learning-rate", "--lr", "-lr", help="Override default learning rate"
         ),
     ] = utils.learning_rate,
-    seq_decoder: Annotated[
-        str | None,
+    seq_decoder_type: Annotated[
+        DecoderType | None,
         typer.Option(
             "-seq",
             "--seq",
             "--sequence-decoder",
-            autocompletion=lambda x: [
-                s for s in sequence_decoders if s.startswith(x.lower())
-            ],
+            help="Pass in name of decoder, e.g. gru; if omitted, decoding is done with just the embedding matrix",
         ),
     ] = None,
 ):
-    """Train LSTM for character filling; must pass masking strategy: [random, smart]."""
+    """train lstm for character filling."""
+
+    seq_decoder = seq_decoder_type.value if seq_decoder_type else None
 
     if force_partition and use_existing_partition:
         raise typer.BadParameter(
             "Cannot use --force-partition and --use-existing together"
         )
 
-    if seq_decoder:
-        seq_decoder = seq_decoder.lower()
-        if seq_decoder not in sequence_decoders:
-            raise typer.BadParameter(
-                f"Invalid sequence decoder passed, available decoders: {sequence_decoders}"
-            )
-        cur_decoder_specs = utils.decoder_specs[seq_decoder]
-
-    # NOTE: in prior version of code, masking_strategy was called masking, and instead of boolean dynamic remask was masking_strategy as ["once", "dynamic"]
+    # this is just to pass to train_model so it can be logged in wandb
+    cur_decoder_specs = utils.decoder_specs[seq_decoder] if seq_decoder else None
 
     logger = logging.getLogger()
 
@@ -190,7 +186,7 @@ def train(
         if not isinstance(model, greek_rnn.RNN):
             raise typer.BadParameter("Path to model has invalid model architecture")
     else:
-        model = greek_rnn.RNN(specs)
+        model = greek_rnn.RNN(specs, decoder_type=seq_decoder)
         model = model.to(utils.device)
     # train_model is in greek_char_generator module
     # if mask = True, train_model() will call model.mask_and_label_characters() to remask.
@@ -219,6 +215,7 @@ def train(
         masking_strategy=masking_strategy,
         learning_rate=learning_rate,
         seed=seed,
+        seq_decoder_specs=cur_decoder_specs,
     )
     run_eval(model, logger)
     logger.info(f"Training complete -- {datetime.now()}\n")
@@ -233,7 +230,7 @@ def predict(
         ),
     ],
 ):
-    """Returns top reconstruction of Greek sentence with lacunae in format [..] with one . per missing character"""
+    """Returns top reconstruction of Greek sentence with lacunae in format [..] with one . per missing character."""
     logger = logging.getLogger()
     model = load_model(logger)
     sentence = re.sub("<gap/>", "!", sentence)
@@ -256,7 +253,7 @@ def predict_k(
         int, typer.Option("-k", "-K", "--k", help="get top k predictions for lacuna")
     ] = -1,
 ):
-    """Returns top k reconstruction of Greek sentence with lacunae in format [..] with one . per missing character"""
+    """Returns top k reconstruction of Greek sentence with lacunae in format [..] with one . per missing character."""
     if k == -1:
         k = typer.prompt(
             "Please enter an integer k for the number of predictions to return (from most to least probable)",
@@ -290,6 +287,9 @@ def rank(
         ),
     ] = None,
 ):
+    """
+    Ranks provided reconstructions for a lacuna. Pass Greek sentence with lacunae marked as [..] followed by reconstructions to rank (without spaces or diacritics).
+    """
     if options is None:
         opt_str = typer.prompt(
             "Please enter options of same length as lacuna, separated by spaces with quotation marks if needed:",
@@ -307,10 +307,29 @@ def rank(
 
 
 @app.command()
-def eval():
+def eval(
+    model_path: Annotated[
+        Path | None,
+        typer.Option(
+            exists=True,
+            dir_okay=False,
+            file_okay=True,
+            help="Path to .pth file for model to evaluate",
+        ),
+    ] = None,
+):
+    """Load best model and run eval on test set, or load specified model."""
+    if model_path and model_path.suffix != ".pth":
+        raise typer.BadParameter(
+            "If path is specified for eval, path must point to model as .pth file"
+        )
     logger = logging.getLogger()
     logger.info("Evaluating a previously trained model")
-    model = load_model(logger)
+    model = (
+        load_model(logger, spec_model_path=model_path)
+        if model_path
+        else load_model(logger)
+    )
     # actual_lacuna_mask_and_label replaces all characters within [] with '_', strips '[' and ']', and adds embedding indices to self.labels for
     # lacuna/mask characters.
     bind_data()

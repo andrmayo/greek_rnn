@@ -2,9 +2,10 @@ old_version
 notes.txt
 corpus/*
 !corpus/.gitkeep
-rnn_code/wandb
-rnn_code/models/best/*
-rnn_code/models/old-weights/*
+greek_rnn/data/*.json
+greek_rnn/wandb
+greek_rnn/models/best/*
+greek_rnn/models/old-weights/*
 __pycache__/
 .*cache
 *egg-info
