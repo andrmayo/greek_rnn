@@ -92,7 +92,7 @@ class RNN(nn.Module):
                 bidirectional=True,
                 dropout=dropout,
                 batch_first=True,
-                proj_size=proj_size // 2,
+                proj_size=proj_size // 2 if proj_size < embed_size else 0,
             )
 
         if caught_warnings:

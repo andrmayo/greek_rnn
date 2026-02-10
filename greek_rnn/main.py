@@ -13,7 +13,7 @@ import torch
 import typer
 
 import greek_rnn.greek_char_data as greek_char_data
-import greek_rnn.greek_rnn as greek_rnn
+import greek_rnn.greek_model as greek_model
 import greek_rnn.greek_utils as utils
 from greek_rnn.greek_char_generator import (
     DataItem,
@@ -137,7 +137,7 @@ def train(
             "-seq",
             "--seq",
             "--sequence-decoder",
-            help="Pass in name of decoder, e.g. gru; if omitted, decoding is done with just the embedding matrix",
+            help="Pass in name of decoder, e.g. gru; if omitted, decoding is done with linear layer.",
         ),
     ] = None,
 ):
@@ -183,10 +183,10 @@ def train(
         model = torch.load(
             preload_model_path, map_location=utils.device, weights_only=False
         )
-        if not isinstance(model, greek_rnn.RNN):
+        if not isinstance(model, greek_model.RNN):
             raise typer.BadParameter("Path to model has invalid model architecture")
     else:
-        model = greek_rnn.RNN(specs, decoder_type=seq_decoder)
+        model = greek_model.RNN(specs, decoder_type=seq_decoder)
         model = model.to(utils.device)
     # train_model is in greek_char_generator module
     # if mask = True, train_model() will call model.mask_and_label_characters() to remask.
@@ -342,9 +342,9 @@ def eval(
     run_eval(model, logger)
 
 
-def run_eval(model: greek_rnn.RNN, logger: logging.Logger):
+def run_eval(model: greek_model.RNN, logger: logging.Logger):
     logger.info(model)
-    greek_rnn.count_parameters(model)
+    greek_model.count_parameters(model)
 
     # run model on test set
     global test_data
@@ -380,7 +380,7 @@ def run_eval(model: greek_rnn.RNN, logger: logging.Logger):
     test_list = [i for i in range(len(test_data))]
     # accuracy evaluation
     logger.info("Test Reconstructed:")
-    model = cast(greek_rnn.RNN, model)
+    model = cast(greek_model.RNN, model)
     accuracy_evaluation(model, test_data, test_list)  # in greek_char_generator
     baseline_accuracy(model, test_data, test_list)  # in greek_char_generator
 
@@ -473,7 +473,7 @@ def partition(logger: logging.Logger) -> None:
 
 def load_model(
     logger: logging.Logger, spec_model_path: Path = default_model_path
-) -> greek_rnn.RNN:
+) -> greek_model.RNN:
     if spec_model_path.suffix == ".pth":
         preload_model = spec_model_path
     else:

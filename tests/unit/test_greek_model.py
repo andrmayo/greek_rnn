@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 import pytest
 import torch
 
-from greek_rnn.greek_rnn import RNN, count_parameters
+from greek_rnn.greek_model import RNN, count_parameters
 from greek_rnn.greek_utils import DataItem
 
 
@@ -226,7 +226,9 @@ class TestRNN:
             # Find original positions of '.' before masking may have replaced other chars with '.'
             dot_index = rnn_model.token_to_index["."]
             original_indexes = rnn_model.lookup_indexes(text)
-            dot_positions = [i for i, idx in enumerate(original_indexes) if idx == dot_index]
+            dot_positions = [
+                i for i, idx in enumerate(original_indexes) if idx == dot_index
+            ]
             for pos in dot_positions:
                 assert masked_item.mask[pos] is False, (
                     f"'.' at position {pos} was masked in {masking_strategy} mode"

@@ -35,7 +35,7 @@ share = False
 # embed_size = 50
 # embed_size = 100
 # embed_size = 150
-# embed_size = 200 # previous tests done with 200
+# embed_size = 200
 embed_size = 300
 
 

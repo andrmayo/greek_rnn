@@ -25,7 +25,7 @@ else:
     from torch.optim import AdamW
 
 import greek_rnn.greek_utils as utils
-from greek_rnn.greek_rnn import RNN
+from greek_rnn.greek_model import RNN
 from greek_rnn.greek_utils import (
     DataItem,
     L2_lambda,

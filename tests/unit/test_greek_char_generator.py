@@ -6,7 +6,7 @@ import pytest
 import torch
 
 from greek_rnn.greek_char_generator import predict_chars, predict_top_k, train_model
-from greek_rnn.greek_rnn import RNN
+from greek_rnn.greek_model import RNN
 from greek_rnn.greek_utils import DataItem
 
 

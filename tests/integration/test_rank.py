@@ -1,13 +1,11 @@
 import subprocess
 import sys
-from pathlib import Path
 
 
 def test_rank_cli():
     """Test ranking options through CLI"""
     sentence = "ἄνδρες [___] γυναῖκες"
     options = ["και", "γαρ", "τον", "αιδ", "σομ", "πετ", "ιυδ"]
-    main_path = Path(__file__).parent.parent.parent / "greek_rnn" / "main.py"
     # sys.executable specifies Python interpreter
     test_args = [sys.executable, "-m", "greek_rnn.main", "rank", sentence] + options
 
