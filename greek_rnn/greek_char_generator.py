@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING, Any, List, Literal, Tuple, cast
 import numpy
 import torch
 import torch.nn.functional as nnf
+import typer
 import wandb
 from torch import nn
 
@@ -258,29 +259,32 @@ def train_model(
 
         model.train()
         train_loss, train_tokens, train_chars, train_mask_count = 0, 0, 0, 0
-        for i in range(0, len(train_data), incremental_batch_size):
-            loss, num_tokens, num_characters, train_masked, _, _ = train_batch(
-                model,
-                optimizer,
-                criterion,
-                train_data,
-                train_list[i : i + incremental_batch_size],
-                masking_strategy,
-                update=True,
-                dynamic_remask=dynamic_remask,
-            )
-
-            logger.debug(f"masked total: {train_mask_count}")
-
-            train_loss += loss
-            train_tokens += num_tokens
-            train_chars += num_characters
-            train_mask_count += train_masked
-
-            if num_characters > 0:
-                logger.debug(
-                    f"{epoch:4} {i:6} {num_tokens:5} {num_characters:6} loss {loss / num_tokens:7.3f} {loss / num_characters:7.3f} -- tot tr loss: {train_loss / train_tokens:8.4f} {train_loss / train_chars:8.4f}"
+        with typer.progressbar(
+            range(0, len(train_data), incremental_batch_size), label=f"Epoch {epoch}"
+        ) as progress:
+            for i in progress:
+                loss, num_tokens, num_characters, train_masked, _, _ = train_batch(
+                    model,
+                    optimizer,
+                    criterion,
+                    train_data,
+                    train_list[i : i + incremental_batch_size],
+                    masking_strategy,
+                    update=True,
+                    dynamic_remask=dynamic_remask,
                 )
+
+                logger.debug(f"masked total: {train_mask_count}")
+
+                train_loss += loss
+                train_tokens += num_tokens
+                train_chars += num_characters
+                train_mask_count += train_masked
+
+                if num_characters > 0:
+                    logger.debug(
+                        f"{epoch:4} {i:6} {num_tokens:5} {num_characters:6} loss {loss / num_tokens:7.3f} {loss / num_characters:7.3f} -- tot tr loss: {train_loss / train_tokens:8.4f} {train_loss / train_chars:8.4f}"
+                    )
 
         model.eval()
         (
