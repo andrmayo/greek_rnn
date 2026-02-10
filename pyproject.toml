@@ -57,7 +57,7 @@ dependencies = [
 ]
 
 [project.scripts]
-greek-rnn = "greek_rnn.main:app"
+greek-rnn = "greek_rnn.main:main"
 
 [build-system]
 requires = ["setuptools>=45", "wheel"]

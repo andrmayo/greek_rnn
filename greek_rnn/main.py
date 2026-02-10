@@ -144,7 +144,7 @@ def train(
         ),
     ] = None,
 ):
-    """train lstm for character filling."""
+    """Train lstm for character filling."""
 
     seq_decoder = seq_decoder_type.value if seq_decoder_type else None
 
