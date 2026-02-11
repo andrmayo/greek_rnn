@@ -90,13 +90,18 @@ decoder_specs = {
         "batch_first": False,
         "dropout": 0.0,
         "bidirectional": False,
-        "device": device,
         "use_teacher_labels": True,
     },
     "lstm": {
         "name": "lstm",
+        "input_size": proj_size if proj_size > 0 else hidden_size,
         "hidden_size": proj_size if proj_size > 0 else hidden_size,
         "num_layers": 1,
+        "bias": True,
+        "batch_first": False,
+        "dropout": 0.0,
+        "bidirectional": False,
+        "use_teacher_labels": True,
     },
 }
 

@@ -124,9 +124,7 @@ class RNN(nn.Module):
             case "gru":
                 self.decoder = GRUDecoder(decoder_specs[cast(str, decoder_type)], self)
             case "lstm":
-                raise NotImplementedError(
-                    "unidirectional LSTM decoder not implemented yet"
-                )
+                self.decoder = LSTMDecoder(decoder_specs[cast(str, decoder_type)], self)
 
         for p in self.parameters():
             if p.dim() > 1:
@@ -171,9 +169,9 @@ class RNN(nn.Module):
                 # multi-character lacunae get overriden here
                 return self.decode_lacuna_regions(encoder_output, logits, masks, labels)
             case "lstm":
-                raise NotImplementedError(
-                    "unidirectional LSTM decoder not implemented yet"
-                )
+                assert isinstance(self.decoder, nn.Module)
+                assert masks is not None
+                return self.decode_lacuna_regions(encoder_output, logits, masks, labels)
             case _:
                 raise ValueError(
                     f"invalid decoder requested; decoder should be None or one of {list(decoder_specs.keys())}"
@@ -459,7 +457,6 @@ class GRUDecoder(nn.Module):
             "batch_first",
             "dropout",
             "bidirectional",
-            "device",
         }
 
         self.gru = torch.nn.GRU(
@@ -556,6 +553,139 @@ class GRUDecoder(nn.Module):
         h0 = torch.tanh(self.encoder_projection(boundary_repr))
 
         return h0.unsqueeze(0).unsqueeze(0)
+
+
+class LSTMDecoder(nn.Module):
+    """
+    Unidirectional LSTM decoder for use with LSTM encoder.
+    Note that forward() is not implemented: this class is
+    embedded in RNN above, which calls forward_region() below
+    in the decode_lacuna_regions() method.
+    """
+
+    def __init__(self, decoder_specs: dict[str, Any], encoder: RNN):
+        super().__init__()
+
+        self.num_tokens = encoder.num_tokens
+        self.encoder_specs = encoder.specs
+        self.embed = encoder.embed
+        self.embed_size = encoder.embed_size
+        self.encoder_proj_size = encoder.proj_size
+        self.encoder_hidden_size = encoder.hidden_size
+
+        self.specs = decoder_specs
+        self.use_teacher_labels: bool = decoder_specs["use_teacher_labels"]
+
+        lstm_params = {
+            "input_size",
+            "hidden_size",
+            "num_layers",
+            "bias",
+            "batch_first",
+            "dropout",
+            "bidirectional",
+        }
+
+        self.lstm = torch.nn.LSTM(
+            **{k: v for k, v in decoder_specs.items() if k in lstm_params}
+        )
+
+        # marks beginning of masked region / lacuna
+        self.start_embedding = nn.Parameter(torch.randn(self.embed_size))
+
+        hidden_size = self.specs["hidden_size"]
+
+        # NOTE: we have a linear layer from encoder outputs to decoder inputs
+        # even where projection isn't necessary, because dimensions already match
+        if self.encoder_proj_size > 0:
+            self.encoder_projection = nn.Linear(self.encoder_proj_size, hidden_size)
+        else:
+            self.encoder_projection = nn.Linear(self.encoder_hidden_size, hidden_size)
+
+        # projection layer that projects concatenated [biLSTM_context, prev_token_embedding]
+        # to the decoder hidden_size
+        encoder_output_size = (
+            self.encoder_proj_size
+            if self.encoder_proj_size > 0
+            else self.encoder_hidden_size
+        )
+        self.input_projection = nn.Linear(
+            encoder_output_size + self.embed_size, hidden_size
+        )
+
+        # this is the projection layer before using embeddings to score all tokens
+        if self.specs["hidden_size"] != self.embed_size:
+            self.output_projection = torch.nn.Linear(
+                self.specs["hidden_size"], self.embed_size
+            )
+        else:
+            self.output_projection = None
+
+        # NOTE: parameters with > 1 dimensions will get initialized in encoder
+
+    def forward_region(
+        self,
+        encoder_output: torch.Tensor,
+        start: int,
+        end: int,
+        teacher_labels=None,
+    ):
+        h = self.compute_init_hidden(encoder_output, start, end)
+        prev_embed = self.start_embedding
+        all_logits = []
+        for t in range(end - start):
+            pos = start + t
+            context = encoder_output[pos]
+
+            decoder_input = self.input_projection(
+                torch.cat([context, prev_embed], dim=-1)
+            )
+            decoder_input = torch.relu(decoder_input)
+            lstm_out, h = self.lstm(decoder_input.unsqueeze(0).unsqueeze(0), h)
+
+            # Project to logits
+            out = lstm_out.squeeze(0).squeeze(0)
+            if self.output_projection:
+                out = self.output_projection(out)
+            logits = torch.matmul(out, torch.t(self.embed.weight))
+            all_logits.append(logits)
+
+            if teacher_labels is not None:
+                prev_embed = self.embed(teacher_labels[t])
+            else:
+                prev_embed = self.embed(logits.argmax(dim=-1))
+
+        return torch.stack(all_logits, dim=0)  # (region_length, num_tokens)
+
+    def compute_init_hidden(self, encoder_output: torch.Tensor, start: int, end: int):
+        seq_len = encoder_output.size(0)
+        boundaries = []
+        if start > 0:
+            boundaries.append(encoder_output[start - 1])
+        if end < seq_len:
+            boundaries.append(encoder_output[end])
+
+        if not boundaries:
+            boundary_repr = torch.zeros(
+                self.encoder_proj_size
+                if self.encoder_proj_size > 0
+                else self.encoder_hidden_size,
+                device=encoder_output.device,
+            )
+        elif len(boundaries) == 1:
+            boundary_repr = boundaries[0]
+        else:
+            boundary_repr = (boundaries[0] + boundaries[1]) / 2.0
+
+        # For LSTM we want an initial hidden state and initial cell state
+
+        h0 = torch.tanh(self.encoder_projection(boundary_repr))
+        h0 = h0.unsqueeze(0).unsqueeze(0)
+        # the cell state stores information from the decoded sequence itself,
+        # hence intialized to zeros
+        c0 = torch.zeros_like(h0)
+
+        return h0, c0
 
 
 def count_parameters(model: nn.Module):
