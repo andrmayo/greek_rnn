@@ -10,3 +10,5 @@ __pycache__/
 .*cache
 *egg-info
 .venv
+log/*
+!log/.gitkeep
