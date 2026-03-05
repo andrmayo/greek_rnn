@@ -12,3 +12,5 @@ __pycache__/
 .venv
 log/*
 !log/.gitkeep
+greek_rnn/log/*
+!greek_rnn/log/.gitkeep
