@@ -27,7 +27,6 @@ from greek_rnn.greek_char_generator import (
 from greek_rnn.greek_utils import device, model_path, seed, specs
 
 default_model_path = Path(model_path) / "best"
-# Note to self: the model at present seems to veer towards just predicting the most common character in the corpus
 
 
 class DecoderType(StrEnum):
