@@ -704,12 +704,10 @@ def rank_reconstructions(
     # filter diacritics
     sentence = utils.filter_diacritics(sentence)
     data_item = DataItem(sentence)
-    print(data_item.text)
     data_item = model.actual_lacuna_mask_and_label(data_item)
     char_indexes = [
         ind for ind, ele in enumerate(cast(str, data_item.text)) if ele == "_"
     ]
-    print(data_item.text)
     # adjust char indexes for padding of data item
     char_indexes = [x + 2 for x in char_indexes]
     option_indexes = []
