@@ -9,8 +9,11 @@ greek_rnn/models/old-weights/*
 __pycache__/
 .*cache
 *egg-info
+.env
 .venv
 log/*
 !log/.gitkeep
 greek_rnn/log/*
 !greek_rnn/log/.gitkeep
+served_models/**/*.pth
+
