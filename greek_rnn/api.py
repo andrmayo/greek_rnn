@@ -8,7 +8,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from starlette.middleware.sessions import SessionMiddleware
 
-import greek_utils as utils
+import greek_rnn.greek_utils as utils
 from greek_rnn.api_config import DEFAULT_MODEL_NAME, DEFAULT_MODEL_PATH
 from greek_rnn.main import setup_logging
 from greek_rnn.routes import router
@@ -24,10 +24,10 @@ if not secret_key:
 
 # use FastAPI lifespan context manager to load language model
 @asynccontextmanager
-async def model_lifespan(app: FastAPI) -> AsyncGenerator[None]:
+async def model_lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     setup_logging()
     default_model = torch.load(
-        DEFAULT_MODEL_PATH, location=utils.device, weights_only=False
+        DEFAULT_MODEL_PATH, map_location=utils.device, weights_only=False
     )
     app.state.model_cache = {DEFAULT_MODEL_NAME: default_model}
     app.state.default_model_name = DEFAULT_MODEL_NAME
