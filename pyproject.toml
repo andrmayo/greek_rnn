@@ -61,11 +61,11 @@ greek-rnn = "greek_rnn.main:main"
 
 [project.optional-dependencies]
 api = [
-    "fastapi>=0.136.1",
-    "itsdangerous>=2.2.0",
-    "pydantic>=2.11.10",
-    "starlette>=1.0.0",
-    "uvicorn[standard]>=0.46.0",
+  "fastapi>=0.136.1",
+  "itsdangerous>=2.2.0",
+  "pydantic>=2.11.10",
+  "starlette>=1.0.0",
+  "uvicorn[standard]>=0.46.0",
 ]
 
 [build-system]
@@ -83,6 +83,9 @@ exclude = [
   "wandb*",
   "strat_experiments*",
 ]
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
 
 
 [dependency-groups]
