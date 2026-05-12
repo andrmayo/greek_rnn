@@ -19,7 +19,7 @@ class PredictKRequest(BaseModel):
 
 class PredictKResponse(BaseModel):
     sentences: list[str]
-    lacuna_masks: list[list[bool]]
+    lacuna_mask: list[bool]
 
 
 class RankRequest(BaseModel):

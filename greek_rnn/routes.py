@@ -77,7 +77,7 @@ async def change_model(model_name: str, req: Request):
     if model_name not in req.app.state.model_cache:
         req.app.state.model_cache[model_name] = torch.load(
             max(model_dir.glob("*.pth"), key=lambda f: f.stat().st_mtime),
-            location=utils.device,
+            map_location=utils.device,
             weights_only=False,
         )
     req.session["model_name"] = model_name
