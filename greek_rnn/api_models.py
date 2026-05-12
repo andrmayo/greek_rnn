@@ -3,27 +3,27 @@ from pydantic import BaseModel, Field
 
 
 class PredictRequest(BaseModel):
-    # sentence with lacuna to fill marked as [..] with one . per missing character
-    sentence: str
+    # text with lacuna to fill marked as [..] with one . per missing character
+    text: str
 
 
 class PredictResponse(BaseModel):
-    sentence: str
+    text: str
     lacuna_mask: list[bool]
 
 
 class PredictKRequest(BaseModel):
-    sentence: str
+    text: str
     k: Annotated[int, Field(gt=0)]
 
 
 class PredictKResponse(BaseModel):
-    sentences: list[str]
+    texts: list[str]
     lacuna_mask: list[bool]
 
 
 class RankRequest(BaseModel):
-    sentence: str
+    text: str
     options: list[str]
 
 

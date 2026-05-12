@@ -1,7 +1,10 @@
+import json
 import logging
 import re
+from typing import AsyncGenerator, cast
+from fastapi.responses import StreamingResponse
 import torch
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, File, HTTPException, Request, UploadFile
 
 import greek_rnn.greek_utils as utils
 from greek_rnn.api_config import SERVED_MODELS_DIR
@@ -30,45 +33,78 @@ def get_model(req: Request):
 
 
 @router.post("/predict/")
-async def predict(body: PredictRequest, req: Request):
-    """Generates top reconstruction of Greek sentence with lacunae in format [..] with one . per missing character."""
+async def predict(body: PredictRequest, req: Request) -> PredictResponse:
+    """Generates top reconstruction of Greek text with lacunae in format [..] with one . per missing character."""
     model = get_model(req)
-    sentence = body.sentence
-    sentence = re.sub("<gap/>", "!", sentence)
+    text = body.text
+    text = re.sub("<gap/>", "!", text)
     pattern = re.compile(r"\[.*?\]")
-    sentence = pattern.sub(lambda x: x.group().replace(" ", ""), sentence)
-    instance = DataItem(text=sentence)
+    text = pattern.sub(lambda x: x.group().replace(" ", ""), text)
+    instance = DataItem(text=text)
     data_item = model.actual_lacuna_mask_and_label(instance)
     return PredictResponse(
-        sentence=predict_chars(model, data_item), lacuna_mask=data_item.mask[1:-1]
+        text=predict_chars(model, data_item), lacuna_mask=data_item.mask[1:-1]
     )
 
 
 @router.post("/rank/")
-async def rank(body: RankRequest, req: Request):
+async def rank(body: RankRequest, req: Request) -> RankResponse:
     """
-    Ranks provided reconstructions for a lacuna. Expects sentence field with Greek sentence with lacunae marked as [..], and options field as a list of reconstructions to rank (without spaces or diacritics).
+    Ranks provided reconstructions for a lacuna. Expects text field with Greek text with lacunae marked as [..], and options field as a list of reconstructions to rank (without spaces or diacritics).
     """
-    sentence, options = body.sentence, body.options
+    text, options = body.text, body.options
 
     model = get_model(req)
-    return RankResponse(ranked=rank_reconstructions(model, sentence, options))
+    return RankResponse(ranked=rank_reconstructions(model, text, options))
 
 
 @router.post("/predict-k/")
-async def predict_k(body: PredictKRequest, req: Request):
-    """Returns top k reconstruction of Greek sentence with lacunae in format [..] with one . per missing character."""
-    sentence, k = body.sentence, body.k
-    sentence = re.sub("<gap/>", "!", sentence)
+async def predict_k(body: PredictKRequest, req: Request) -> PredictKResponse:
+    """Returns top k reconstruction of Greek text with lacunae in format [..] with one . per missing character."""
+    text, k = body.text, body.k
+    text = re.sub("<gap/>", "!", text)
     pattern = re.compile(r"\[.*?\]")
-    sentence = pattern.sub(lambda x: x.group().replace(" ", ""), sentence)
+    text = pattern.sub(lambda x: x.group().replace(" ", ""), text)
 
     model = get_model(req)
 
-    instance = DataItem(text=sentence)
+    instance = DataItem(text=text)
     data_item = model.actual_lacuna_mask_and_label(instance)
-    sentences = predict_top_k(model, data_item, k)
-    return PredictKResponse(sentences=sentences, lacuna_mask=data_item.mask[1:-1])
+    texts = predict_top_k(model, data_item, k)
+    return PredictKResponse(texts=texts, lacuna_mask=data_item.mask[1:-1])
+
+
+@router.post("/predict-file/")
+async def predict_file(
+    req: Request,
+    file: UploadFile = File(
+        ...,
+        description="Either JSON file with format {'text': ['αβγ[...]', 'αβγ[...]']}, or JSONL file with format {'text': 'αβγ[...]'} for each text",
+    ),
+) -> StreamingResponse:
+    if not (file.filename and file.filename.endswith((".json", ".jsonl"))):
+        raise HTTPException(status_code=422, detail="File must be .json or .jsonl")
+
+    contents = await file.read()
+    texts = (
+        [
+            json.loads(line.strip())["text"]
+            for line in contents.decode("utf-8").splitlines()
+            if line.strip()
+        ]
+        if cast(str, file.filename).endswith("jsonl")
+        else json.loads(contents.strip())["text"]
+    )
+    model = get_model(req)
+
+    async def generate() -> AsyncGenerator[str, None]:
+        for text in texts:
+            instance = DataItem(text=text)
+            data_item = model.actual_lacuna_mask_and_label(instance)
+            result = predict_chars(model, data_item)
+            yield json.dumps({"text": text, "reconstruction": result}) + "\n"
+
+    return StreamingResponse(generate(), media_type="application/x-ndjson")
 
 
 @router.patch("/change_model/{model_name}")
