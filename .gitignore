@@ -4,6 +4,7 @@ corpus/*
 !corpus/.gitkeep
 greek_rnn/data/*.json
 greek_rnn/wandb
+greek_rnn/models/*.pth
 greek_rnn/models/best/*
 greek_rnn/models/old-weights/*
 __pycache__/
@@ -16,4 +17,5 @@ log/*
 greek_rnn/log/*
 !greek_rnn/log/.gitkeep
 served_models/**/*.pth
-
+wandb/
+scripts/logs/
