@@ -612,7 +612,7 @@ def predict_top_k(
     k: int = 10,
     save_to_file: bool = True,
     output_file: str | os.PathLike | None = None,
-):
+) -> list[str]:
     if data_item.mask is None:
         raise ValueError("DataItem passed to predict_top_k has uninitialized mask")
     # beam search
