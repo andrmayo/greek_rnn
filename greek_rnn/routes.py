@@ -107,7 +107,7 @@ async def predict_file(
     return StreamingResponse(generate(), media_type="application/x-ndjson")
 
 
-@router.patch("/change_model/{model_name}")
+@router.patch("/change-model/{model_name}")
 async def change_model(model_name: str, req: Request):
     model_dir = SERVED_MODELS_DIR / model_name
     if model_name not in req.app.state.model_cache:

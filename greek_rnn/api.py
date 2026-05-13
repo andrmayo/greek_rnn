@@ -37,4 +37,4 @@ async def model_lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
 app = FastAPI(lifespan=model_lifespan)
 app.add_middleware(SessionMiddleware, secret_key=secret_key)
-app.include_router(router)
+app.include_router(router, prefix="/api")
