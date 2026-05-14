@@ -19,7 +19,7 @@ function Header() {
   return (
     <header className="h-[65px] bg-[#343a40] flex items-center px-6 shrink-0">
       <span className="font-['Noto_Serif'] text-white text-xl italic">
-        Lacuna RNN
+        Greek Lacuna Reconstruction
       </span>
     </header>
   );
