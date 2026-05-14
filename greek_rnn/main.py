@@ -1,4 +1,3 @@
-from enum import StrEnum
 import hashlib
 import json
 import logging
@@ -6,6 +5,7 @@ import os
 import re
 import sys
 from datetime import datetime
+from enum import StrEnum
 from pathlib import Path
 from typing import Annotated, Literal, cast
 
