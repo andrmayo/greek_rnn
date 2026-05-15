@@ -1,7 +1,7 @@
 .PHONY: run-dev setup run-dev-backend run-dev-frontend fmt
 
 run-dev: setup
-	uvicorn greek_rnn.api:app --reload --host 127.0.0.1 --port 8000 & \
+	uv run uvicorn greek_rnn.api:app --reload --host 127.0.0.1 --port 8000 & \
 	npm run dev --prefix frontend & \
 	wait
 
