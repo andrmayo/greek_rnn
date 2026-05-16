@@ -64,6 +64,19 @@ export async function* predictFile(file: File): AsyncGenerator<FileResultItem> {
   }
 }
 
+export async function getModels(): Promise<string[]> {
+  const res = await fetch(`${API_BASE}/models/`);
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+export async function getDefaultModel(): Promise<string> {
+  const res = await fetch(`${API_BASE}/default-model/`);
+  if (!res.ok) throw new Error(await res.text());
+  const data = await res.json();
+  return data.model;
+}
+
 export async function changeModel(modelName: string): Promise<void> {
   const res = await fetch(`${API_BASE}/change-model/${modelName}`, {
     method: "PATCH",

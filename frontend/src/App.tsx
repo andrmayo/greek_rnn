@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { ModelSelector } from "./components/ModelSelector";
 import { PredictForm } from "./components/PredictForm";
 import { PredictKForm } from "./components/PredictKForm";
 import { RankForm } from "./components/RankForm";
@@ -105,7 +106,7 @@ function App() {
         <Sidebar side="left">
           <Widget title="Model">
             <p className="p-2 text-sm text-[var(--color-text-secondary)]">
-              Model selector coming soon
+              <ModelSelector />
             </p>
           </Widget>
         </Sidebar>

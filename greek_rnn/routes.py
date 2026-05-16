@@ -107,6 +107,20 @@ async def predict_file(
     return StreamingResponse(generate(), media_type="application/x-ndjson")
 
 
+@router.get("/default-model/")
+async def get_default_model(req: Request):
+    return {"model": req.app.state.default_model_name}
+
+
+@router.get("/models/")
+async def get_models() -> list[str]:
+    return [
+        p.name
+        for p in SERVED_MODELS_DIR.iterdir()
+        if p.is_dir() and list(p.glob("*.pth"))
+    ]
+
+
 @router.patch("/change-model/{model_name}")
 async def change_model(model_name: str, req: Request):
     model_dir = SERVED_MODELS_DIR / model_name
