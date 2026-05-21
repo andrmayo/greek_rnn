@@ -7,6 +7,7 @@ run-dev: setup
 
 setup:
 	uv sync --extra api
+	npm install --prefix frontend
 
 run-dev-backend:
 	uvicorn greek_rnn.api:app --reload --host 127.0.0.1 --port 8000 
