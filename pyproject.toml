@@ -85,6 +85,13 @@ exclude = [
   "strat_experiments*",
 ]
 
+[tool.ruff]
+line-length = 88
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "tab"
+
 [tool.ruff.lint]
 select = ["E", "F", "I"]
 
