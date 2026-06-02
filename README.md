@@ -7,13 +7,25 @@ papyrus texts. A core hypothesis here is that the strong sequential and recency
 biases of LSTMs is, in fact, a good thing for working with a small datasets like
 the Greek papyri.
 
-NB: the approach taken here is to evaluate the final model against scholarly
-reconstructions, rather than against random mask filling. This has the advantage
-of being less variable: whole texts include both
+The best results so far have been from an encoder-decoder RNN architecture with
+an LSTM encoder and GRU decoder.
 
-## TODO
+NB: the approach taken here is to look at two methods of evaluating the final
+model:
 
-- ensure that during training lacuna markers don't get masked and filled
+1. against scholarly reconstructions
+2. against random masks
+
+Evaluating against random masks is a more straightforward metric, since the
+ground truth is really the ground truth. Evaluating against scholarly
+reconstructions, however, is preferable for comparing different models, since
+different models are trained using different masking strategies and so
+evaluating against scholarly reconstructions is a good neutral ground (since it
+won't replicate the masking strategy of any particular model). It's also a
+better representation of the distribution of lacunae lengths that scholars
+actually try to reconstruct. (With the caveat that model performance is greatly
+understated by comparing against scholarly reconstructions, which should tend to
+be an unbiased but high variance approximation of the original text.)
 
 ## Data
 
@@ -42,10 +54,10 @@ The corpus contains texts with three types of lacunae markers:
 - `.`: Single missing characters without reconstruction
 - `<gap/>`: Variable-length lacunae without reconstruction
 
-During data partitioning (`--force-partition` flag), all texts are randomly split into
-train (80%), dev (10%), and test (10%) sets. Importantly, **all texts are
-included regardless of whether they contain lacunae or reconstructions** - there
-is no filtering by lacuna density.
+During data partitioning (`--force-partition` flag), all texts are randomly
+split into train (80%), dev (10%), and test (10%) sets. Importantly, **all texts
+are included regardless of whether they contain lacunae or reconstructions** -
+there is no filtering by lacuna density.
 
 ### Training Phase
 
@@ -201,6 +213,7 @@ Where `masking_strategy` is `random` (randomly mask single characters) or
 `smart` (mask randomly sized sequences).
 
 Options:
+
 - `--dynamic-remask` / `-d`: Remask texts each epoch (default: mask once)
 - `--force-partition` / `-f`: Force repartitioning of data
 - `--use-existing`: Use existing data partitions without checking for changes
@@ -240,5 +253,5 @@ this doesn't work with lacunae of unspecified length.
 python -m greek_rnn.main eval
 ```
 
-Evaluates a previously trained model from `greek_rnn/models/best/` against
-the test partition.
+Evaluates a previously trained model from `greek_rnn/models/best/` against the
+test partition.
