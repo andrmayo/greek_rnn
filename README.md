@@ -214,9 +214,13 @@ Where `masking_strategy` is `random` (randomly mask single characters) or
 
 Options:
 
-- `--dynamic-remask` / `-d`: Remask texts each epoch (default: mask once)
+- `--dynamic-remask` / `-d`: Remask texts each epoch (recommended)
 - `--force-partition` / `-f`: Force repartitioning of data
 - `--use-existing`: Use existing data partitions without checking for changes
+- `--preload-model-path`: Path to model if using pre-trained model
+- `--learning-rate`: Override default learning rate
+- `--seq-decoder-type`: Pass in name of decoder, e.g. 'gru' or 'lstm', if
+  omitted, decoding is done with a linear layer
 
 By default, data is automatically repartitioned if source data changes are
 detected.
