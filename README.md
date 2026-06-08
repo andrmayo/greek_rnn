@@ -221,6 +221,10 @@ Options:
 - `--learning-rate`: Override default learning rate
 - `--seq-decoder-type`: Pass in name of decoder, e.g. 'gru' or 'lstm', if
   omitted, decoding is done with a linear layer
+- `--save-dir` / `-sd`: Directory to save models to, default to
+  `/greek_rnn/models`
+- `--model-name` / `-mn`: Base file name for saving model, to which '\_best.pth'
+  and '\_latest.pth' will be appended, default to 'greek_rnn_model'
 
 By default, data is automatically repartitioned if source data changes are
 detected.

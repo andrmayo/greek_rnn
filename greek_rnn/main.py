@@ -204,6 +204,7 @@ def train(
 
     logger.info(f"Training model -- {datetime.now()}")
     model_name = model_name or default_model_name
+    save_dir = save_dir or default_model_path
 
     logger.info(
         f"Train {model_name} model specs: embed_size: {specs[0]}, "
@@ -253,6 +254,7 @@ def train(
         learning_rate=learning_rate,
         seed=seed,
         seq_decoder_specs=cur_decoder_specs,
+        save_dir=save_dir,
     )
     run_eval(model, logger)
     logger.info(f"Training complete -- {datetime.now()}\n")

@@ -15,8 +15,9 @@ import numpy
 import torch
 import torch.nn.functional as nnf
 import typer
-import wandb
 from torch import nn
+
+import wandb
 
 if TYPE_CHECKING:
     from torch.optim.adamw import AdamW
@@ -169,9 +170,11 @@ def train_model(
     output_name: str = "greek_lacuna",
     seq_decoder_specs: dict[str, Any] | None = None,
     seed=None,
+    save_dir: Path | str | None = None,
 ):
     if seed is not None:
         random.seed(seed)
+    save_dir = save_dir or model_path
     # start a new wandb run to track this script
     wandb.init(
         project="greek_rnn",
@@ -363,8 +366,8 @@ def train_model(
             patience_counter = 0
             logger.info(f"New best dev loss: {dev_loss:.6f} at epoch {epoch}")
             # Save best model
-            Path(model_path).mkdir(parents=True, exist_ok=True)
-            torch.save(model, f"{model_path}/{output_name}_best.pth")
+            Path(save_dir).mkdir(parents=True, exist_ok=True)
+            torch.save(model, f"{save_dir}/{output_name}_best.pth")
         else:
             patience_counter += 1
             logger.info(
@@ -385,8 +388,8 @@ def train_model(
         )
 
         # Save current model (for debugging/backup)
-        Path(model_path).mkdir(parents=True, exist_ok=True)
-        torch.save(model, f"{model_path}/{output_name}_latest.pth")
+        Path(save_dir).mkdir(parents=True, exist_ok=True)
+        torch.save(model, f"{save_dir}/{output_name}_latest.pth")
 
         # sample_masked = 0
         # sample_correct = 0
@@ -407,8 +410,8 @@ def train_model(
             f"with dev loss {best_dev_loss:.6f}"
         )
         # Save final best model
-        Path(model_path).mkdir(parents=True, exist_ok=True)
-        torch.save(model, f"{model_path}/{output_name}.pth")
+        Path(save_dir).mkdir(parents=True, exist_ok=True)
+        torch.save(model, f"{save_dir}/{output_name}.pth")
     else:
         logger.warning("No best model state found - using final epoch model")
 
