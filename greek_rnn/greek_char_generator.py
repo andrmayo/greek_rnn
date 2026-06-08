@@ -384,7 +384,7 @@ def train_model(
 
         logger.info(
             f"dev masked total: {dev_masked}, correct predictions: {dev_correct}, "
-            "simple accuracy: {round(dev_correct / dev_masked, 3)}"
+            f"simple accuracy: {round(dev_correct / dev_masked, 3)}"
         )
 
         # Save current model (for debugging/backup)
