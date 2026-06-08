@@ -16,26 +16,26 @@ from greek_rnn.routes import router
 # get environment variables
 secret_key = os.environ.get("SESSION_SECRET_KEY")
 if not secret_key:
-	secret_key = secrets.token_hex(32)
-	warnings.warn(
-		"""
+    secret_key = secrets.token_hex(32)
+    warnings.warn(
+        """
         SESSION_SECRET_KEY not set, using a random key.prefix.
         Sessions will not persist across restarts.
         """
-	)
+    )
 
 
 # use FastAPI lifespan context manager to load language model
 @asynccontextmanager
 async def model_lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
-	setup_logging()
-	default_model = torch.load(
-		DEFAULT_MODEL_PATH, map_location=utils.device, weights_only=False
-	)
-	app.state.model_cache = {DEFAULT_MODEL_NAME: default_model}
-	app.state.default_model_name = DEFAULT_MODEL_NAME
-	yield
-	# cleanup
+    setup_logging()
+    default_model = torch.load(
+        DEFAULT_MODEL_PATH, map_location=utils.device, weights_only=False
+    )
+    app.state.model_cache = {DEFAULT_MODEL_NAME: default_model}
+    app.state.default_model_name = DEFAULT_MODEL_NAME
+    yield
+    # cleanup
 
 
 app = FastAPI(lifespan=model_lifespan)

@@ -90,7 +90,7 @@ line-length = 88
 
 [tool.ruff.format]
 quote-style = "double"
-indent-style = "tab"
+indent-style = "space"
 
 [tool.ruff.lint]
 select = ["E", "F", "I"]
