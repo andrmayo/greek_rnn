@@ -5,7 +5,11 @@ import { predict } from "../api";
 import type { PredictResponse } from "../api";
 import { ReconstructionDisplay } from "./ReconstructionDisplay";
 
-export function PredictForm() {
+export function PredictForm({
+  onResult,
+}: {
+  onResult?: (input: string, result: PredictResponse) => void;
+}) {
   const [text, setText] = useState("");
   const [result, setResult] = useState<PredictResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -17,7 +21,9 @@ export function PredictForm() {
     setResult(null);
     setLoading(true);
     try {
-      setResult(await predict(text));
+      const data = await predict(text);
+      setResult(data);
+      onResult?.(text, data);
     } catch (err) {
       setError(String(err));
     } finally {

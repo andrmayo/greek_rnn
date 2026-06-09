@@ -5,7 +5,11 @@ import type { PredictKResponse } from "../api";
 import { predictK } from "../api";
 import { ReconstructionDisplay } from "./ReconstructionDisplay";
 
-export function PredictKForm() {
+export function PredictKForm({
+  onResult,
+}: {
+  onResult?: (input: string, k: number, result: PredictKResponse) => void;
+}) {
   const [text, setText] = useState("");
   const [k, setK] = useState(5);
   const [result, setResult] = useState<PredictKResponse | null>(null);
@@ -18,7 +22,9 @@ export function PredictKForm() {
     setResult(null);
     setLoading(true);
     try {
-      setResult(await predictK(text, k));
+      const data = await predictK(text, k);
+      setResult(data);
+      onResult?.(text, k, data);
     } catch (err) {
       setError(String(err));
     } finally {

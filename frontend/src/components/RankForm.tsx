@@ -4,7 +4,11 @@ import { useState } from "react";
 import type { RankResponse } from "../api";
 import { rank } from "../api";
 
-export function RankForm() {
+export function RankForm({
+  onResult,
+}: {
+  onResult?: (input: string, result: RankResponse) => void;
+}) {
   const [text, setText] = useState("");
   const [options, setOptions] = useState<string[]>([""]);
   const [simpleOptions, setSimpleOptions] = useState("");
@@ -25,7 +29,9 @@ export function RankForm() {
     setResult(null);
     setLoading(true);
     try {
-      setResult(await rank(text, getOptions()));
+      const data = await rank(text, getOptions());
+      setResult(data);
+      onResult?.(text, data);
     } catch (err) {
       setError(String(err));
     } finally {

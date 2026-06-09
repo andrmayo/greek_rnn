@@ -1,11 +1,14 @@
 import { useState } from "react";
 
+import type { HistoryEntry, HistoryEntryData } from "./types";
+import type { PredictResponse, PredictKResponse, RankResponse } from "./api";
 import { ModelSelector } from "./components/ModelSelector";
 import { PredictForm } from "./components/PredictForm";
 import { PredictKForm } from "./components/PredictKForm";
 import { RankForm } from "./components/RankForm";
 import { FileUploadForm } from "./components/FileUploadForm";
 import { Widget } from "./components/Widget";
+import { HistoryWidget } from "./components/HistoryWidget";
 
 type Tab = "predict" | "predict-k" | "rank" | "batch";
 
@@ -83,15 +86,23 @@ function TabBar({
   );
 }
 
-function ContentBody() {
+function ContentBody({
+  onPredict,
+  onPredictK,
+  onRank,
+}: {
+  onPredict: (input: string, result: PredictResponse) => void;
+  onPredictK: (input: string, k: number, result: PredictKResponse) => void;
+  onRank: (input: string, result: RankResponse) => void;
+}) {
   const [activeTab, setActiveTab] = useState<Tab>("predict");
   return (
     <section className="flex-1 overflow-y-auto bg-white flex flex-col">
       <TabBar active={activeTab} onChange={setActiveTab} />
       <div className="p-6">
-        {activeTab === "predict" && <PredictForm />}
-        {activeTab === "predict-k" && <PredictKForm />}
-        {activeTab === "rank" && <RankForm />}
+        {activeTab === "predict" && <PredictForm onResult={onPredict} />}
+        {activeTab === "predict-k" && <PredictKForm onResult={onPredictK} />}
+        {activeTab === "rank" && <RankForm onResult={onRank} />}
         {activeTab === "batch" && <FileUploadForm />}
       </div>
     </section>
@@ -99,6 +110,12 @@ function ContentBody() {
 }
 
 function App() {
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
+
+  function addEntry(entry: HistoryEntryData) {
+    setHistory((prev) => [{ ...entry, id: Date.now() }, ...prev]);
+  }
+
   return (
     <div className="flex flex-col h-screen">
       <Header />
@@ -110,12 +127,18 @@ function App() {
             </p>
           </Widget>
         </Sidebar>
-        <ContentBody />
+        <ContentBody
+          onPredict={(input, result) =>
+            addEntry({ type: "predict", input, result })
+          }
+          onPredictK={(input, k, result) =>
+            addEntry({ type: "predict-k", input, k, result })
+          }
+          onRank={(input, result) => addEntry({ type: "rank", input, result })}
+        />
         <Sidebar side="right">
           <Widget title="History">
-            <p className="p-2 text-sm text-[var(--color-text-secondary)]">
-              Results history coming soon
-            </p>
+            <HistoryWidget history={history} />
           </Widget>
         </Sidebar>
       </div>
