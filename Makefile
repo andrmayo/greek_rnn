@@ -20,5 +20,6 @@ fmt:
 	uv run ruff check --fix greek_rnn
 
 gen-docker-reqs:
-	@ uv export --no-dev --all-extras --no-hashes | grep -v torch | grep -v nvidia | grep -v triton > requirements-cpu.txt
-	@ uv export --no-dev --all-extras --no-hashes | grep "^torch==" | sed 's/torch==\([^ \\]*\)/torch==\1+cpu --index-url https:\/\/download.pytorch.org\/whl\/cpu/' >> requirements-cpu.txt
+	@ echo '--extra-index-url https://download.pytorch.org/whl/cpu\n' > requirements-cpu-torch.txt
+	@ uv export --no-dev --all-extras --no-hashes | grep "^torch==" | sed 's/torch==\([^ \\]*\)/torch==\1+cpu/' >> requirements-cpu-torch.txt
+	@ uv export --no-dev --all-extras --no-hashes | grep -v torch | grep -v nvidia | grep -v triton > requirements-cpu-no-torch.txt

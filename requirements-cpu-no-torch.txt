@@ -57,4 +57,3 @@ uvloop==0.22.1 ; platform_python_implementation != 'PyPy' and sys_platform != 'c
 wandb==0.18.7 ; python_full_version < '4.0'
 watchfiles==1.1.1
 websockets==16.0
-torch==2.4.1+cpu --index-url https://download.pytorch.org/whl/cpu

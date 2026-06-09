@@ -19,3 +19,5 @@ greek_rnn/log/*
 served_models/**/*.pth
 wandb/
 scripts/logs/
+frontend/.env.production
+greek_rnn/results/*.csv
