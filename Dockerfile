@@ -11,5 +11,5 @@ COPY ./README.md .
 
 RUN uv sync --no-dev --all-extras
 
-chmod +x entrypoint.sh
+RUN chmod +x entrypoint.sh
 ENTRYPOINT ./entrypoint.sh
