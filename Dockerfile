@@ -18,4 +18,4 @@ COPY ./README.md .
 RUN uv pip install .
 
 RUN chmod +x entrypoint.sh
-ENTRYPOINT ./entrypoint.sh
+ENTRYPOINT ["./entrypoint.sh"]
