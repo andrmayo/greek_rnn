@@ -7,7 +7,7 @@ COPY ./pyproject.toml .
 COPY ./uv.lock .
 COPY ./served_models/ ./served_models/
 COPY ./greek_rnn/ ./greek_rnn/
-COPY ./README.md 
+COPY ./README.md .
 
 RUN uv sync --no-dev --all-extras
 
