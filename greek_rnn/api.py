@@ -6,6 +6,7 @@ from typing import AsyncGenerator
 
 import torch
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
 import greek_rnn.greek_utils as utils
@@ -14,13 +15,21 @@ from greek_rnn.main import setup_logging
 from greek_rnn.routes import router
 
 # get environment variables
-secret_key = os.environ.get("SESSION_SECRET_KEY")
+secret_key = os.getenv("SESSION_SECRET_KEY")
 if not secret_key:
     secret_key = secrets.token_hex(32)
     warnings.warn(
         """
         SESSION_SECRET_KEY not set, using a random key.prefix.
         Sessions will not persist across restarts.
+        """
+    )
+frontend_origin = os.getenv("FRONTEND_ORIGIN")
+if not frontend_origin:
+    warnings.warn(
+        """
+        FRONTEND_ORIGIN not set, so no CORS middleware
+        will be used.
         """
     )
 
@@ -40,4 +49,11 @@ async def model_lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
 app = FastAPI(lifespan=model_lifespan)
 app.add_middleware(SessionMiddleware, secret_key=secret_key)
+if frontend_origin:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=[frontend_origin],
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 app.include_router(router, prefix="/api")
