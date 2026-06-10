@@ -15,7 +15,7 @@ COPY ./served_models/ ./served_models/ ./served_models/
 COPY ./greek_rnn/ ./greek_rnn/ ./greek_rnn/
 COPY ./README.md ./
 
-RUN uv pip install .
+RUN uv pip install --no-build-isolation --no-deps .
 
 RUN chmod +x entrypoint.sh
 ENTRYPOINT ["./entrypoint.sh"]
