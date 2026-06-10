@@ -1,6 +1,6 @@
 steps:
   - name: "gcr.io/google.com/cloudsdktool/cloud-sdk:slim"
-    args: ["storage", "cp", "-r", "gs://greek-rnn-models/*", "./served_models/"]
+    args: ["gsutil", "cp", "-r", "gs://greek-rnn-models/*", "./served_models/"]
     id: Download Models
   - name: gcr.io/cloud-builders/docker
     args:
