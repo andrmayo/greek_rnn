@@ -40,7 +40,7 @@ steps:
       - "-c"
       - |
         gcloud run services describe $_SERVICE_NAME --region=$_DEPLOY_REGION --format='value(status.url)' > /workspace/cloud_run_url.txt
-  - name: "node:18"
+  - name: "node:22"
     entrypoint: "bash"
     args:
       - "-c"
