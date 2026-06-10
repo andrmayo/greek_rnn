@@ -27,13 +27,28 @@ steps:
       - $_SERVICE_NAME
       - "--platform=managed"
       - >-
-        --image=$_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$REPO_NAME/$_SERVICE_NAME:$COMMIT_SHA
+        x--image=$_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$REPO_NAME/$_SERVICE_NAME:$COMMIT_SHA
       - >-
         --labels=managed-by=gcp-cloud-build-deploy-cloud-run,commit-sha=$COMMIT_SHA,gcb-build-id=$BUILD_ID,gcb-trigger-id=$_TRIGGER_ID
       - "--region=$_DEPLOY_REGION"
       - "--quiet"
     id: Deploy
     entrypoint: gcloud
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk:slim"
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |
+        gcloud run services describe $_SERVICE_NAME --region=$_DEPLOY_REGION --format='value(status.url)' > /workspace/cloud_run_url.txt
+  - name: "node:18"
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |
+        cd frontend npm install
+        echo "VITE_API_URL=$(cat /workspace/cloud_run_url.txt)" > .env.production
+        npm run build
+    id: Build Frontend
 images:
   - >-
     $_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$REPO_NAME/$_SERVICE_NAME:$COMMIT_SHA
