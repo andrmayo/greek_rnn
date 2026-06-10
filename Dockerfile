@@ -11,8 +11,8 @@ RUN uv pip install -r requirements-cpu-torch.txt
 COPY ./pyproject.toml ./requirements-cpu-no-torch.txt ./entrypoint.sh ./
 
 RUN uv pip install -r requirements-cpu-no-torch.txt
-COPY ./served_models/ ./served_models/ ./served_models/
-COPY ./greek_rnn/ ./greek_rnn/ ./greek_rnn/
+COPY ./served_models/ ./served_models/
+COPY ./greek_rnn/ ./greek_rnn/
 COPY ./README.md ./
 
 RUN uv pip install --no-build-isolation --no-deps .
