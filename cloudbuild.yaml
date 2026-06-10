@@ -45,7 +45,8 @@ steps:
     args:
       - "-c"
       - |
-        cd frontend npm install
+        cd frontend
+        npm install
         echo "VITE_API_URL=$(cat /workspace/cloud_run_url.txt)" > .env.production
         npm run build
     id: Build Frontend
