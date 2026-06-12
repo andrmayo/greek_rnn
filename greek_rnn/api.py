@@ -15,7 +15,7 @@ from greek_rnn.main import setup_logging
 from greek_rnn.routes import router
 
 # get environment variables
-secret_key = os.getenv("SESSION_SECRET_KEY")
+secret_key: str | None = os.getenv("SESSION_SECRET_KEY")
 if not secret_key:
     secret_key = secrets.token_hex(32)
     warnings.warn(
@@ -24,14 +24,16 @@ if not secret_key:
         Sessions will not persist across restarts.
         """
     )
-frontend_origin = os.getenv("FRONTEND_ORIGIN")
-if not frontend_origin:
+frontend_origins: str | list[str] | None = os.getenv("FRONTEND_ORIGINS")
+if not frontend_origins:
     warnings.warn(
         """
-        FRONTEND_ORIGIN not set, so no CORS middleware
+        FRONTEND_ORIGINS not set, so no CORS middleware
         will be used.
         """
     )
+else:
+    frontend_origins = frontend_origins.split(",")
 
 
 # use FastAPI lifespan context manager to load language model
@@ -49,10 +51,10 @@ async def model_lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
 app = FastAPI(lifespan=model_lifespan)
 app.add_middleware(SessionMiddleware, secret_key=secret_key)
-if frontend_origin:
+if frontend_origins:
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=[frontend_origin],
+        allow_origins=frontend_origins,
         allow_methods=["*"],
         allow_headers=["*"],
     )
