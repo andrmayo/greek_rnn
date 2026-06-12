@@ -1,5 +1,6 @@
 {
   "hosting": {
+    "site": "greek-lacuna-project",
     "public": "frontend/dist",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "rewrites": [
