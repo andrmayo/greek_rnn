@@ -21,6 +21,12 @@ function EntryCard({ entry }: { entry: HistoryEntry }) {
           {truncated}
         </span>
       </div>
+      <span className="shrink-0 text-xs font-['Noto_Sans'] text-[var(--color-text-secondary)] bg-[var(--color-bg)] border border-[var(--color-border)] px-1.5 py-0.5">
+        MODEL
+      </span>
+      <span className="text-xs font-['Noto_Serif'] text-[var(--color-text-secondary)]">
+        {entry.model}
+      </span>
       {entry.type === "predict" && (
         <ReconstructionDisplay
           text={entry.result.text}

@@ -91,9 +91,14 @@ function ContentBody({
   onPredictK,
   onRank,
 }: {
-  onPredict: (input: string, result: PredictResponse) => void;
-  onPredictK: (input: string, k: number, result: PredictKResponse) => void;
-  onRank: (input: string, result: RankResponse) => void;
+  onPredict: (input: string, result: PredictResponse, model: string) => void;
+  onPredictK: (
+    input: string,
+    k: number,
+    result: PredictKResponse,
+    model: string,
+  ) => void;
+  onRank: (input: string, result: RankResponse, model: string) => void;
 }) {
   const [activeTab, setActiveTab] = useState<Tab>("predict");
   return (
@@ -128,13 +133,15 @@ function App() {
           </Widget>
         </Sidebar>
         <ContentBody
-          onPredict={(input, result) =>
-            addEntry({ type: "predict", input, result })
+          onPredict={(input, result, model) =>
+            addEntry({ type: "predict", input, result, model })
           }
-          onPredictK={(input, k, result) =>
-            addEntry({ type: "predict-k", input, k, result })
+          onPredictK={(input, k, result, model) =>
+            addEntry({ type: "predict-k", input, k, result, model })
           }
-          onRank={(input, result) => addEntry({ type: "rank", input, result })}
+          onRank={(input, result, model) =>
+            addEntry({ type: "rank", input, result, model })
+          }
         />
         <Sidebar side="right">
           <Widget title="History">

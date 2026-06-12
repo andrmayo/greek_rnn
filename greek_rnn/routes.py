@@ -126,6 +126,11 @@ async def get_default_model(req: Request):
     return {"model": req.app.state.default_model_name}
 
 
+@router.get("/get-current-model/")
+async def get_current_model(req: Request):
+    return {"model": req.session.get("model_name", req.app.state.default_model_name)}
+
+
 @router.get("/models/")
 async def get_models() -> list[str]:
     return [

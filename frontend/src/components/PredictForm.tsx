@@ -1,6 +1,6 @@
 import type { SyntheticEvent } from "react";
 import { useState } from "react";
-import { predict } from "../api";
+import { getCurrentModel, predict } from "../api";
 
 import type { PredictResponse } from "../api";
 import { ReconstructionDisplay } from "./ReconstructionDisplay";
@@ -8,7 +8,7 @@ import { ReconstructionDisplay } from "./ReconstructionDisplay";
 export function PredictForm({
   onResult,
 }: {
-  onResult?: (input: string, result: PredictResponse) => void;
+  onResult?: (input: string, result: PredictResponse, model: string) => void;
 }) {
   const [text, setText] = useState("");
   const [result, setResult] = useState<PredictResponse | null>(null);
@@ -21,9 +21,13 @@ export function PredictForm({
     setResult(null);
     setLoading(true);
     try {
-      const data = await predict(text);
+      // FIX: Slight possibility of race condition, since model could get changed after inference request but before getCurrentModel fires
+      const [data, model] = await Promise.all([
+        predict(text),
+        getCurrentModel(),
+      ]);
       setResult(data);
-      onResult?.(text, data);
+      onResult?.(text, data, model);
     } catch (err) {
       setError(String(err));
     } finally {

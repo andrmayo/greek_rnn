@@ -77,6 +77,13 @@ export async function getDefaultModel(): Promise<string> {
   return data.model;
 }
 
+export async function getCurrentModel(): Promise<string> {
+  const res = await fetch(`${API_BASE}/get-current-model/`);
+  if (!res.ok) throw new Error(await res.text());
+  const data = await res.json();
+  return data.model;
+}
+
 export async function changeModel(modelName: string): Promise<void> {
   const res = await fetch(`${API_BASE}/change-model/${modelName}`, {
     method: "PATCH",

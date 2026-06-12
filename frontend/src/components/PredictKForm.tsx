@@ -2,13 +2,18 @@ import { useState, type SyntheticEvent } from "react";
 
 import type { PredictKResponse } from "../api";
 
-import { predictK } from "../api";
+import { getCurrentModel, predictK } from "../api";
 import { ReconstructionDisplay } from "./ReconstructionDisplay";
 
 export function PredictKForm({
   onResult,
 }: {
-  onResult?: (input: string, k: number, result: PredictKResponse) => void;
+  onResult?: (
+    input: string,
+    k: number,
+    result: PredictKResponse,
+    model: string,
+  ) => void;
 }) {
   const [text, setText] = useState("");
   const [k, setK] = useState(5);
@@ -22,9 +27,13 @@ export function PredictKForm({
     setResult(null);
     setLoading(true);
     try {
-      const data = await predictK(text, k);
+      // FIX: Slight possibility of race condition, since model could get changed after inference request but before getCurrentModel fires
+      const [data, model] = await Promise.all([
+        predictK(text, k),
+        getCurrentModel(),
+      ]);
       setResult(data);
-      onResult?.(text, k, data);
+      onResult?.(text, k, data, model);
     } catch (err) {
       setError(String(err));
     } finally {

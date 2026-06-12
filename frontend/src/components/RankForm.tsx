@@ -2,12 +2,12 @@ import type { SyntheticEvent } from "react";
 import { useState } from "react";
 
 import type { RankResponse } from "../api";
-import { rank } from "../api";
+import { getCurrentModel, rank } from "../api";
 
 export function RankForm({
   onResult,
 }: {
-  onResult?: (input: string, result: RankResponse) => void;
+  onResult?: (input: string, result: RankResponse, model: string) => void;
 }) {
   const [text, setText] = useState("");
   const [options, setOptions] = useState<string[]>([""]);
@@ -29,9 +29,13 @@ export function RankForm({
     setResult(null);
     setLoading(true);
     try {
-      const data = await rank(text, getOptions());
+      // FIX: Slight possibility of race condition, since model could get changed after inference request but before getCurrentModel fires
+      const [data, model] = await Promise.all([
+        rank(text, getOptions()),
+        getCurrentModel(),
+      ]);
       setResult(data);
-      onResult?.(text, data);
+      onResult?.(text, data, model);
     } catch (err) {
       setError(String(err));
     } finally {
