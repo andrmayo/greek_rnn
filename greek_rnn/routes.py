@@ -22,13 +22,15 @@ from greek_rnn.greek_char_generator import (
     predict_top_k,
     rank_reconstructions,
 )
+from greek_rnn.greek_model import RNN
 from greek_rnn.greek_utils import DataItem
+from greek_rnn.letter_tokenizer import LetterTokenizer
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
 
-def get_model(req: Request):
+def get_model(req: Request) -> RNN:
     model_name = req.session.get("model_name", req.app.state.default_model_name)
     return req.app.state.model_cache[model_name]
 
@@ -39,16 +41,95 @@ async def predict(body: PredictRequest, req: Request) -> PredictResponse:
     Generates top reconstruction of Greek text with lacunae in format [..]
     with one . per missing character.
     """
+    # TODO: Clean this up by replacing assert checks with equivalent unit tests
     model = get_model(req)
     text = body.text
     text = re.sub("<gap/>", "!", text)
     pattern = re.compile(r"\[.*?\]")
     text = pattern.sub(lambda x: x.group().replace(" ", ""), text)
+    tokenizer = LetterTokenizer(False, False)
+
+    # use explit loop to keep track of whitespace so that
+    # we can later display text as originally formatted
+    text_buff = []
+    space_idxs = []
+    newline_idxs = []
+    tab_idxs = []
+    i = 0
+    for char in text:
+        if char in "[]":
+            text_buff.append(char)
+        elif char in " \n\t":
+            if char == " ":
+                space_idxs.append(i)
+            elif char == "\n":
+                newline_idxs.append(i)
+            elif char == "\t":
+                tab_idxs.append(i)
+            i += 1
+        else:
+            tokens = list(tokenizer.process_token(char))
+            text_buff += tokens
+            i += len(tokens)
+
+    text = "".join(text_buff)
+
     instance = DataItem(text=text)
     data_item = model.actual_lacuna_mask_and_label(instance)
-    return PredictResponse(
-        text=predict_chars(model, data_item), lacuna_mask=data_item.mask[1:-1]
+    assert data_item.mask, (
+        "RNN.actual_lacuna_mask_and_label not populating mask for data_item"
     )
+    text = predict_chars(model, data_item)
+    lacuna_mask = data_item.mask[1:-1]
+    assert len(text) == len(lacuna_mask), (
+        "text and lacuna_mask should both be of same length, "
+        "with BOT and EOT tokens stripped"
+    )
+
+    # Add white space in, reversing index lists
+    # so they can be used as stacks
+    space_idxs.reverse()
+    newline_idxs.reverse()
+    tab_idxs.reverse()
+
+    text_buff = []
+    lacuna_buff = []
+    i = 0
+
+    def idx_peek_lists(idx: int) -> bool:
+        if space_idxs and idx == space_idxs[-1]:
+            return True
+        if newline_idxs and idx == newline_idxs[-1]:
+            return True
+        if tab_idxs and idx == tab_idxs[-1]:
+            return True
+        return False
+
+    for char, masked in zip(text, lacuna_mask):
+        while idx_peek_lists(i):
+            if space_idxs and i == space_idxs[-1]:
+                text_buff.append(" ")
+                space_idxs.pop()
+                lacuna_buff.append(False)
+            elif newline_idxs and i == newline_idxs[-1]:
+                text_buff.append("\n")
+                newline_idxs.pop()
+                lacuna_buff.append(False)
+            elif tab_idxs and i == tab_idxs[-1]:
+                text_buff.append("\t")
+                tab_idxs.pop()
+                lacuna_buff.append(False)
+            i += 1
+        text_buff.append(char)
+        lacuna_buff.append(masked)
+        i += 1
+
+    text = "".join(text_buff)
+    lacuna_mask = lacuna_buff
+    del text_buff, lacuna_buff
+    logger.info(text)
+
+    return PredictResponse(text=text, lacuna_mask=lacuna_mask)
 
 
 @router.post("/rank/")
