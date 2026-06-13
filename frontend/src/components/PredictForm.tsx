@@ -44,13 +44,16 @@ export function PredictForm({
         rows={4}
         className="w-full border border-[var(--color-border)] rounded p-2 font-['Noto_Serif'] text-base resize-y focus:outline-none focus:border-[var(--color-brand)]"
       />
-      <button
-        type="submit"
-        disabled={loading || !text.trim()}
-        className="self-start px-4 py-2 bg-[var(--color-brand)] text-white rounded hover:opacity-90 disabled:opacity-50"
-      >
-        {loading ? "Predicting..." : "Predict"}
-      </button>
+      <span className="flex items-center gap-2">
+        <button
+          type="submit"
+          disabled={loading || !text.trim()}
+          className="self-start px-4 py-2 bg-[var(--color-brand)] text-white rounded hover:opacity-90 disabled:opacity-50"
+        >
+          {loading ? "Predicting..." : "Predict"}
+        </button>
+        {loading && <span className="animate-spin inline-block">⟳</span>}
+      </span>
       {error && <p className="text-red-600 text-sm">{error}</p>}
       {result && (
         <div className="border border-[var(--color-border)] rounded p-4">
