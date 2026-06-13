@@ -127,7 +127,6 @@ async def predict(body: PredictRequest, req: Request) -> PredictResponse:
     text = "".join(text_buff)
     lacuna_mask = lacuna_buff
     del text_buff, lacuna_buff
-    logger.info(text)
 
     return PredictResponse(text=text, lacuna_mask=lacuna_mask)
 
