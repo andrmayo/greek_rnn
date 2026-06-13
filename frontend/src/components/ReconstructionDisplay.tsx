@@ -10,7 +10,7 @@ export function ReconstructionDisplay({
   const chars = Array.from(text);
 
   return (
-    <p className="font-['Noto_Serif'] text-base leading-relaxed">
+    <p className="font-['Noto_Serif'] text-base leading-relaxed whitespace-pre-wrap">
       {chars.map((char, i) =>
         lacunaMask[i] ? (
           <span
