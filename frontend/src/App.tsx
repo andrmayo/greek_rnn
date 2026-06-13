@@ -127,9 +127,9 @@ function App() {
       <div className="flex flex-1 overflow-hidden">
         <Sidebar side="left">
           <Widget title="Model">
-            <p className="p-2 text-sm text-[var(--color-text-secondary)]">
+            <span className="p-2 text-sm text-[var(--color-text-secondary)]">
               <ModelSelector />
-            </p>
+            </span>
           </Widget>
         </Sidebar>
         <ContentBody
