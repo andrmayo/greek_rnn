@@ -161,6 +161,7 @@ async def predict_k(body: PredictKRequest, req: Request) -> PredictKResponse:
     instance = DataItem(text=text)
     data_item = model.actual_lacuna_mask_and_label(instance)
     texts = predict_top_k(model, data_item, k)
+    assert data_item.mask, "DataItem object is missing mask attribute"
     return PredictKResponse(texts=texts, lacuna_mask=data_item.mask[1:-1])
 
 
