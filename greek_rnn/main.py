@@ -401,6 +401,8 @@ def rank(
     logger = logging.getLogger()
     model = load_model(logger)
     ranking = rank_reconstructions(model, sentence, cast(list[str], options))
+    # Note: the rankings with log_sum are sent to stderr, while the ranked options
+    # themselves go to stdout
     typer.echo("Ranking:", err=True)
     typer.echo("(option, log_sum)", err=True)
     for option in ranking:
