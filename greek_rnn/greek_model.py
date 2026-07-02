@@ -18,7 +18,7 @@ USER_MASK = "#"
 class RNN(nn.Module):
     def __init__(
         self,
-        specs: list[int | float],
+        specs: dict[str, int | float | bool],
         spaces_are_tokens: bool = False,
         newlines_are_tokens: bool = True,
         decoder_type: str | None = None,
@@ -28,6 +28,7 @@ class RNN(nn.Module):
         self.tokenizer = letter_tokenizer.LetterTokenizer(
             spaces_are_tokens, newlines_are_tokens
         )
+        self.specs = specs.copy()
         self.unk_char = "?"
         self.bot_char = "<"
         self.eot_char = ">"
@@ -42,22 +43,23 @@ class RNN(nn.Module):
         if spaces_are_tokens:
             tokens += " "
         self.num_tokens = len(tokens)
-        self.specs = specs + [self.num_tokens]
+        self.specs["num_tokens"] = self.num_tokens
 
-        (
-            embed_size,
-            hidden_size,
-            proj_size,
-            rnn_nLayers,
-            share,
-            dropout,
-            masking_proportion,
-        ) = specs
+        # (
+        #     embed_size,
+        #     hidden_size,
+        #     proj_size,
+        #     rnn_nLayers,
+        #     share,
+        #     dropout,
+        #     masking_proportion,
+        # ) = specs
 
-        embed_size, hidden_size, proj_size = (
-            cast(int, embed_size),
-            cast(int, hidden_size),
-            cast(int, proj_size),
+        embed_size, hidden_size, proj_size, share = (
+            cast(int, self.specs["embed_size"]),
+            cast(int, self.specs["hidden_size"]),
+            cast(int, self.specs["proj_size"]),
+            self.specs["share"],
         )
 
         self.embed_size = int(embed_size)
@@ -75,7 +77,8 @@ class RNN(nn.Module):
             self.index_to_token[i] = token
 
         self.embed = nn.Embedding(self.num_tokens, embed_size)
-        self.masking_proportion = masking_proportion
+        self.embed_dropout_layer = nn.Dropout(self.specs["dropout_embed"])
+        self.masking_proportion = self.specs["masking_proportion"]
 
         # currently, the hidden_size is the same as the embedding size, so
         # this layer is unnecessary
@@ -88,9 +91,9 @@ class RNN(nn.Module):
             self.rnn = nn.LSTM(
                 embed_size,
                 hidden_size // 2,
-                num_layers=rnn_nLayers,
+                num_layers=self.specs["rnn_nLayers"],
                 bidirectional=True,
-                dropout=dropout,
+                dropout=self.specs["dropout_encoder"],
                 batch_first=True,
                 proj_size=proj_size // 2 if proj_size < embed_size else 0,
             )
@@ -118,7 +121,7 @@ class RNN(nn.Module):
                 proj_size if proj_size > 0 else hidden_size, self.num_tokens
             )
 
-        self.dropout = nn.Dropout(dropout)
+        self.output_dropout_layer = nn.Dropout(self.specs["dropout_output"])
 
         self.decoder_type = decoder_type
         match self.decoder_type:
@@ -151,11 +154,11 @@ class RNN(nn.Module):
         seqs = torch.cat(input_seqs).view(batch_size, num_tokens)
 
         embed = self.embed(seqs)
-        embed = self.dropout(embed)
+        embed = self.embed_dropout_layer(embed)
         # embed = self.scale_up(embed)
 
         encoder_output, _ = self.rnn(embed)
-        encoder_output = self.dropout(encoder_output)
+        encoder_output = self.output_dropout_layer(encoder_output)
 
         if self.share:
             # use embedding table as output layer

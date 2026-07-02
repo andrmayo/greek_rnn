@@ -67,20 +67,31 @@ hidden_size = 300
 # rnn_nLayers = 3
 rnn_nLayers = 4
 
-dropout = 0.0
+# dropout as applied to embedding outputs
+default_dropout_embed = 0.0
 # dropout = 0.1
+
+# dropout as applied with PyTorch built-in dropout param between stacked LSTM layers
+default_dropout_encoder = 0.0
+
+# dropout as applied to output of encoder LSTM
+default_dropout_output = 0.0
 
 masking_proportion = 0.15
 
-specs = [
-    embed_size,
-    hidden_size,
-    proj_size,
-    rnn_nLayers,
-    share,
-    dropout,
-    masking_proportion,
-]
+encoder_specs: dict[str, dict[str, int | float | bool]] = {
+    "lstm": {
+        "embed_size": embed_size,
+        "hidden_size": hidden_size,
+        "proj_size": proj_size,
+        "rnn_nLayers": rnn_nLayers,
+        "share": share,
+        "dropout_embed": default_dropout_embed,
+        "dropout_encoder": default_dropout_encoder,
+        "dropout_output": default_dropout_output,
+        "masking_proportion": masking_proportion,
+    },
+}
 
 decoder_specs = {
     "gru": {

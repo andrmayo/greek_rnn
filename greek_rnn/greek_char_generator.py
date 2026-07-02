@@ -15,9 +15,8 @@ import numpy
 import torch
 import torch.nn.functional as nnf
 import typer
-from torch import nn
-
 import wandb
+from torch import nn
 
 if TYPE_CHECKING:
     from torch.optim.adamw import AdamW
@@ -187,11 +186,13 @@ def train_model(
             "patience": patience,
             "masking_strategy": masking_strategy,
             "dynamic_remask": dynamic_remask,
-            "embed_size": model.specs[0],
-            "hidden_size": model.specs[1],
-            "rnn_layers": model.specs[3],
-            "dropout": model.specs[5],
-            "masking_proportion": model.specs[6],
+            "embed_size": model.specs["embed_size"],
+            "hidden_size": model.specs["hidden_size"],
+            "rnn_nLayers": model.specs["rnn_nLayers"],
+            "dropout_embed": model.specs["dropout_embed"],
+            "dropout_encoder": model.specs["dropout_encoder"],
+            "dropout_output": model.specs["dropout_output"],
+            "masking_proportion": model.specs["masking_proportion"],
             "seq_decoder": seq_decoder_specs,
         },
     )

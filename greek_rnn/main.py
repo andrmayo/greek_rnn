@@ -24,7 +24,7 @@ from greek_rnn.greek_char_generator import (
     rank_reconstructions,
     train_model,
 )
-from greek_rnn.greek_utils import device, model_path, seed, specs
+from greek_rnn.greek_utils import device, encoder_specs, model_path, seed
 
 default_model_path = Path(model_path) / "best"
 
@@ -140,6 +140,28 @@ def train(
             "--learning-rate", "--lr", "-lr", help="Override default learning rate"
         ),
     ] = utils.learning_rate,
+    dropout_embed: Annotated[
+        float | None,
+        typer.Option(
+            "--dropout-embed", "-dm", help="Override default 0.0 dropout for embeddings"
+        ),
+    ] = None,
+    dropout_encoder: Annotated[
+        float | None,
+        typer.Option(
+            "--dropout-encoder",
+            "-de",
+            help="Override default 0.0 dropout for LSTM encoder layers",
+        ),
+    ] = None,
+    dropout_output: Annotated[
+        float | None,
+        typer.Option(
+            "--dropout-output",
+            "-do",
+            help="Override default 0.0 dropout for encoder outputs",
+        ),
+    ] = None,
     seq_decoder_type: Annotated[
         DecoderType | None,
         typer.Option(
@@ -169,12 +191,24 @@ def train(
 ):
     """Train language model for character filling."""
 
+    # using an encoder_type variable in case we later want to add multiple encoder
+    # architectures
+    encoder_type = "lstm"
     seq_decoder = seq_decoder_type.value if seq_decoder_type else None
+
+    cur_encoder_specs = encoder_specs[encoder_type]
 
     if force_partition and use_existing_partition:
         raise typer.BadParameter(
             "Cannot use --force-partition and --use-existing together"
         )
+
+    if dropout_embed is not None:
+        cur_encoder_specs["dropout_embed"] = dropout_embed
+    if dropout_encoder is not None:
+        cur_encoder_specs["dropout_encoder"] = dropout_encoder
+    if dropout_output is not None:
+        cur_encoder_specs["dropout_output"] = dropout_output
 
     # this is just to pass to train_model so it can be logged in wandb
     cur_decoder_specs = utils.decoder_specs[seq_decoder] if seq_decoder else None
@@ -207,9 +241,15 @@ def train(
     save_dir = save_dir or default_model_path
 
     logger.info(
-        f"Train {model_name} model specs: embed_size: {specs[0]}, "
-        f"hidden_size: {specs[1]}, proj_size: {specs[2]}, "
-        f"rnn n layers: {specs[3]}, share: {specs[4]}, dropout: {specs[5]}"
+        f"Train {model_name} model "
+        f"encoder_specs: embed_size: {cur_encoder_specs['embed_size']}, "
+        f"hidden_size: {cur_encoder_specs['hidden_size']}, "
+        f"proj_size: {cur_encoder_specs['proj_size']}, "
+        f"rnn n layers: {cur_encoder_specs['rnn_nLayers']}, "
+        f"share: {cur_encoder_specs['share']}, "
+        f"dropout_embed: {cur_encoder_specs['dropout_embed']}, "
+        f"dropout_encoder: {cur_encoder_specs['dropout_encoder']},"
+        f"dropout_output: {cur_encoder_specs['dropout_output']}"
     )
 
     if preload_model_path:
@@ -219,7 +259,7 @@ def train(
         if not isinstance(model, greek_model.RNN):
             raise typer.BadParameter("Path to model has invalid model architecture")
     else:
-        model = greek_model.RNN(specs, decoder_type=seq_decoder)
+        model = greek_model.RNN(cur_encoder_specs, decoder_type=seq_decoder)
         model = model.to(utils.device)
     # train_model is in greek_char_generator module
     # if mask = True,
@@ -552,10 +592,13 @@ def load_model(
     logger.info(f"Loading model: {preload_model}")
     model = torch.load(preload_model, map_location=device, weights_only=False)
     logger.info(
-        f"Load model: {model} with specs: embed_size: {model.specs[0]}, "
-        f"hidden_size: {model.specs[1]}, proj_size: {model.specs[2]}, "
-        f"rnn n layers: {model.specs[3]}, share: {model.specs[4]}, "
-        f"dropout: {model.specs[5]}"
+        f"Load model: {model} with specs: embed_size: {model.specs['embed_size']}, "
+        f"hidden_size: {model.specs['hidden_size']}, "
+        f"proj_size: {model.specs['proj_size']}, "
+        f"rnn n layers: {model.specs['rnn_nLayers']}, share: {model.specs['share']}, "
+        f"dropout_embed: {model.specs['dropout_embed']}, "
+        f"dropout_encoder: {model.specs['dropout_encoder']}, "
+        f"dropout_output: {model.specs['dropout_output']}"
     )
     return model
 

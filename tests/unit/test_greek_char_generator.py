@@ -13,7 +13,17 @@ from greek_rnn.greek_utils import DataItem
 class TestPredict:
     @pytest.fixture
     def sample_specs(self):
-        return [300, 300, 150, 4, False, 0.0, 0.15]  # Standard specs
+        return {
+            "embed_size": 300,
+            "hidden_size": 300,
+            "proj_size": 150,
+            "rnn_nLayers": 4,
+            "share": False,
+            "dropout_embed": 0.0,
+            "dropout_encoder": 0.0,
+            "dropout_output": 0.0,
+            "masking_proportion": 0.15,
+        }  # Standard specs
 
     @pytest.fixture
     def rnn_model(self, sample_specs):
@@ -131,7 +141,17 @@ class TestPredict:
 class TestPredictTopK:
     @pytest.fixture
     def sample_specs(self):
-        return [300, 300, 150, 4, False, 0.0, 0.15]  # Standard specs
+        return {
+            "embed_size": 300,
+            "hidden_size": 300,
+            "proj_size": 150,
+            "rnn_nLayers": 4,
+            "share": False,
+            "dropout_embed": 0.0,
+            "dropout_encoder": 0.0,
+            "dropout_output": 0.0,
+            "masking_proportion": 0.15,
+        }  # Standard specs
 
     @pytest.fixture
     def rnn_model(self, sample_specs):
@@ -277,7 +297,17 @@ class TestPredictTopK:
 class TestTrainModel:
     @pytest.fixture
     def sample_specs(self):
-        return [300, 300, 150, 4, False, 0.0, 0.15]  # Standard specs
+        return {
+            "embed_size": 300,
+            "hidden_size": 300,
+            "proj_size": 150,
+            "rnn_nLayers": 4,
+            "share": False,
+            "dropout_embed": 0.0,
+            "dropout_encoder": 0.0,
+            "dropout_output": 0.0,
+            "masking_proportion": 0.15,
+        }  # Standard specs
 
     @pytest.fixture
     def rnn_model(self, sample_specs):
@@ -316,7 +346,8 @@ class TestTrainModel:
                 patch("greek_rnn.greek_char_generator.wandb"),
             ):
                 # Mock train_batch to return predictable loss values
-                # Simulate dev loss: improves for 2 epochs, then gets worse for 3 epochs (triggers early stop)
+                # Simulate dev loss: improves for 2 epochs,
+                # then gets worse for 3 epochs (triggers early stop)
                 dev_losses = [1.0, 0.8, 0.9, 1.1, 1.2]  # Best at epoch 1 (0.8)
                 train_losses = [1.0, 0.9, 0.85, 0.8, 0.75]
 

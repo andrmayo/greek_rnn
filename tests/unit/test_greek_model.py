@@ -11,15 +11,25 @@ from greek_rnn.greek_utils import DataItem
 class TestRNN:
     @pytest.fixture
     def sample_specs(self):
-        return [300, 300, 150, 4, False, 0.0, 0.15]  # Standard specs
+        return {
+            "embed_size": 300,
+            "hidden_size": 300,
+            "proj_size": 150,
+            "rnn_nLayers": 4,
+            "share": False,
+            "dropout_embed": 0.0,
+            "dropout_encoder": 0.0,
+            "dropout_output": 0.0,
+            "masking_proportion": 0.15,
+        }  # Standard specs
 
     @pytest.fixture
     def rnn_model(self, sample_specs):
         return RNN(sample_specs)
 
     def test_init(self, sample_specs):
-        model = RNN(sample_specs)
-        assert model.specs == sample_specs + [34]  # 34 is num_tokens
+        model = RNN(sample_specs.copy())
+        assert model.specs == sample_specs | {"num_tokens": 34}
         assert model.num_tokens == 34
         assert model.mask_char == "_"
         assert model.user_mask_char == "#"
@@ -142,33 +152,58 @@ class TestRNN:
         assert len(lacuna_positions) == 0
 
     def test_weight_sharing_false(self, sample_specs):
-        sample_specs[4] = False  # share = False
+        sample_specs["share"] = False
         model = RNN(sample_specs)
         assert hasattr(model, "out")
         assert not hasattr(model, "scale_down")
 
     def test_weight_sharing_true(self, sample_specs):
-        sample_specs[2] = 0  # proj_size = 0, so hidden_size must equal embed_size
-        sample_specs[4] = True  # share = True
+        # proj_size = 0, so hidden_size must equal embed_size
+        sample_specs["proj_size"] = 0
+        sample_specs["share"] = True
         model = RNN(sample_specs)
         assert model.out is None
 
     def test_weight_sharing_rejects_mismatched_proj(self, sample_specs):
-        sample_specs[4] = True  # share = True
+        sample_specs["share"] = True
         # proj_size=150 != embed_size=300 → should reject
         with pytest.raises(ValueError):
             RNN(sample_specs)
 
     def test_dropout_initialization(self):
         # Test with dropout
-        specs_with_dropout = [300, 300, 150, 4, False, 0.5, 0.15]
+        specs_with_dropout = {
+            "embed_size": 300,
+            "hidden_size": 300,
+            "proj_size": 150,
+            "rnn_nLayers": 4,
+            "share": False,
+            "dropout_embed": 0.5,
+            "dropout_encoder": 0.5,
+            "dropout_output": 0.5,
+            "masking_proportion": 0.15,
+        }
         model = RNN(specs_with_dropout)
-        assert model.dropout.p == 0.5
+        assert model.rnn.dropout == 0.5
+        assert model.embed_dropout_layer.p == 0.5
+        assert model.output_dropout_layer.p == 0.5
 
         # Test without dropout
-        specs_no_dropout = [300, 300, 150, 4, False, 0.0, 0.15]
+        specs_no_dropout = {
+            "embed_size": 300,
+            "hidden_size": 300,
+            "proj_size": 150,
+            "rnn_nLayers": 4,
+            "share": False,
+            "dropout_embed": 0.0,
+            "dropout_encoder": 0.0,
+            "dropout_output": 0.0,
+            "masking_proportion": 0.15,
+        }
         model = RNN(specs_no_dropout)
-        assert model.dropout.p == 0.0
+        assert model.rnn.dropout == 0.0
+        assert model.embed_dropout_layer.p == 0.0
+        assert model.output_dropout_layer.p == 0.0
 
     def test_model_parameters_exist(self, rnn_model):
         # Test that all expected parameters exist
@@ -223,7 +258,8 @@ class TestRNN:
                 data_item_copy, masking_strategy=masking_strategy
             )
 
-            # Find original positions of '.' before masking may have replaced other chars with '.'
+            # Find original positions of '.' before masking
+            # may have replaced other chars with '.'
             dot_index = rnn_model.token_to_index["."]
             original_indexes = rnn_model.lookup_indexes(text)
             dot_positions = [
@@ -277,10 +313,12 @@ class TestRNN:
 
             for pos in positions:
                 assert cast(list[bool], masked_item.mask)[pos] is False, (
-                    f"Lacuna marker at position {pos} was masked in {masking_strategy} mode"
+                    f"Lacuna marker at position {pos} "
+                    f"was masked in {masking_strategy} mode"
                 )
                 assert cast(list[int], masked_item.labels)[pos] == -100, (
-                    f"Lacuna marker at position {pos} has label in {masking_strategy} mode"
+                    f"Lacuna marker at position {pos} "
+                    f"has label in {masking_strategy} mode"
                 )
 
 
