@@ -27,5 +27,5 @@ def test_rank_cli():
     )
 
     assert result.returncode == 0
-    assert "Ranking:" in result.stdout
+    assert "Ranking:" in result.stderr
     assert "τον" in result.stdout
