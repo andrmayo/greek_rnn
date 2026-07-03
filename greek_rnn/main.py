@@ -724,3 +724,7 @@ def bind_data(
 def main():
     setup_logging()
     app()
+
+
+if __name__ == "__main__":
+    main()
