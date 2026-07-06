@@ -23,3 +23,6 @@ gen-docker-reqs:
 	@ echo '--extra-index-url https://download.pytorch.org/whl/cpu\n' > requirements-cpu-torch.txt
 	@ uv export --no-dev --all-extras --no-hashes --no-emit-project | grep "^torch==" | sed 's/torch==\([^ \\]*\)/torch==\1+cpu/' >> requirements-cpu-torch.txt
 	@ uv export --no-dev --all-extras --no-hashes --no-emit-project | grep -v torch | grep -v nvidia | grep -v triton > requirements-cpu-no-torch.txt
+
+force-gcloud-rebuild:
+	@ gcloud builds triggers run deploy-greek-rnn-main --branch=main --project=greek-lacuna-project
