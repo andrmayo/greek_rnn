@@ -1,5 +1,6 @@
 # Description
 
+import contextlib
 import csv
 import json
 import logging
@@ -82,81 +83,93 @@ def train_batch(
     dynamic_remask: bool,
     update: bool = True,  # update=False is used for dev set
 ) -> tuple[float, int, int, int, int, int]:
-    model.zero_grad()
-    total_loss, total_tokens, total_chars = 0, 0, 0
+    grad_context = contextlib.nullcontext() if update else torch.no_grad()
 
-    train_masked = 0
+    with grad_context:
+        model.zero_grad()
+        total_loss, total_tokens, total_chars = 0, 0, 0
 
-    dev_masked = 0
-    dev_correct = 0
+        train_masked = 0
 
-    for i in data_indexes:
-        data_item = data[i]
+        dev_masked = 0
+        dev_correct = 0
 
-        if dynamic_remask:
-            data_item, _ = model.mask_and_label_characters(
-                data_item, masking_strategy=masking_strategy
-            )
+        for i in data_indexes:
+            data_item = data[i]
 
-        # Ensure indexes are populated even if not masking dynamically
-        if data_item.indexes is None:
-            data_item.indexes = model.lookup_indexes(data_item.text)
+            if dynamic_remask:
+                data_item, _ = model.mask_and_label_characters(
+                    data_item, masking_strategy=masking_strategy
+                )
 
-        index_tensor = torch.tensor(data_item.indexes, dtype=torch.int64).to(device)
-        label_tensor = torch.tensor(data_item.labels, dtype=torch.int64).to(device)
-        masked_idx = torch.BoolTensor(data_item.mask).to(device)
+            # Ensure indexes are populated even if not masking dynamically
+            if data_item.indexes is None:
+                data_item.indexes = model.lookup_indexes(data_item.text)
 
-        if model.decoder is None:
-            out = model([index_tensor])
-        else:
-            if model.decoder.use_teacher_labels:
-                out = model([index_tensor], [masked_idx], [label_tensor])
+            index_tensor = torch.tensor(data_item.indexes, dtype=torch.int64).to(device)
+            label_tensor = torch.tensor(data_item.labels, dtype=torch.int64).to(device)
+            masked_idx = torch.BoolTensor(data_item.mask).to(device)
+
+            if model.decoder is None:
+                out = model([index_tensor])
             else:
-                out = model([index_tensor], [masked_idx])
+                if model.decoder.use_teacher_labels:
+                    out = model([index_tensor], [masked_idx], [label_tensor])
+                else:
+                    out = model([index_tensor], [masked_idx])
 
-        train_masked += torch.numel(masked_idx)  # to find the average loss
+            train_masked += torch.numel(masked_idx)  # to find the average loss
 
-        masked_out = out[0, masked_idx]
-        masked_label = label_tensor[masked_idx]
-        loss = criterion(masked_out, masked_label)
+            masked_out = out[0, masked_idx]
+            masked_label = label_tensor[masked_idx]
+            loss = criterion(masked_out, masked_label)
 
-        try:
-            total_loss += loss.item()
-        except RuntimeError as e:
-            raise RuntimeError(
-                f"""Error accessing loss as scalar, 
-                    criterion probably not applying reduction to loss tensor: {e}
-                """
-            )
-        total_tokens += len(out[0])
-        if data_item.text is None:
-            raise ValueError("DataItem passed to train_batch has uninitialized text")
-        total_chars += len(data_item.text)
+            try:
+                total_loss += loss.item()
+            except RuntimeError as e:
+                raise RuntimeError(
+                    f"""Error accessing loss as scalar, 
+                        criterion probably not applying reduction to loss tensor: {e}
+                    """
+                )
+            total_tokens += len(out[0])
+            if data_item.text is None:
+                raise ValueError(
+                    "DataItem passed to train_batch has uninitialized text"
+                )
+            total_chars += len(data_item.text)
+
+            if update:
+                loss.backward()
+            else:
+                target = []
+                for emb in out[0]:
+                    scores = emb
+                    _, best = scores.max(0)
+                    best = best.data.item()
+                    target.append(best)
+
+                # compare target to label
+                # logger.debug(f"self attn labels: {data_item.labels}")
+                # logger.debug(f"target labels: {target}")
+                # logger.info("No update")
+                dev_masked_current, dev_correct_current, _ = check_accuracy(
+                    target, data_item
+                )
+                dev_masked += dev_masked_current
+                dev_correct += dev_correct_current
 
         if update:
-            loss.backward()
-        else:
-            target = []
-            for emb in out[0]:
-                scores = emb
-                _, best = scores.max(0)
-                best = best.data.item()
-                target.append(best)
+            optimizer.step()
 
-            # compare target to label
-            # logger.debug(f"self attn labels: {data_item.labels}")
-            # logger.debug(f"target labels: {target}")
-            # logger.info("No update")
-            dev_masked_current, dev_correct_current, _ = check_accuracy(
-                target, data_item
-            )
-            dev_masked += dev_masked_current
-            dev_correct += dev_correct_current
-
-    if update:
-        optimizer.step()
-
-    return total_loss, total_tokens, total_chars, train_masked, dev_masked, dev_correct
+        return (
+            total_loss,
+            total_tokens,
+            total_chars,
+            train_masked,
+            dev_masked,
+            dev_correct,
+        )
 
 
 def train_model(
@@ -609,39 +622,43 @@ def predict_chars(model: RNN, data_item: DataItem) -> str:
 
     logger.info(f"input text: {data_item.text}")
 
-    index_tensor = torch.tensor(data_item.indexes, dtype=torch.int64).to(device)
-    if model.decoder is not None:
-        masked_idx = torch.BoolTensor(data_item.mask).to(device)
-        out = model([index_tensor], [masked_idx])
-    else:
-        out = model([index_tensor])
-
-    # get target indexes
-    target = []
-    for emb in out[0]:
-        scores = emb
-        _, best = scores.max(0)
-        best = best.data.item()
-        target.append(best)
-
-    # Build output text by replacing masked positions with predictions
-    output_chars = []
-    for i, token_index in enumerate(data_item.indexes):
-        if i < len(data_item.mask) and data_item.mask[i]:
-            # This position was masked, use the model's prediction
-            predicted_char = model.index_to_token[target[i]]
-            output_chars.append(predicted_char)
+    model.eval()
+    with torch.no_grad():
+        index_tensor = torch.tensor(data_item.indexes, dtype=torch.int64).to(device)
+        if model.decoder is not None:
+            masked_idx = torch.BoolTensor(data_item.mask).to(device)
+            out = model([index_tensor], [masked_idx])
         else:
-            # This position was not masked, use the original character
-            original_char = model.index_to_token[token_index]
-            output_chars.append(original_char)
+            out = model([index_tensor])
 
-    # Remove control characters (BOT/EOT)
-    output_text = "".join(output_chars)
-    output_text = output_text.replace(model.bot_char, "").replace(model.eot_char, "")
+        # get target indexes
+        target = []
+        for emb in out[0]:
+            scores = emb
+            _, best = scores.max(0)
+            best = best.data.item()
+            target.append(best)
 
-    logger.info(f"output text: {output_text}")
-    return output_text
+        # Build output text by replacing masked positions with predictions
+        output_chars = []
+        for i, token_index in enumerate(data_item.indexes):
+            if i < len(data_item.mask) and data_item.mask[i]:
+                # This position was masked, use the model's prediction
+                predicted_char = model.index_to_token[target[i]]
+                output_chars.append(predicted_char)
+            else:
+                # This position was not masked, use the original character
+                original_char = model.index_to_token[token_index]
+                output_chars.append(original_char)
+
+        # Remove control characters (BOT/EOT)
+        output_text = "".join(output_chars)
+        output_text = output_text.replace(model.bot_char, "").replace(
+            model.eot_char, ""
+        )
+
+        logger.info(f"output text: {output_text}")
+        return output_text
 
 
 # file names for csv will be automatically generated from timestamp
@@ -658,87 +675,92 @@ def predict_top_k(
     # beam search
     logger.info(f"input text: {data_item.text}")
 
-    index_tensor = torch.tensor(data_item.indexes, dtype=torch.int64).to(device)
-    if model.decoder is not None:
-        masked_idx = torch.BoolTensor(data_item.mask).to(device)
-        out = model([index_tensor], [masked_idx])
-    else:
-        out = model([index_tensor])
+    model.eval()
 
-    # get target candidates
-    target_candidates = []
-    for emb in out[0]:
-        scores = emb
-        probabilities = nnf.softmax(scores, dim=0)
-        vocabid_probs = []
-        for i in range(len(probabilities)):
-            vocabid_probs.append((i, probabilities[i]))
-        sorted_vocabid_probs = sorted(vocabid_probs, key=lambda x: x[1], reverse=True)
+    with torch.no_grad():
+        index_tensor = torch.tensor(data_item.indexes, dtype=torch.int64).to(device)
+        if model.decoder is not None:
+            masked_idx = torch.BoolTensor(data_item.mask).to(device)
+            out = model([index_tensor], [masked_idx])
+        else:
+            out = model([index_tensor])
 
-        target_candidates.append(sorted_vocabid_probs)
-
-    lacuna_candidates = []
-    for i in range(len(data_item.mask)):
-        if i >= len(target_candidates):
-            logger.warning(
-                "Mask array longer than target_candidates: "
-                f"mask[{len(data_item.mask)}] "
-                f"vs target_candidates[{len(target_candidates)}]"
+        # get target candidates
+        target_candidates = []
+        for emb in out[0]:
+            scores = emb
+            probabilities = nnf.softmax(scores, dim=0)
+            vocabid_probs = []
+            for i in range(len(probabilities)):
+                vocabid_probs.append((i, probabilities[i]))
+            sorted_vocabid_probs = sorted(
+                vocabid_probs, key=lambda x: x[1], reverse=True
             )
-            continue
-        if data_item.mask[i]:
-            lacuna_candidates.append(target_candidates[i])
 
-    if not lacuna_candidates:
-        logger.warning(
-            "No lacuna positions found for top-k prediction for data_item "
-            "with text number {data_item.text_number}, and text {data_item.text}\n"
-        )
-        return []
+            target_candidates.append(sorted_vocabid_probs)
 
-    top_k = [[list(), 0.0]]
-    # walk over each step in sequence
-    for row in lacuna_candidates:
-        all_candidates = list()
-        # expand each current candidate
-        for i in range(len(top_k)):
-            seq, score = top_k[i]
-            for j in range(len(row)):
-                candidate = [seq + [row[j][0]], score + log(row[j][1])]
-                all_candidates.append(candidate)
-        # order all candidates by score
-        ordered = sorted(all_candidates, key=lambda tup: tup[1], reverse=True)
-        # select k best
-        top_k = ordered[:k]
+        lacuna_candidates = []
+        for i in range(len(data_item.mask)):
+            if i >= len(target_candidates):
+                logger.warning(
+                    "Mask array longer than target_candidates: "
+                    f"mask[{len(data_item.mask)}] "
+                    f"vs target_candidates[{len(target_candidates)}]"
+                )
+                continue
+            if data_item.mask[i]:
+                lacuna_candidates.append(target_candidates[i])
 
-    return_list = []
+        if not lacuna_candidates:
+            logger.warning(
+                "No lacuna positions found for top-k prediction for data_item "
+                "with text number {data_item.text_number}, and text {data_item.text}\n"
+            )
+            return []
 
-    if save_to_file:
-        # Generate filename if not provided
-        if output_file is None:
-            import datetime
+        top_k = [[list(), 0.0]]
+        # walk over each step in sequence
+        for row in lacuna_candidates:
+            all_candidates = list()
+            # expand each current candidate
+            for i in range(len(top_k)):
+                seq, score = top_k[i]
+                for j in range(len(row)):
+                    candidate = [seq + [row[j][0]], score + log(row[j][1])]
+                    all_candidates.append(candidate)
+            # order all candidates by score
+            ordered = sorted(all_candidates, key=lambda tup: tup[1], reverse=True)
+            # select k best
+            top_k = ordered[:k]
 
-            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-            output_file = f"{Path(__file__).parent}/results/top_k_{timestamp}.csv"
-            Path(output_file).parent.mkdir(parents=True, exist_ok=True)
+        return_list = []
 
-        with open(output_file, "w", newline="") as csvfile:
-            writer = csv.writer(csvfile)
-            writer.writerow(["Rank", "Candidate", "LogSum"])  # Write header
+        if save_to_file:
+            # Generate filename if not provided
+            if output_file is None:
+                import datetime
+
+                timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+                output_file = f"{Path(__file__).parent}/results/top_k_{timestamp}.csv"
+                Path(output_file).parent.mkdir(parents=True, exist_ok=True)
+
+            with open(output_file, "w", newline="") as csvfile:
+                writer = csv.writer(csvfile)
+                writer.writerow(["Rank", "Candidate", "LogSum"])  # Write header
+                for index, seq_value in enumerate(top_k):
+                    seq = seq_value[0]
+                    value = seq_value[1]
+                    lacuna_string = model.decode(seq)
+                    return_list.append(lacuna_string)
+                    writer.writerow([index + 1, lacuna_string, value])
+        else:
+            # No file writing, just build return list
             for index, seq_value in enumerate(top_k):
                 seq = seq_value[0]
-                value = seq_value[1]
                 lacuna_string = model.decode(seq)
                 return_list.append(lacuna_string)
-                writer.writerow([index + 1, lacuna_string, value])
-    else:
-        # No file writing, just build return list
-        for index, seq_value in enumerate(top_k):
-            seq = seq_value[0]
-            lacuna_string = model.decode(seq)
-            return_list.append(lacuna_string)
 
-    return return_list
+        return return_list
 
 
 def rank_reconstructions(
