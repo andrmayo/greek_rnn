@@ -392,7 +392,7 @@ def train_model(
         if patience_counter >= patience:
             logger.info(
                 f"Early stopping at epoch {epoch}. Best dev loss: "
-                "{best_dev_loss:.6f} at epoch {best_epoch}"
+                f"{best_dev_loss:.6f} at epoch {best_epoch}"
             )
             break
 
